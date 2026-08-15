@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+docs/_build/
+coverage.xml
