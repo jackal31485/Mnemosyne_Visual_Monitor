@@ -21,7 +21,11 @@ class RuntimeData:
     mnemosyne_schema: Optional[SchemaSnapshot] = None
 
 
-def get_runtime_data(db_path: Optional[Path] = None) -> RuntimeData:
+def get_runtime_data(
+    db_path: Optional[Path] | None = None,
+    *,
+    enable_vectors: bool = True,
+) -> RuntimeData:
     """Return a :class:`RuntimeData` instance.
 
     Parameters
@@ -29,10 +33,14 @@ def get_runtime_data(db_path: Optional[Path] = None) -> RuntimeData:
     db_path:
         Path to a SQLite Mnemosyne database. If ``None`` the schema field will be
         ``None`` and no inspection takes place.
+    enable_vectors:
+        Forwarded unchanged to :func:`inspect_sqlite_database`. Defaults to ``True``
+        for backward compatibility.
     """
     hermes = hermes_mod.get_hermes_runtime_snapshot()
     if db_path is None:
         return RuntimeData(hermes)
-    # delegate to inspector; it performs read‑only checks.
-    schema = inspector_mod.inspect_sqlite_database(db_path, enable_vectors=True)
+    schema = inspector_mod.inspect_sqlite_database(
+        db_path, enable_vectors=enable_vectors
+    )
     return RuntimeData(hermes, schema)

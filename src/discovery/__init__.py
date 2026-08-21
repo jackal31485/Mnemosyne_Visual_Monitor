@@ -1,1 +1,1 @@
-# __init__ for discovery module
+# Discovery package
