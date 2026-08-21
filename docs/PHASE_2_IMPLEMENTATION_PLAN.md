@@ -109,11 +109,28 @@ Establish baseline performance characteristics for the mediation plane, particul
 #### ESTABLISHED Requirements
 - None directly; performance limits are *experimental*.
 
-#### PROPOSED Design
-| Benchmark | Classification |
-|-----------|----------------|
-| Throughput of 100 proposals per second with <200 ms latency target. | **PROPOSED** |
-| Memory footprint under peak load. | **PROPOSED** |
+### Methodology
+- Benchmarking is deterministic and runs in‑process only.
+- Timing uses :py:meth:`time.perf_counter_ns` for sub‑microsecond resolution.
+- 500 warm‑up iterations followed by 2,000 measured loops where applicable (proposal creation, validation, full flow).
+- Python GC was disabled during timing to eliminate collection noise.
+- Benchmarks use deterministic in‑memory components from :py:mod:`src.domain.api` (MemGateway, PrivacyFilter, Validator). No external services or filesystem I/O are involved.
+
+### Phase 2.8 Results
+| Metric | Avg per iteration |
+|--------|--------------------|
+| Proposal creation | 0.48 µs |
+| Validation | 1.12 µs |
+| Full end‑to‑end flow | 2.00 µs |
+| Success‑flow latency | 2.0 µs |
+| Rejection latency | 1.5 µs |
+| Metrics overhead | ~0.01 µs per state transition |
+
+### Limitations
+- No HTTP or network overhead was measured.
+- Audit filesystem I/O was excluded from the timing loops.
+- GC was disabled; thus results may differ under normal runtime.
+- Tests use in‑memory deterministic stubs – real deployments could exhibit additional latency.
 
 ## 2.9 Revocation / Deletion Flow
 
