@@ -2,3 +2,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+
+# Runtime-generated mediation audit records
+audit/

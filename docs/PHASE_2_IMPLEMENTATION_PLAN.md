@@ -47,10 +47,10 @@ Provide advanced diagnostic information about the mediation plane’s internal s
 - Health monitoring is often required for production deployments (see Project Roadmap, Phase 9).
 
 #### PROPOSED Design
-| Requirement | Classification |
-|-------------|----------------|
-| Expose `/diagnostics` endpoint returning JSON with uptime, queue depth, and recent activity. | **PROPOSED** |
-| Provide an optional WebSocket stream for real-time updates. | **PROPOSED** |
+| Requirement | Classification | Phase 2.5 Implementation |
+|-------------|----------------|---------------------------|
+| Expose `/diagnostics` endpoint returning JSON with uptime, queue depth, and recent activity. | **PROPOSED** | Not implemented as HTTP; diagnostics are exposed through the dependency-free `Diagnostics` Python service because no HTTP/API framework is established in the repository. |
+| Provide an optional WebSocket stream for real-time updates. | **PROPOSED** | Deferred; no WebSocket architecture exists in the current project. |
 
 #### OPEN Decisions
 - Scope of diagnostics data: only high‑level metrics vs. full stack trace.
