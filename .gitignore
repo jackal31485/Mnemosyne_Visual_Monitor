@@ -5,3 +5,6 @@ __pycache__/
 
 # Runtime-generated mediation audit records
 audit/
+
+# Local Python virtual environment
+.venv/

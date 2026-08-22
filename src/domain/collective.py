@@ -1,6 +1,6 @@
 import sqlite3
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, List
 
 # Constants for the collective database location.
 DB_PATH = Path("data") / "collective.db"
@@ -275,6 +275,24 @@ class CollectiveDAO:
 
     def delete_entry(self, entry_id: int) -> None:
         self.conn.execute("DELETE FROM collective_entries WHERE id = ?", (entry_id,))
+        self.conn.commit()
+
+    # -------------------------------------------------------------------------
+    # Embedding helpers – used by Phase 5C.
+    # -------------------------------------------------------------------------
+    def update_entry_embedding(self, entry_id: int, embedding: List[float]) -> None:
+        """Store a pickled representation of *embedding* for the given entry.
+
+        SQLite accepts arbitrary binary blobs; we serialise the Python list/tuple
+        using :mod:`pickle`.  ``None`` is not allowed – callers must supply a valid
+        sequence of floats.
+        """
+        import pickle
+        blob = pickle.dumps(embedding)
+        self.conn.execute(
+            "UPDATE collective_entries SET embedding = ? WHERE id = ?",
+            (blob, entry_id),
+        )
         self.conn.commit()
 
 
