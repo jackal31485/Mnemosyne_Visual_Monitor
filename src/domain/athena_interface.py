@@ -17,10 +17,8 @@ from .collective import CollectiveDAO
 
 __all__ = ["AthenaCollectiveInterface"]
 
-
 class AthenaCollectiveInterface:
     """Read‑only API for Athena.
-
     The class lazily initialises a :class:`CollectiveDAO` instance and
     forwards read operations.  All methods are intentionally immutable – no
     mutation helpers are exposed.
@@ -31,31 +29,53 @@ class AthenaCollectiveInterface:
         self._dao.ensure_schema()
 
     # ------------------------------------------------------------------
-    # Query helpers mirroring the DAO API – no write methods.
+    # Primitive query helpers mirroring the DAO API – no write methods.
     # ------------------------------------------------------------------
 
     def list_promoted(self):
         """Return a list of IDs of promoted entries that are not revoked."""
-        conn = self._dao.conn
-        cur = conn.execute(
+        cur = self._dao.conn.execute(
             "SELECT id FROM collective_entries WHERE is_promoted=1 AND is_revoked=0 ORDER BY id"
         )
         return [row["id"] for row in cur.fetchall()]
 
-    def get_by_id(self, entry_id: int):  # pragma: no cover – thin wrapper
-        """Return the record tuple for ``entry_id``.
+    def get_by_id(self, entry_id: int):
+        """Return the 9‑field tuple **only** when promoted and NOT revoked.
 
-        The DAO’s :meth:`CollectiveDAO.get_by_id` already returns a 9‑field tuple matching the legacy tests; we simply forward it.
+        Visibility check is performed on the promotion/revocation flags before exposing
+        the data. Raw SQLite rows are returned to callers unchanged except for
+        filtering.
         """
-        return self._dao.get_by_id(entry_id)
+        record = self._dao.get_by_id(entry_id)
+        if not record:
+            return None
+        cur = self._dao.conn.execute(
+            "SELECT is_promoted, is_revoked FROM collective_entries WHERE id = ?", (entry_id,)
+        )
+        row = cur.fetchone()
+        if not row or not bool(row["is_promoted"]):
+            return None
+        if bool(row["is_revoked"]):
+            return None
+        return record
 
     def find_by_source(self, src: str, orig_mem: str):
-        """Return the first matching entry for ``src`` and ``orig_mem``.
-        Mirrors :meth:`CollectiveDAO.get_by_source`.
-        """
-        return self._dao.get_by_source(src, orig_mem)
+        """Return the first matching entry **if** promoted and NOT revoked.
 
-    # ------------------------------------------------------------------
-    # Ensure interface is *read‑only* by not exposing any mutating methods.
-    # The DAO instance can be wrapped if needed in the future.
-    # ------------------------------------------------------------------
+        The DAO returns a 9‑field tuple.  Visibility logic mirrors :meth:`get_by_id`.
+        """
+        record = self._dao.get_by_source(src, orig_mem)
+        if not record:
+            return None
+        entry_id = int(record[0])
+        cur = self._dao.conn.execute(
+            "SELECT is_promoted, is_revoked FROM collective_entries WHERE id = ?", (entry_id,)
+        )
+        row = cur.fetchone()
+        if not row or not bool(row["is_promoted"]):
+            return None
+        if bool(row["is_revoked"]):
+            return None
+        return record
+
+    # No mutating methods exposed – the interface remains read‑only.
