@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import sqlite3
 from pathlib import Path
 from typing import Any, Iterable
@@ -10,8 +9,8 @@ CREATE TABLE IF NOT EXISTS collective_entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     source_profile TEXT      NOT NULL,
     origin_memory_id TEXT     NOT NULL,
-    proposed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    validated_at TIMESTAMP,
+    proposed_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    validated_at TEXT,
     validator_profile TEXT,
     validation_score REAL,
     is_revoked BOOLEAN NOT NULL DEFAULT 0,
@@ -84,8 +83,18 @@ class CollectiveDAO:
         row = cur.fetchone()
         if row is None:
             return None
-        # Convert Row to tuple in the order defined by schema for test expectations.
-        return tuple(row)
+        # Map SQLite Row order to test‑expected index layout.
+        return (
+            row["id"],
+            row["source_profile"],
+            row["origin_memory_id"],
+            row["proposed_at"],
+            row["validated_at"],
+            row["validation_score"],
+            row["validator_profile"],
+            row["is_revoked"],
+            row["revocation_reason"],
+        )
 
     def update_entry_revoked(self, entry_id: int, reason: str) -> None:
         self.conn.execute(
@@ -97,3 +106,41 @@ class CollectiveDAO:
     def delete_entry(self, entry_id: int) -> None:
         self.conn.execute("DELETE FROM collective_entries WHERE id = ?", (entry_id,))
         self.conn.commit()
+
+    # ---------------------------------------------------------------------
+    # Stage 2 – Reference & provenance metadata support
+    # ---------------------------------------------------------------------
+    def insert_collective_entry(
+        self,
+        source_profile: str,
+        origin_memory_id: str,
+        *,
+        proposed_at: str | None = None,
+        validator_profile: str | None = None,
+        validated_at: str | None = None,
+        validation_score: float | None = None
+    ) -> int:
+        """Insert a new reference with optional provenance.
+
+        The method validates that ``source_profile`` and ``origin_memory_id`` are
+        non‑empty strings; raw memory content is never accepted.
+        All other parameters are stored verbatim in the corresponding columns.
+        """
+        if not source_profile:
+            raise ValueError("source_profile cannot be empty")
+        if not origin_memory_id:
+            raise ValueError("origin_memory_id cannot be empty")
+
+        cur = self.conn.execute(
+            "INSERT INTO collective_entries (\n                source_profile, origin_memory_id,\n                proposed_at, validator_profile, validated_at, validation_score\n            ) VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                source_profile,
+                origin_memory_id,
+                proposed_at,
+                validator_profile,
+                validated_at,
+                validation_score,
+            ),
+        )
+        self.conn.commit()
+        return int(cur.lastrowid)
