@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS collective_entries (
     validator_profile TEXT,
     validation_score REAL,
     is_revoked BOOLEAN NOT NULL DEFAULT 0,
-    revocation_reason TEXT
+    revocation_reason TEXT,
+    is_promoted BOOLEAN NOT NULL DEFAULT 0
 );
 """
 
@@ -103,9 +104,38 @@ class CollectiveDAO:
         )
         self.conn.commit()
 
+    def update_entry_promoted(self, entry_id: int) -> None:
+        self.conn.execute(
+            "UPDATE collective_entries SET is_promoted = 1 WHERE id = ?",
+            (entry_id,),
+        )
+        self.conn.commit()
+
+    def get_lifecycle_state(self, entry_id: int):
+        """Return lifecycle state for a collective entry."""
+        cur = self.conn.execute(
+            """
+            SELECT validated_at, is_revoked, revocation_reason, is_promoted
+            FROM collective_entries
+            WHERE id = ?
+            """,
+            (entry_id,),
+        )
+        row = cur.fetchone()
+        if row is None:
+            return None
+
+        return (
+            row["validated_at"],
+            row["is_revoked"],
+            row["revocation_reason"],
+            row["is_promoted"],
+        )
+
     def delete_entry(self, entry_id: int) -> None:
         self.conn.execute("DELETE FROM collective_entries WHERE id = ?", (entry_id,))
         self.conn.commit()
+
 
     # ---------------------------------------------------------------------
     # Stage 2 – Reference & provenance metadata support
