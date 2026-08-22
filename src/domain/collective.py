@@ -280,15 +280,18 @@ class CollectiveDAO:
     # -------------------------------------------------------------------------
     # Embedding helpers – used by Phase 5C.
     # -------------------------------------------------------------------------
-    def update_entry_embedding(self, entry_id: int, embedding: List[float]) -> None:
-        """Store a pickled representation of *embedding* for the given entry.
+    def update_entry_embedding(self, entry_id: int, embedding: bytes) -> None:
+        """Store a raw float32 embedding BLOB.
 
-        SQLite accepts arbitrary binary blobs; we serialise the Python list/tuple
-        using :mod:`pickle`.  ``None`` is not allowed – callers must supply a valid
-        sequence of floats.
+        The embedding must already be generated from approved sanitized content.
+        SQLite stores the vector as opaque binary data; the DAO does not inspect
+        or transform the semantic content.
         """
-        import pickle
-        blob = pickle.dumps(embedding)
+        if not isinstance(embedding, (bytes, bytearray, memoryview)):
+            raise TypeError("embedding must be a bytes-like float32 vector")
+
+        blob = bytes(embedding)
+
         self.conn.execute(
             "UPDATE collective_entries SET embedding = ? WHERE id = ?",
             (blob, entry_id),

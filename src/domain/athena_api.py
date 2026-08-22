@@ -53,7 +53,8 @@ class AthenaAPI:
         does not expose the raw embedding in its output -- callers receive only IDs
         sorted from highest to lowest similarity.
         """
-        import math, pickle
+        import math
+        import numpy as np
 
         # Ensure list-like and compute query norm.
         try:
@@ -76,7 +77,12 @@ class AthenaAPI:
                 if blob is None:
                     continue
                 try:
-                    emb_vec = pickle.loads(blob)
+                    emb_vec = np.frombuffer(
+                        blob,
+                        dtype=np.float32,
+                    )
+                    if not np.all(np.isfinite(emb_vec)):
+                        continue
                 except Exception:
                     continue  # malformed or unreadable embedding
                 # skip entries with mismatched dimensionality
@@ -108,14 +114,19 @@ class AthenaAPI:
             if blob is None:
                 continue
             try:
-                r = pickle.loads(blob)
-                # Normalize vector type; accept list/tuple of floats.
-                r_vec = [float(v) for v in r]
+                r_vec = np.frombuffer(
+                    blob,
+                    dtype=np.float32,
+                )
+                if not np.all(np.isfinite(r_vec)):
+                    continue
             except Exception:  # pragma: no cover
-                continue  # malformed encoding – skip silently
+                continue
+
             if len(r_vec) != len(q):
                 continue
-            denom_r_sq = sum(x * x for x in r_vec)
+
+            denom_r_sq = float(np.dot(r_vec, r_vec))
             if denom_r_sq == 0:
                 continue
             denom_r = math.sqrt(denom_r_sq)

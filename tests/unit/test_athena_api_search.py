@@ -1,4 +1,4 @@
-import pickle
+import numpy as np
 import unittest
 
 from src.domain.athena_api import AthenaAPI
@@ -21,7 +21,7 @@ class TestAthenaSearch(unittest.TestCase):
         self.dao.update_entry_promoted(entry_id)
         self.dao.conn.execute(
             "UPDATE collective_entries SET embedding=? WHERE id=?",
-            (pickle.dumps(vec), entry_id),
+            (np.asarray(vec, dtype=np.float32).tobytes(), entry_id),
         )
         self.dao.conn.commit()
         return entry_id
@@ -38,7 +38,7 @@ class TestAthenaSearch(unittest.TestCase):
         entry_id = self.dao.insert_collective_entry("srcX", "memx")
         self.dao.conn.execute(
             "UPDATE collective_entries SET embedding=? WHERE id=?",
-            (pickle.dumps(self.vec_a), entry_id),
+            (np.asarray(self.vec_a, dtype=np.float32).tobytes(), entry_id),
         )
         self.dao.conn.commit()
 
@@ -90,7 +90,7 @@ class TestAthenaSearch(unittest.TestCase):
 
         self.dao.conn.execute(
             "UPDATE collective_entries SET embedding=? WHERE id=?",
-            (b"not-a-valid-pickle", entry_id),
+            (b"not-a-valid-embedding", entry_id),
         )
         self.dao.conn.commit()
 
@@ -136,7 +136,7 @@ class TestAthenaSearch(unittest.TestCase):
         )
         self.dao.conn.execute(
             "UPDATE collective_entries SET embedding=? WHERE id=?",
-            (b"not-a-valid-pickle", malformed_id),
+            (b"not-a-valid-embedding", malformed_id),
         )
         self.dao.conn.commit()
 
