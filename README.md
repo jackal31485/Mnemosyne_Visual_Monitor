@@ -1,24 +1,111 @@
-# Mnemosyne Visual Monitor – Phase 2 Completion
+# Mnemosyne Visual Monitor
 
-**Status:** *COMPLETE*
+**Current Status: Phase 3 – Collective Knowledge Base COMPLETE**
 
-*Phase 2 (Mediation Plane / Air‑Lock)* implements the proposal, privacy filtering, validation, and promotion pipeline.
+The Mnemosyne Visual Monitor provides a visual and operational layer around the independent Mnemosyne memory stores used by Hermes profiles.
 
-✔ All requirements in the implementation plan have been satisfied:
-- **Proposal model**: `src/domain/api.py` defines `proposal_id`, source profile, memory ID, state transitions.
-- **State machine**: transitions are handled explicitly in `MediationAPI.validate`.
-- **Privacy filtering**: performed by `SimplePrivacyFilter.filter`; no PII is stored in the collective DB. (The filter merely prevents prohibited content from moving past the promotion boundary.)
-- **Validation pipeline**: LLM‑based or stub validator (`SimpleValidator`) guarantees `is_validated=True` before promotion.
-- **Metrics**: collected in `src/domain/metrics.py`, exposed via `MediationAPI.get_metrics()`. No HTTP/FastAPI endpoint exists.
-- **Diagnostics**: provided by `src/domain/diagnostics.Diagnostics`; offers uptime, queue depth and memory usage snapshots. Available only through Python objects.
-- **Integration tests** (see `tests/`): confirm end‑to‑end flow and state transitions.
-- **Performance benchmarks** 48 ms total; metric collection overhead negligible.
+The core architecture is:
 
-- **Read‑Only audit**: logs are written to a transient `audit/` directory, which is run‑time generated and ignored by `.gitignore`.
+**Private Mnemosyne Memory → Mediation Plane / Air-Lock → Collective Knowledge Base**
 
-**Test result**
-`46 passed | 2 skipped | 48 collected`
+Individual Hermes profiles retain independent private Mnemosyne databases. The collective layer stores validated references and provenance, not copies of private memory content.
 
-**Phase 3 readiness** – Collective Knowledge Base, cross‑profile synchronization, revocation logic remain Phase 3 responsibilities.
+---
 
-*Documentation* updated accordingly.
+## Completed Phases
+
+### Phase 1 – Foundations / Discovery
+**COMPLETE**
+
+Established the project structure and read-only discovery of the local Hermes/Mnemosyne installation and profile isolation.
+
+### Phase 2 – Mediation Plane / Air-Lock
+**COMPLETE**
+
+Established the controlled boundary between private profile memory and collective knowledge.
+
+Implemented:
+
+- Proposal handling
+- Privacy filtering
+- Validation
+- Promotion controls
+- Provenance tracking
+- Metrics and diagnostics
+- Reference-based sharing
+- Protection against raw private-memory content crossing the boundary
+
+The mediation layer does not merge the underlying profile memory stores.
+
+### Phase 3 – Collective Knowledge Base
+**COMPLETE**
+
+Phase 3 established the domain-level collective knowledge lifecycle.
+
+#### Phase 3A – Proposal Lifecycle
+**COMPLETE**
+
+Implemented:
+
+- Collective proposal creation
+- Validation lifecycle
+- Rejection handling
+- Promotion after successful validation
+- Lifecycle-state inspection
+- Reference-only proposal storage
+- Provenance preservation
+
+Lifecycle:
+
+**PROPOSED → VALIDATED → PROMOTED**
+
+Invalid transitions are rejected.
+
+#### Phase 3B – Collective Promotion Semantics
+**COMPLETE**
+
+Implemented:
+
+- Persistent `is_promoted` state
+- Promoted-entry querying
+- `get_by_source(source_profile, origin_memory_id)`
+- Promotion-state inspection
+- Provenance preservation during promotion
+- Protection against duplicate promotion
+- Protection against promotion before validation
+- Verification that raw private-memory content is not stored
+
+#### Phase 3C – Collective Review & Revocation
+**COMPLETE**
+
+Implemented:
+
+- `list_by_state()`
+- `list_proposed()`
+- `list_validated()`
+- `list_rejected()`
+- `list_promoted()`
+- `list_revoked()`
+- Domain-level revocation
+- Revocation reasons
+- Duplicate-revocation protection
+- Revocation of promoted entries
+- Preservation of provenance and validation metadata
+- Protection against promotion after revocation
+
+Lifecycle semantics now include:
+
+```text
+PROPOSED
+    |
+    v
+VALIDATED
+    |
+    v
+PROMOTED
+    |
+    +-------> REVOKED
+
+PROPOSED --------> REJECTED / REVOKED
+VALIDATED -------> REVOKED
+PY
