@@ -148,6 +148,97 @@ class CollectiveDAO:
             row["revocation_reason"],
         )
 
+    def list_by_state(self, state: str) -> list[int]:
+        """Return entry IDs matching a lifecycle state, sorted by primary key.
+
+        Supported states:
+            proposed, validated, rejected, promoted, revoked
+        """
+        queries = {
+            "proposed": """
+                SELECT id FROM collective_entries
+                WHERE validated_at IS NULL
+                  AND is_revoked = 0
+                ORDER BY id
+            """,
+            "validated": """
+                SELECT id FROM collective_entries
+                WHERE validated_at IS NOT NULL
+                  AND is_revoked = 0
+                ORDER BY id
+            """,
+            "rejected": """
+                SELECT id FROM collective_entries
+                WHERE is_revoked = 1
+                  AND validated_at IS NULL
+                ORDER BY id
+            """,
+            "promoted": """
+                SELECT id FROM collective_entries
+                WHERE is_promoted = 1
+                ORDER BY id
+            """,
+            "revoked": """
+                SELECT id FROM collective_entries
+                WHERE is_revoked = 1
+                ORDER BY id
+            """,
+        }
+
+        if state not in queries:
+            raise ValueError(
+                "Unknown lifecycle state: "
+                f"{state!r}. Expected one of: "
+                "proposed, validated, rejected, promoted, revoked"
+            )
+
+        cur = self.conn.execute(queries[state])
+        return [row["id"] for row in cur.fetchall()]
+
+    def list_proposed(self) -> list[int]:
+        """Return IDs of proposals awaiting validation."""
+        return self.list_by_state("proposed")
+
+    def list_validated(self) -> list[int]:
+        """Return IDs of validated, non-revoked entries."""
+        return self.list_by_state("validated")
+
+    def list_rejected(self) -> list[int]:
+        """Return IDs of rejected entries."""
+        return self.list_by_state("rejected")
+
+    def list_revoked(self) -> list[int]:
+        """Return IDs of all revoked entries."""
+        return self.list_by_state("revoked")
+
+    def revoke_entry(self, entry_id: int, reason: str) -> None:
+        """Revoke an entry without altering its provenance or validation data."""
+        if not reason:
+            raise ValueError("rejection reason cannot be empty")
+
+        cur = self.conn.execute(
+            "SELECT is_revoked FROM collective_entries WHERE id = ?",
+            (entry_id,),
+        )
+        row = cur.fetchone()
+
+        if row is None:
+            raise KeyError(f"Entry {entry_id} not found")
+
+        if row["is_revoked"]:
+            raise ValueError("Entry already revoked")
+
+        self.conn.execute(
+            """
+            UPDATE collective_entries
+            SET is_revoked = 1,
+                revocation_reason = ?
+            WHERE id = ?
+            """,
+            (reason, entry_id),
+        )
+        self.conn.commit()
+
     def get_lifecycle_state(self, entry_id: int):
         """Return lifecycle state for a collective entry."""
         cur = self.conn.execute(

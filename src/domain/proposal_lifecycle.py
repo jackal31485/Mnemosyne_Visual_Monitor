@@ -92,6 +92,25 @@ class ProposalManager:
             reason=reason,
         )
 
+    def revoke(self, proposal_id: int, reason: str) -> None:
+        """Revoke a proposal without altering its provenance or validation data."""
+        entry = self.dao.get_by_id(proposal_id)
+        if entry is None:
+            raise KeyError(f"Proposal {proposal_id} not found")
+
+        _, revoked, _, _ = self._state(proposal_id)
+
+        if revoked:
+            raise ValueError("Entry already revoked")
+
+        if not reason:
+            raise ValueError("rejection reason cannot be empty")
+
+        self.dao.revoke_entry(
+            entry_id=proposal_id,
+            reason=reason,
+        )
+
     def promote(self, proposal_id: int) -> None:
         entry = self.dao.get_by_id(proposal_id)
         if entry is None:
