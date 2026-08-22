@@ -35,19 +35,25 @@ A phase is complete only when:
 * GUI (if applicable) has passed user‑scenario tests.
 
 ### Current Status
-| Phase                                     | Status      |
-|-------------------------------------------|-------------|
-| Foundations / Discovery                  | **COMPLETE**|
-- **Phase 2 (Mediation Plane / Air‑Lock)**                | **COMPLETE**
-- - **Collective Knowledge Base**                 | NOT STARTED |
-+ **Phase 2 (Mediation Plane / Air‑Lock)**          | **COMPLETE**
-+ * Collective Knowledge Base pending – Phase 3.
- - - **Athena Interface / Collective Memory Interaction** | NOT STARTED |
-- - **Vector / Embedding / Knowledge Relationships**  | NOT STARTED |
-- - **Cross‑Profile Synchronization / Organic Learning** | NOT STARTED |
-- - **Revocation / Conflict Resolution**          | NOT STARTED |
-- - **Full Testing / Validation / Live GUI**       | NOT STARTED |
-- - **Documentation / Cleanup / Production Readiness** | NOT STARTED |
+| Phase | Status |
+|---|---|
+| Foundations / Discovery | **COMPLETE** |
+| Mediation Plane / Air-Lock | **COMPLETE** |
+| Collective Knowledge Base | **COMPLETE** |
+| Athena Interface / Collective Memory Interaction | **NEXT — PHASE 4** |
+| Vector / Embedding / Knowledge Relationships | NOT STARTED |
+| Cross-Profile Synchronization / Organic Learning | NOT STARTED |
+| Revocation / Conflict Resolution | NOT STARTED |
+| Full Testing / Validation / Live GUI | NOT STARTED |
+| Documentation / Cleanup / Production Readiness | NOT STARTED |
+
+Phase 3 was completed through the following domain milestones:
+
+- **Phase 3A — Proposal Lifecycle:** proposal, validation, rejection, and promotion state enforcement.
+- **Phase 3B — Collective Promotion Semantics:** promoted-reference querying, provenance preservation, and promotion-state enforcement.
+- **Phase 3C — Collective Review & Revocation:** lifecycle state queries, revocation, audit-preserving provenance, and revoked-state handling.
+
+The collective layer remains reference-based. Private Mnemosyne memory content is never copied into the collective database.
 
 ---
 For the most up‑to‑date details see the individual Phase files: `docs/PHASE_1_FOUNDATIONS_REPORT.md`, `docs/PHASE_2_MEDIATION_DESIGN.md` and `docs/IMPLEMENTATION_SPECIFICATION.md`.
