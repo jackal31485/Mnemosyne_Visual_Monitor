@@ -111,6 +111,43 @@ class CollectiveDAO:
         )
         self.conn.commit()
 
+    def list_promoted(self) -> list[int]:
+        """Return IDs of collective entries that have been promoted."""
+        cur = self.conn.execute(
+            "SELECT id FROM collective_entries WHERE is_promoted = 1 ORDER BY id"
+        )
+        return [row["id"] for row in cur.fetchall()]
+
+    def get_by_source(self, src: str, orig_mem: str):
+        """Return the first matching entry using the legacy 9-field tuple."""
+        cur = self.conn.execute(
+            """
+            SELECT *
+            FROM collective_entries
+            WHERE source_profile = ?
+              AND origin_memory_id = ?
+            ORDER BY id ASC
+            LIMIT 1
+            """,
+            (src, orig_mem),
+        )
+        row = cur.fetchone()
+
+        if row is None:
+            return None
+
+        return (
+            row["id"],
+            row["source_profile"],
+            row["origin_memory_id"],
+            row["proposed_at"],
+            row["validated_at"],
+            row["validation_score"],
+            row["validator_profile"],
+            row["is_revoked"],
+            row["revocation_reason"],
+        )
+
     def get_lifecycle_state(self, entry_id: int):
         """Return lifecycle state for a collective entry."""
         cur = self.conn.execute(
