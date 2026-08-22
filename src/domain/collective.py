@@ -27,8 +27,9 @@ class CollectiveDAO:
     the ``collective_entries`` table.
     """
 
-    def __init__(self) -> None:
-        self._db_path = DB_PATH.absolute()
+    def __init__(self, db_path: str | Path | None = None) -> None:
+        """Create a DAO using the default or explicitly supplied SQLite database."""
+        self._db_path = Path(db_path or DB_PATH).absolute()
         # Ensure parent directories exist; SQLite will create file if missing.
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
         # Lazy connection placeholder
@@ -51,13 +52,25 @@ class CollectiveDAO:
     # Schema helpers
     # ---------------------------------------------------------------------
     def ensure_schema(self) -> None:
-        """Create the collective schema if it does not exist.
+        """Create the collective schema and migrate legacy databases.
 
-        The call is idempotent – repeated execution leaves the DB unchanged but
-        guarantees the table exists and the ``validation_score`` column is of
-        type REAL.
+        The operation is idempotent. Existing databases receive the nullable
+        ``embedding`` BLOB column without altering existing records.
         """
         self.conn.execute(SCHEMA_SQL)
+
+        columns = {
+            row["name"]
+            for row in self.conn.execute(
+                "PRAGMA table_info('collective_entries')"
+            ).fetchall()
+        }
+
+        if "embedding" not in columns:
+            self.conn.execute(
+                "ALTER TABLE collective_entries ADD COLUMN embedding BLOB"
+            )
+
         self.conn.commit()
 
     def get_table_names(self) -> Iterable[str]:
