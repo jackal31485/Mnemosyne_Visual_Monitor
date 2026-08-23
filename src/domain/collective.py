@@ -73,6 +73,12 @@ class CollectiveDAO:
 
         self.conn.commit()
 
+    def reset(self) -> None:
+        """Reset the collective database to an empty state."""
+        self.close()
+        if self._db_path.exists():
+            self._db_path.unlink()
+
     def get_table_names(self) -> Iterable[str]:
         cur = self.conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
         return [row["name"] for row in cur.fetchall()]
