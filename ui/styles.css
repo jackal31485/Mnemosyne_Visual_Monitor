@@ -1,0 +1,86 @@
+body {
+    margin: 0;
+    padding: 10px;
+    background-color: #080b12;
+    color: #eee;
+    font-family: sans-serif;
+}
+
+header,
+footer {
+    color: #fff;
+    background-color: #111722;
+    padding: 0.8rem 1rem;
+    border: 1px solid #293241;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+    background: #151b27;
+    border: 1px solid #293241;
+    border-radius: 6px;
+    padding: 0.5rem 0.7rem;
+}
+
+#graph {
+    width: 100%;
+    height: 600px;
+    display: block;
+    background-color: #0d111a;
+    border: 2px solid #293241;
+    border-radius: 6px;
+    margin-top: 0.5rem;
+}
+
+.status {
+    color: #9fb3c8;
+    min-height: 20px;
+    font-size: 0.9rem;
+    margin-top: 0.4rem;
+}
+
+.status.error {
+    color: #ff6b6b;
+}
+
+select,
+input[type=number] {
+    padding: 0.3rem 0.5rem;
+    background: #252d3a;
+    color: #eee;
+    border: 1px solid #3a4658;
+    border-radius: 4px;
+}
+
+.links line {
+    stroke: #718096;
+    stroke-opacity: 0.55;
+}
+
+.nodes circle {
+    stroke: #fff;
+    stroke-width: 1.5px;
+    cursor: grab;
+}
+
+.nodes circle:hover {
+    stroke-width: 3px;
+    filter: drop-shadow(0 0 6px currentColor);
+}
+
+.node-label {
+    fill: #e6edf3;
+    font-size: 12px;
+    pointer-events: none;
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+
