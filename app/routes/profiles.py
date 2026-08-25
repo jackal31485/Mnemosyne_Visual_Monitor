@@ -6,31 +6,31 @@ from ..schemas import ProfileDTO
 
 # Helper: find databases for a single profile directory
 
-def _discover_profile(profile_path: Path) -> str | None:
-    """Return first SQLite file path found under *profile_path*.
-    Searches the directory and, if none found, searches one level deeper.
-    Returns ``None`` if no db discovered.
+def _discover_mnemosyne_db(profile_dir: Path) -> Path | None:
+    """Return path to the Mnemosyne SQLite database for *profile_dir*.
+    The expected location is
+   ~/.hermes/profiles/<profile>/mnemosyne/data/mnemosyne.db.
+    If the file does not exist or cannot be accessed, return ``None``.
     """
-    for entry in profile_path.iterdir():
-        if entry.is_file() and entry.suffix.lower() in {".db", ".sqlite", ".sqlite3"}:
-            return str(entry.resolve())
-    # search one level deeper just in case the database is nested
-    try:
-        for child in profile_path.rglob("*"):
-            if child.is_file() and child.suffix.lower() in {".db", ".sqlite", ".sqlite3"}:
-                return str(child.resolve())
-    except Exception:
-        pass
+    db_path = profile_dir / "mnemosyne" / "data" / "mnemosyne.db"
+    if db_path.is_file():
+        return db_path.resolve()
     return None
 
-# Helper: try to count rows in a known table (nodes)
+# Backward-compatible discovery helper used by existing tests/callers.
+def _discover_profile(profile_dir: Path) -> Path | None:
+    """Return the discovered Mnemosyne database for a Hermes profile."""
+    return _discover_mnemosyne_db(profile_dir)
 
-def _count_nodes(db_path: str) -> int:
+
+# Helper: count rows in the Mnemosyne working-memory table
+
+def _count_working_memory(db_path: str) -> int:
     try:
         import sqlite3
         conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=2.0)
         cur = conn.cursor()
-        cur.execute("SELECT COUNT(*) FROM nodes")
+        cur.execute("SELECT COUNT(*) FROM working_memory")
         return cur.fetchone()[0]
     except Exception:  # pragma: no cover – if table missing simply return 0
         return 0
@@ -46,10 +46,10 @@ def get_profiles() -> List[ProfileDTO]:
     if not base_path.is_dir():
         return profiles
     for profile_dir in sorted(p for p in base_path.iterdir() if p.is_dir()):
-        db = _discover_profile(profile_dir)
-        if not db:
-            continue  # skip profiles without a database discovery
-        memory_count = _count_nodes(db)
+        db_obj = _discover_mnemosyne_db(profile_dir)
+        if not db_obj:
+            continue  # skip profiles without a Mnemosyne database
+        memory_count = _count_working_memory(str(db_obj))
         profiles.append(
             ProfileDTO(id=profile_dir.name.lower(), name=profile_dir.name.title(), memory_count=int(memory_count))
         )
