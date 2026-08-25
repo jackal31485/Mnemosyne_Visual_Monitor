@@ -32,3 +32,11 @@ class GraphResponse(BaseModel):
 
     nodes: list[NodeDTO]
     edges: dict[str, list[EdgeDTO]]
+
+
+class ProfileDTO(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    name: str
+    memory_count: int

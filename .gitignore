@@ -8,3 +8,6 @@ audit/
 
 # Local Python virtual environment
 .venv/
+
+# Local test/runtime databases
+tmp/

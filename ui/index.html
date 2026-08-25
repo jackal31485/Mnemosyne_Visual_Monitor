@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Mnemosyne Visual Monitor – Constellation</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+</head>
+<body>
+<header class="app-header">
+    <h1>Mnemosyne Visual Monitor – Constellation</h1>
+</header>
+<main>
+    <section id="controls" class="controls">
+        <label for="profileSelect">Profile:</label>
+        <select id="profileSelect"></select>
+
+        <label for="edgeLimitInput">Edge limit:</label>
+        <input type="number" id="edgeLimitInput" min="0" value="10" step="1">
+    </section>
+    <div id="status" class="status"></div>
+    <svg id="graph"></svg>
+</main>
+<footer>
+    <p>Read‑only view. Data fetched from http://127.0.0.1:8000</p>
+</footer>
+<script src="app.js"></script>
+</body>
+</html>
