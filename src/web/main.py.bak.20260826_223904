@@ -10,22 +10,9 @@ from app.main import app as api_app
 app = FastAPI(title="Mnemosyne Visual Monitor – Constellation View")
 
 @app.get("/api/graph")
-def graph(source_profile: str | None = None, edge_limit: int | None = None):
+def graph():
     client = TestClient(api_app)
-    params = {}
-    if source_profile:
-        params["source_profile"] = source_profile
-    if edge_limit is not None:
-        params["edge_limit"] = edge_limit
-    response = client.get("/api/graph", params=params)
-    response.raise_for_status()
-    return response.json()
-
-
-@app.get("/api/profiles")
-def profiles():
-    client = TestClient(api_app)
-    response = client.get("/api/profiles")
+    response = client.get("/api/graph")
     response.raise_for_status()
     return response.json()
 
