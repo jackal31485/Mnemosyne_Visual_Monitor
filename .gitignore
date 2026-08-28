@@ -11,3 +11,6 @@ audit/
 
 # Local test/runtime databases
 tmp/
+
+# Local embedding model weights
+models/

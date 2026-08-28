@@ -1,44 +1,123 @@
 const API_BASE = "http://127.0.0.1:8000";
 
+let graphInstance = null;
+let currentGraphData = {
+    nodes: [],
+    links: [],
+};
+
+let autoRotate = false;
+
+const PROFILE_COLORS = {
+    athena: "#4dabf7",
+    boss: "#ff922b",
+    friday: "#b197fc",
+    hawk: "#51cf66",
+    jeeves: "#22b8cf",
+    pope: "#ff6b6b",
+    horus: "#f59f00",
+    odin: "#845ef7",
+    thoth: "#20c997",
+    vulcan: "#fa5252",
+};
+
 function updateStatus(message = "", isError = false) {
     const status = document.getElementById("status");
+
+    if (!status) {
+        return;
+    }
+
     status.textContent = message;
     status.classList.toggle("error", isError);
 }
 
+function nodeColor(node) {
+    const profile = String(node.source_profile || "").toLowerCase();
+
+    return PROFILE_COLORS[profile] || "#ced4da";
+}
+
+function nodeLabel(node) {
+    const profile = node.source_profile || "unknown";
+    const memoryId = node.origin_memory_id || node.graph_id || "";
+
+    return `${profile}\n${memoryId}`;
+}
+
+function deduplicateEdges(edges) {
+    const seen = new Set();
+    const result = [];
+
+    for (const edge of edges) {
+        const source = edge.source_id;
+        const target = edge.target_id;
+
+        if (!source || !target || source === target) {
+            continue;
+        }
+
+        const key = source < target
+            ? `${source}\u0000${target}`
+            : `${target}\u0000${source}`;
+
+        if (seen.has(key)) {
+            continue;
+        }
+
+        seen.add(key);
+
+        result.push({
+            source,
+            target,
+            similarity_score: Number(edge.similarity_score) || 0,
+        });
+    }
+
+    return result;
+}
+
 async function fetchProfiles() {
     try {
-        const resp = await fetch(`${API_BASE}/api/profiles`);
+        const response = await fetch(`${API_BASE}/api/profiles`);
 
-        if (!resp.ok) {
-            throw new Error(`Profile API error ${resp.status}`);
+        if (!response.ok) {
+            throw new Error(`Profile API error ${response.status}`);
         }
 
-        const data = await resp.json();
-        const sel = document.getElementById("profileSelect");
+        const profiles = await response.json();
+        const select = document.getElementById("profileSelect");
 
-        sel.innerHTML = "";
+        select.innerHTML = "";
 
-        const allOpt = document.createElement("option");
-        allOpt.textContent = "All";
-        allOpt.value = "";
-        sel.appendChild(allOpt);
+        const allOption = document.createElement("option");
+        allOption.value = "";
+        allOption.textContent = "All";
+        select.appendChild(allOption);
 
-        for (const profile of data) {
-            const opt = document.createElement("option");
-            opt.value = profile.id;
-            opt.textContent = profile.name;
-            sel.appendChild(opt);
+        for (const profile of profiles) {
+            const option = document.createElement("option");
+
+            option.value = profile.id;
+            option.textContent = profile.name;
+
+            select.appendChild(option);
         }
-    } catch (err) {
-        updateStatus(`Unable to load profiles: ${err.message}`, true);
+    } catch (error) {
+        updateStatus(
+            `Unable to load profiles: ${error.message}`,
+            true
+        );
     }
 }
 
 async function fetchGraph() {
     try {
         const profile = document.getElementById("profileSelect").value;
-        const edgeLimit = document.getElementById("edgeLimitInput").value;
+        const edgeLimit = document
+            .getElementById("edgeLimitInput")
+            .value
+            .trim();
 
         const params = new URLSearchParams();
 
@@ -47,165 +126,275 @@ async function fetchGraph() {
         }
 
         if (edgeLimit !== "") {
-            params.set("edge_limit", edgeLimit);
+            const parsedLimit = Number.parseInt(edgeLimit, 10);
+
+            if (!Number.isNaN(parsedLimit) && parsedLimit >= 0) {
+                params.set("edge_limit", parsedLimit);
+            }
         }
 
         const query = params.toString();
-        const url = `${API_BASE}/api/graph${query ? `?${query}` : ""}`;
 
-        const resp = await fetch(url);
+        const url =
+            `${API_BASE}/api/graph` +
+            (query ? `?${query}` : "");
 
-        if (!resp.ok) {
-            throw new Error(`Graph API error ${resp.status}`);
+        updateStatus("Loading constellation...");
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`Graph API error ${response.status}`);
         }
 
-        const graph = await resp.json();
+        const graph = await response.json();
+
         renderGraph(graph);
+    } catch (error) {
         updateStatus(
-            `${graph.nodes.length} nodes, ${Object.values(graph.edges).flat().length} edges`
+            `Unable to load graph: ${error.message}`,
+            true
         );
-    } catch (err) {
-        updateStatus(`Unable to load graph: ${err.message}`, true);
     }
 }
 
 function renderGraph(graph) {
-    const svg = d3.select("#graph");
-    svg.selectAll("*").remove();
+    const container = document.getElementById("graph");
 
-    const width = svg.node().clientWidth;
-    const height = svg.node().clientHeight;
+    if (!container) {
+        return;
+    }
 
-    const nodes = graph.nodes || [];
-    const edges = Object.values(graph.edges || {}).flat();
+    container.innerHTML = "";
 
-    const nodeById = new Map(nodes.map(node => [node.graph_id, node]));
+    const nodes = (graph.nodes || []).map(node => ({
+        ...node,
+    }));
 
-    const links = edges
+    const allEdges = Object
+        .values(graph.edges || {})
+        .flat();
+
+    const nodeIds = new Set(
+        nodes.map(node => node.graph_id)
+    );
+
+    const links = deduplicateEdges(allEdges)
         .filter(edge =>
-            nodeById.has(edge.source_id) &&
-            nodeById.has(edge.target_id)
-        )
-        .map(edge => ({
-            source: edge.source_id,
-            target: edge.target_id,
-            similarity_score: edge.similarity_score
-        }));
+            nodeIds.has(edge.source) &&
+            nodeIds.has(edge.target)
+        );
 
-    const profileColors = {
-        athena: "#4dabf7",
-        boss: "#ff922b",
-        friday: "#b197fc",
-        hawk: "#51cf66",
-        jeeves: "#22b8cf",
-        pope: "#ff6b6b"
+    currentGraphData = {
+        nodes,
+        links,
     };
 
-    function nodeColor(node) {
-        return profileColors[node.source_profile.toLowerCase()] || "#ced4da";
-    }
+    graphInstance = ForceGraph3D()(container)
+        .backgroundColor("#080b12")
+        .showNavInfo(false)
 
-    const simulation = d3.forceSimulation(nodes)
-        .force(
-            "link",
-            d3.forceLink(links)
-                .id(node => node.graph_id)
-                .distance(140)
-                .strength(0.7)
+        .nodeId("graph_id")
+
+        .nodeVal(() => 4)
+
+        .nodeColor(nodeColor)
+
+        .nodeLabel(nodeLabel)
+
+        .nodeOpacity(0.95)
+
+        .nodeResolution(12)
+
+        .linkSource("source")
+
+        .linkTarget("target")
+
+        .linkColor(() => "#718096")
+
+        .linkOpacity(link =>
+            0.25 + Math.max(
+                0,
+                Number(link.similarity_score) || 0
+            ) * 0.65
         )
-        .force("charge", d3.forceManyBody().strength(-350))
-        .force("center", d3.forceCenter(width / 2, height / 2))
-        .force("collision", d3.forceCollide().radius(32));
 
-    const link = svg.append("g")
-        .attr("class", "links")
-        .selectAll("line")
-        .data(links)
-        .join("line")
-        .attr("stroke-width", edge => 1 + edge.similarity_score * 3)
-        .attr("stroke-opacity", edge => 0.25 + edge.similarity_score * 0.65);
-
-    const node = svg.append("g")
-        .attr("class", "nodes")
-        .selectAll("circle")
-        .data(nodes)
-        .join("circle")
-        .attr("r", 14)
-        .attr("fill", nodeColor)
-        .attr("stroke", "#fff")
-        .attr("stroke-width", 1.5)
-        .style("filter", item =>
-            `drop-shadow(0 0 6px ${nodeColor(item)})`
+        .linkWidth(link =>
+            0.5 +
+            Math.max(
+                0,
+                Number(link.similarity_score) || 0
+            ) * 2.5
         )
-        .call(
-            d3.drag()
-                .on("start", dragStarted)
-                .on("drag", dragged)
-                .on("end", dragEnded)
-        );
 
-    node.append("title")
-        .text(item =>
-            `${item.source_profile}: ${item.origin_memory_id}`
-        );
+        .linkDirectionalParticles(link =>
+            Number(link.similarity_score) >= 0.85 ? 2 : 0
+        )
 
-    const labels = svg.append("g")
-        .attr("class", "labels")
-        .selectAll("text")
-        .data(nodes)
-        .join("text")
-        .attr("class", "node-label")
-        .text(item => item.source_profile);
+        .linkDirectionalParticleWidth(1.5)
 
-    simulation.on("tick", () => {
-        link
-            .attr("x1", linkDatum => linkDatum.source.x)
-            .attr("y1", linkDatum => linkDatum.source.y)
-            .attr("x2", linkDatum => linkDatum.target.x)
-            .attr("y2", linkDatum => linkDatum.target.y);
+        .linkDirectionalParticleSpeed(0.004)
 
-        node
-            .attr("cx", nodeDatum => nodeDatum.x)
-            .attr("cy", nodeDatum => nodeDatum.y);
+        .graphData(currentGraphData)
 
-        labels
-            .attr("x", nodeDatum => nodeDatum.x)
-            .attr("y", nodeDatum => nodeDatum.y - 24);
-    });
+        .onNodeClick(node => {
+            updateStatus(
+                `${node.source_profile || "unknown"} — ` +
+                `${node.origin_memory_id || node.graph_id}`
+            );
 
-    function dragStarted(event, d) {
-        if (!event.active) {
-            simulation.alphaTarget(0.3).restart();
-        }
+            graphInstance.cameraPosition(
+                {
+                    x: node.x * 1.6,
+                    y: node.y * 1.6,
+                    z: node.z * 1.6,
+                },
+                node,
+                800
+            );
+        })
 
-        d.fx = d.x;
-        d.fy = d.y;
+        .onBackgroundClick(() => {
+            updateStatus(
+                `${currentGraphData.nodes.length} nodes, ` +
+                `${currentGraphData.links.length} unique similarity links`
+            );
+        });
+
+    /*
+     * Keep the force simulation spread out enough for a large graph.
+     */
+    graphInstance.d3Force(
+        "charge"
+    ).strength(-80);
+
+    graphInstance.d3Force(
+        "link"
+    ).distance(45);
+
+    /*
+     * Give the renderer a little time to settle before fitting.
+     */
+    setTimeout(() => {
+        fitGraph();
+    }, 1200);
+
+    updateStatus(
+        `${nodes.length} nodes, ` +
+        `${links.length} unique similarity links`
+    );
+}
+
+function fitGraph() {
+    if (!graphInstance || !currentGraphData.nodes.length) {
+        return;
     }
 
-    function dragged(event, d) {
-        d.fx = event.x;
-        d.fy = event.y;
+    graphInstance.zoomToFit(
+        1000,
+        80
+    );
+}
+
+function resetView() {
+    if (!graphInstance) {
+        return;
     }
 
-    function dragEnded(event, d) {
-        if (!event.active) {
-            simulation.alphaTarget(0);
-        }
+    graphInstance.cameraPosition(
+        {
+            x: 0,
+            y: 0,
+            z: 1000,
+        },
+        {
+            x: 0,
+            y: 0,
+            z: 0,
+        },
+        1000
+    );
 
-        d.fx = null;
-        d.fy = null;
+    setTimeout(() => {
+        fitGraph();
+    }, 1100);
+}
+
+function toggleAutoRotate() {
+    if (!graphInstance) {
+        return;
+    }
+
+    autoRotate = !autoRotate;
+
+    graphInstance.controls().autoRotate = autoRotate;
+    graphInstance.controls().autoRotateSpeed = 0.5;
+
+    const button = document.getElementById("rotateButton");
+
+    if (button) {
+        button.textContent =
+            autoRotate
+                ? "Stop Rotation"
+                : "Auto Rotate";
     }
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-    await fetchProfiles();
-    await fetchGraph();
+window.addEventListener("resize", () => {
+    if (!graphInstance) {
+        return;
+    }
 
-    document
-        .getElementById("profileSelect")
-        .addEventListener("change", fetchGraph);
+    const container = document.getElementById("graph");
 
-    document
-        .getElementById("edgeLimitInput")
-        .addEventListener("change", fetchGraph);
+    if (!container) {
+        return;
+    }
+
+    graphInstance
+        .width(container.clientWidth)
+        .height(container.clientHeight);
 });
+
+document.addEventListener(
+    "DOMContentLoaded",
+    async () => {
+        document
+            .getElementById("profileSelect")
+            .addEventListener(
+                "change",
+                fetchGraph
+            );
+
+        document
+            .getElementById("edgeLimitInput")
+            .addEventListener(
+                "change",
+                fetchGraph
+            );
+
+        document
+            .getElementById("fitButton")
+            .addEventListener(
+                "click",
+                fitGraph
+            );
+
+        document
+            .getElementById("resetButton")
+            .addEventListener(
+                "click",
+                resetView
+            );
+
+        document
+            .getElementById("rotateButton")
+            .addEventListener(
+                "click",
+                toggleAutoRotate
+            );
+
+        await fetchProfiles();
+        await fetchGraph();
+    }
+);

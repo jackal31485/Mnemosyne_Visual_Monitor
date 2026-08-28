@@ -2,28 +2,61 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mnemosyne Visual Monitor – Constellation</title>
     <link rel="stylesheet" href="styles.css" />
-    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/3d-force-graph"></script>
 </head>
+
 <body>
 <header class="app-header">
     <h1>Mnemosyne Visual Monitor – Constellation</h1>
 </header>
+
 <main>
     <section id="controls" class="controls">
-        <label for="profileSelect">Profile:</label>
-        <select id="profileSelect"></select>
+        <div class="control-group">
+            <label for="profileSelect">Profile:</label>
+            <select id="profileSelect"></select>
+        </div>
 
-        <label for="edgeLimitInput">Edge limit:</label>
-        <input type="number" id="edgeLimitInput" min="0" value="10" step="1">
+        <div class="control-group">
+            <label for="edgeLimitInput">Edge limit:</label>
+            <input
+                type="number"
+                id="edgeLimitInput"
+                min="0"
+                step="1"
+                placeholder="All"
+            />
+        </div>
+
+        <div class="control-group buttons">
+            <button id="fitButton" type="button">Fit All</button>
+            <button id="resetButton" type="button">Reset View</button>
+            <button id="rotateButton" type="button">Auto Rotate</button>
+        </div>
     </section>
+
     <div id="status" class="status"></div>
-    <svg id="graph"></svg>
+
+    <section id="graph-container">
+        <div id="graph"></div>
+
+        <div id="graph-help">
+            <strong>3D Controls</strong>
+            <span>Drag: rotate</span>
+            <span>Right-drag: pan</span>
+            <span>Wheel: zoom</span>
+        </div>
+    </section>
 </main>
+
 <footer>
-    <p>Read‑only view. Data fetched from http://127.0.0.1:8000</p>
+    <p>Read-only view. Data fetched from http://127.0.0.1:8000</p>
 </footer>
+
 <script src="app.js"></script>
 </body>
 </html>

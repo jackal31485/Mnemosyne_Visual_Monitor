@@ -1,42 +1,61 @@
-"""
-Memory Gateway protocol and an in‑memory test implementation.
+"""Memory gateway abstraction.
 
-The Mediation Plane must not perform any SQLite or filesystem access. This module defines the protocol used by the plane and provides a simple
-`InMemoryMemoryGateway` for unit/ integration tests.
+The gateway provides controlled access to source memory content.  The real
+application supplies the concrete implementation that reads the source
+Mnemosyne profile store.  The in-memory implementation exists for tests.
+
+The gateway itself does not write to the collective database and does not
+change the read-only status of source Mnemosyne databases.
 """
+
 from __future__ import annotations
-from typing import Protocol, Dict, Any
+
+from typing import Protocol
+
 
 class MemoryGateway(Protocol):
-    """Protocol for retrieving a single memory entry belonging to a profile.
+    """Interface for retrieving source memory content."""
 
-    The Mediation Plane will call ``get_memory(profile, memory_id)`` and expects a JSON‑serializable dictionary
-    that represents the sanitized content of the source memory.  No database or file‑system access is performed by this interface.
-    """
-
-    def get_memory(self, profile: str, memory_id: str) -> Dict[str, Any]:
+    def get_memory(self, profile: str, memory_id: str) -> str:
+        """Return the sanitized source content for a memory."""
         ...
 
-# ---------------------------------------------------------------------------
-# In‑memory implementation for tests – not used in production code
-# ---------------------------------------------------------------------------
-class InMemoryMemoryGateway:
-    """A simple gateway that stores memories in a nested dictionary.
 
-    The internal store structure is ``_store[profile][memory_id]``.  Methods raise
-    ``KeyError`` for unknown profiles or memory ids to mimic the behaviour
-    expected by the tests.
+class InMemoryMemoryGateway:
+    """In-memory gateway used by unit and integration tests.
+
+    Memories are keyed by ``(profile, memory_id)`` so profile identity remains
+    part of the lookup boundary.
     """
 
-    def __init__(self, store: Dict[str, Dict[str, Dict[str, Any]]] | None = None):
-        self._store = store if store is not None else {}
+    def __init__(
+        self,
+        store: dict[tuple[str, str], str] | None = None,
+    ) -> None:
+        self.store: dict[tuple[str, str], str] = (
+            dict(store) if store is not None else {}
+        )
 
-    def add_memory(self, profile: str, memory_id: str, content: Dict[str, Any]) -> None:
-        self._store.setdefault(profile, {})[memory_id] = content
+    def add_memory(
+        self,
+        profile: str,
+        memory_id: str,
+        content: str,
+    ) -> None:
+        """Add or replace a test memory."""
+        self.store[(profile, memory_id)] = content
 
-    def get_memory(self, profile: str, memory_id: str) -> Dict[str, Any]:
-        try:
-            return self._store[profile][memory_id]
-        except KeyError as exc:
-            # Provide a clear error message – the tests expect an exception for unknown data.
-            raise KeyError(f"Memory {memory_id} not found for profile {profile}") from exc
+    def get_memory(
+        self,
+        profile: str,
+        memory_id: str,
+    ) -> str:
+        """Retrieve a test memory or raise ``KeyError`` if unavailable."""
+        key = (profile, memory_id)
+
+        if key not in self.store:
+            raise KeyError(
+                f"Memory {memory_id} not found for profile {profile}"
+            )
+
+        return self.store[key]
