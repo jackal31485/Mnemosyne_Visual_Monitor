@@ -15,6 +15,7 @@ if str(SRC_ROOT) not in sys.path:
 
 from app.routes.graph import router as graph_router
 from app.routes.profiles import router as profiles_router
+from app.routes.discovery import router as discovery_router
 
 
 def create_app() -> FastAPI:
@@ -32,6 +33,7 @@ def create_app() -> FastAPI:
     )
     application.include_router(graph_router)
     application.include_router(profiles_router)
+    application.include_router(discovery_router)
     return application
 
 

@@ -398,3 +398,56 @@ document.addEventListener(
         await fetchGraph();
     }
 );
+
+/* --------------------------------------------------------------------- */
+/*  LAN Discovery UI – uses the new /api/discovery endpoints  */
+/* --------------------------------------------------------------------- */
+
+async function fetchDiscovery() {
+    try {
+        const response = await fetch(`${API_BASE}/api/discovery`);
+        if (!response.ok) throw new Error(`Network error ${response.status}`);
+        const data = await response.json();
+        renderDiscoveryList(data.agents || []);
+    } catch (e) {
+        updateStatus(`Failed to load discovery: ${e.message}`, true);
+    }
+}
+
+async function scanDiscovery() {
+    updateStatus("Scanning local network…");
+    try {
+        const response = await fetch(`${API_BASE}/api/discovery/scan`, {
+            method: "POST",
+        });
+        if (!response.ok) throw new Error(`Scan failed ${response.status}`);
+        const data = await response.json();
+        renderDiscoveryList(data.agents || []);
+    } catch (e) {
+        updateStatus(`Scan error: ${e.message}`, true);
+    }
+}
+
+function renderDiscoveryList(agents) {
+    const container = document.getElementById("discoveryList");
+    if (!container) return;
+    let html = `<h3>REMOTE AGENTS</h3>`;
+    if (agents.length === 0) {
+        html += `<p>No agents found.</p>`;
+    } else {
+        html += `<p>Scan complete — ${agents.length} agent${agents.length > 1 ? "s" : ""} found</p>`;
+        for (const a of agents) {
+            const dt = new Date();
+            html += `\n<div class="agent-item">`;
+            html += `<strong>${a.hostname}</strong><br/>`;
+            html += `Host: ${a.hostname}<br/>`; // duplicate but fine
+            html += `Version: ${a.installed_version || "N/A"}<br/>`;
+            html += `Client ID: ${a.client_id}\n`;
+            html += `Last seen: ${new Date(a.last_seen).toLocaleString()}<br/>
+        </div>`;
+        }
+    }
+    container.innerHTML = html;
+}
+
+document.getElementById("scanButton").addEventListener("click", scanDiscovery);

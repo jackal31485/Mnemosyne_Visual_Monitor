@@ -12,7 +12,7 @@ from typing import Final, Optional
 
 # Configuration – overridable via environment
 DEFAULT_GROUP: Final[str] = "224.10.0.1"
-DEFAULT_PORT: Final[int] = 34567
+DEFAULT_PORT: Final[int] = 34600
 LAN_DISCOVERY_GROUP: Final[str] = os.getenv("LAN_DISCOVERY_GROUP", DEFAULT_GROUP)
 LAN_DISCOVERY_PORT: Final[int] = int(os.getenv("LAN_DISCOVERY_PORT", str(DEFAULT_PORT)))
 
