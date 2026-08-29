@@ -14,3 +14,6 @@ tmp/
 
 # Local embedding model weights
 models/
+
+# Local runtime discovery database
+app/db/
