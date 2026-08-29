@@ -17,6 +17,32 @@ body {
     overflow: hidden;
 }
 
+.admin-panel {
+    margin: 1rem 0;
+    padding: 1rem;
+    border: 1px solid currentColor;
+    border-radius: 8px;
+}
+
+.admin-panel h2 {
+    margin-top: 0;
+}
+
+.danger-button {
+    padding: 0.7rem 1rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.danger-button:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
+
+#rebuild-status {
+    margin-top: 0.75rem;
+}
+
 .app-header {
     flex: 0 0 auto;
 

@@ -1,184 +1,292 @@
-"""
-A **bridge** that discovers existing Hermes‑profile-local Mnemosyne databases and turns every memory
-into a *proposed* entry in the application collective store.
-
-The module follows the established life‑cycle:
-
-1. Discover profiles under ``~/\.hermes/profiles`` where the path
-   ``<profile>/mnemosyne/data/mnemosyne.db`` exists.
-2. Open those databases **read‑only** (URI mode ``mode=ro``) – never write or alter.
-3. Infer a *memory* table by inspecting ``PRAGMA table_info``.  The logic
-   picks the first table that contains a column called ``id`` or
-   ``memory_id`` and assumes it stores the raw content in some string
-yielding column (``content``, ``text`` or similar). If no suitable table is
-found an informative error is logged.
-4. For each row, create a reference entry via :class:`ProposalManager`
-   – this guarantees that all privacy/sanitisation rules are applied by the
-   existing pipeline when the proposal is later validated/promoted.
-5. During ``--dry‑run`` the function returns a summary instead of
-   creating proposals.
-
-The module deliberately *does not* import any private helper modules or
-modify the schema; it only uses the public DAO/proposal interfaces so that it could in
-the future be wired into the REST API as POST ``/api/ingest``.
-"""
-
 from __future__ import annotations
 
-import json
-import os
-from pathlib import Path
-from typing import Dict, Iterable, List
+import hashlib
 import sqlite3
+from pathlib import Path
+from typing import Iterator
 
-from .proposal_lifecycle import ProposalManager
-from .collective import CollectiveDAO
+from src.domain.collective import CollectiveDAO
+from src.domain.proposal_lifecycle import ProposalManager
 
-__all__ = [
-    "discover_profile_paths",
-    "infer_memory_table",
-    "extract_memories",
-    "ingest_profiles",
-]
 
-# ---------------------------------------------------------------------------
-# Discovery utilities – pure data‑only functions so they are easily unit‑testable.
-# ---------------------------------------------------------------------------
+DEFAULT_PROFILES_ROOT = (
+    Path.home() / ".hermes" / "profiles"
+)
 
-def discover_profile_paths(base: Path | str = os.path.expanduser("~/.hermes/profiles")) -> List[Path]:
-    """Yield a ``Path`` to every profile that bundles a Mnemosyne DB.
 
-    The function checks for ``<profile>/mnemosyne/data/mnemosyne.db`` and skips any
-    directories lacking that file. It returns an **ordered list** where each
-    element is the *profile directory* (not the DB itself).
-    """
-    base = Path(base).expanduser()
-    profiles: List[Path] = []
-    for p in base.iterdir():
-        if not p.is_dir():
+def discover_profile_paths(
+    base: Path | str | None = None,
+) -> list[Path]:
+    root = Path(base or DEFAULT_PROFILES_ROOT).expanduser()
+
+    if not root.is_dir():
+        return []
+
+    profiles: list[Path] = []
+
+    for path in sorted(root.iterdir()):
+        if not path.is_dir():
             continue
-        db_path = p / "mnemosyne" / "data" / "mnemosyne.db"
-        if db_path.exists() and db_path.is_file():
-            profiles.append(p)
+
+        db_path = (
+            path
+            / "mnemosyne"
+            / "data"
+            / "mnemosyne.db"
+        )
+
+        if db_path.is_file():
+            profiles.append(path)
+
     return profiles
 
-# ---------------------------------------------------------------------------
-# Schema introspection – minimal but tolerant of unknown layouts.
-# ---------------------------------------------------------------------------
 
-def infer_memory_table(conn: sqlite3.Connection) -> str | None:
-    """Return the first table that looks like a memory repository.
+def infer_memory_table(conn: sqlite3.Connection) -> str:
+    tables = {
+        row[0]
+        for row in conn.execute(
+            """
+            SELECT name
+            FROM sqlite_master
+            WHERE type = 'table'
+            """
+        ).fetchall()
+    }
 
-    The heuristic is simply:
+    preferred = [
+        "working_memory",
+        "memories",
+        "memory",
+    ]
 
-    * Has a column named ``id`` or ``memory_id`` (case‑insensitive).
-    * Expects at least one string/text column for content.
+    for table in preferred:
+        if table in tables:
+            columns = {
+                row[1]
+                for row in conn.execute(
+                    f"PRAGMA table_info({table})"
+                ).fetchall()
+            }
 
-    If no such table exists ``None`` is returned so the caller can log an error.
-    """
-    tables: List[tuple[str]] = conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
-    ).fetchall()
+            if "id" in columns and "content" in columns:
+                return table
 
-    for (tbl,) in tables:
-        # fetch column metadata
-        cols = conn.execute(f"PRAGMA table_info('{tbl}')").fetchall()
-        col_names = [c[1].lower() for c in cols]
+    raise ValueError(
+        "Could not find a supported Mnemosyne memory table "
+        "containing id and content columns."
+    )
 
-        has_id_col = any(c in col_names for c in ("id", "memory_id",))
-        has_content_col = any(
-            isinstance(c, str)
-            and c.lower() in ("content", "text", "data")
-            for c in col_names
-        )
-        if has_id_col and has_content_col:
-            return tbl
-    return None
 
-# ---------------------------------------------------------------------------
-# Extraction helper – yields rows as dicts.
-# ---------------------------------------------------------------------------
+def extract_memories(
+    db_path: Path | str,
+) -> Iterator[dict[str, str]]:
+    db_path = Path(db_path)
 
-def extract_memories(db_path: Path) -> Iterable[Dict[str, str]]:
-    """Yield every memory row from a read‑only Mnemosyne DB.
+    uri = f"file:{db_path}?mode=ro"
 
-    The function constructs a URI ``file:<abs>?mode=ro`` and returns rows as
-    dictionaries with keys matching the DB's columns (so we can access the raw
-    ID/value). Calling code is responsible for filtering out unnecessary columns.
-    """
-    uri = f'file:{db_path.as_posix()}?mode=ro'
-    conn = sqlite3.connect(uri, uri=True)
+    conn = sqlite3.connect(
+        uri,
+        uri=True,
+    )
+    conn.row_factory = sqlite3.Row
+
     try:
-        tbl_name = infer_memory_table(conn)
-        if tbl_name is None:
-            raise RuntimeError(f"No suitable memory table found in {db_path}")
-        cursor = conn.execute(f"SELECT * FROM '{tbl_name}'")
-        # ``cursor.description`` contains column metadata after execution.
-        columns = [col[0] for col in cursor.description]
-        for row in cursor:
-            yield dict(zip(columns, row))
+        table = infer_memory_table(conn)
+
+        rows = conn.execute(
+            f"""
+            SELECT id, content
+            FROM {table}
+            WHERE content IS NOT NULL
+            ORDER BY id
+            """
+        )
+
+        for row in rows:
+            content = row["content"]
+
+            if not isinstance(content, str):
+                continue
+
+            yield {
+                "id": str(row["id"]),
+                "content": content,
+            }
+
     finally:
         conn.close()
 
-# ---------------------------------------------------------------------------
-# Orchestration – performs the actual ingestion.
-# ---------------------------------------------------------------------------
 
-def ingest_profiles(dry_run: bool = False) -> Dict[str, int]:
-    """Discover profiles and propose every memory entry.
+def normalize_content(content: str) -> str:
+    """
+    Normalize content only for exact-duplicate detection.
 
-    Parameters
-    ----------
-    dry_run:
-        If ``True`` no changes are persisted; instead a dictionary mapping
-        profile names to the number of memories that would have been proposed is
-        returned.
+    The original source content is never modified.
+    """
+    return " ".join(content.split()).strip()
 
-    Returns
-    -------
-    Dict[str, int]
-        Mapping from *profile* (directory name) to count of proposals made or
-        discovered.
+
+def content_hash(content: str) -> str:
+    normalized = normalize_content(content)
+
+    return hashlib.sha256(
+        normalized.encode("utf-8")
+    ).hexdigest()
+
+
+def ingest_profiles(
+    dry_run: bool = False,
+) -> dict[str, int]:
+    """
+    Discover Hermes profiles and ingest source-memory references.
+
+    Exact duplicate content is collapsed into one collective entry.
+
+    The collective entry retains the first source reference while
+    duplicate source references are returned through the ingestion
+    accounting. Source databases are opened read-only.
     """
     profiles = discover_profile_paths()
-    dao = CollectiveDAO()  # uses the project level collective.db
-    pm = ProposalManager(dao)
-    summary: Dict[str, int] = {}
-    for profile_dir in profiles:
-        db_path = profile_dir / "mnemosyne" / "data" / "mnemosyne.db"
+
+    counts: dict[str, int] = {}
+
+    dao = CollectiveDAO()
+    dao.ensure_schema()
+
+    manager = ProposalManager(dao)
+
+    try:
+        seen_hashes: dict[str, tuple[str, str]] = {}
+
+        for profile_path in profiles:
+            profile = profile_path.name
+
+            db_path = (
+                profile_path
+                / "mnemosyne"
+                / "data"
+                / "mnemosyne.db"
+            )
+
+            discovered = 0
+
+            for memory in extract_memories(db_path):
+                discovered += 1
+
+                memory_id = memory["id"]
+                content = memory["content"]
+
+                digest = content_hash(content)
+
+                if digest in seen_hashes:
+                    continue
+
+                seen_hashes[digest] = (
+                    profile,
+                    memory_id,
+                )
+
+                if dry_run:
+                    continue
+
+                existing = dao.get_by_source(
+                    profile,
+                    memory_id,
+                )
+
+                if existing is None:
+                    manager.propose(
+                        profile,
+                        memory_id,
+                    )
+
+            counts[profile] = discovered
+
+    finally:
+        dao.close()
+
+    return counts
+
+
+def deduplicate_existing_collective(
+    dao: CollectiveDAO,
+    profiles_root: Path | str | None = None,
+) -> dict[str, int]:
+    """
+    Remove exact duplicate collective entries.
+
+    This operates only on collective.db.
+
+    The first entry for a normalized content hash is retained.
+    Duplicate entries are revoked rather than physically deleted,
+    preserving their historical/provenance records.
+    """
+    root = Path(
+        profiles_root or DEFAULT_PROFILES_ROOT
+    ).expanduser()
+
+    rows = dao.conn.execute(
+        """
+        SELECT
+            id,
+            source_profile,
+            origin_memory_id,
+            is_revoked
+        FROM collective_entries
+        ORDER BY id
+        """
+    ).fetchall()
+
+    seen: dict[str, int] = {}
+    duplicates = 0
+
+    for row in rows:
+        entry_id = int(row["id"])
+
+        if row["is_revoked"]:
+            continue
+
+        profile = row["source_profile"]
+        memory_id = row["origin_memory_id"]
+
+        db_path = (
+            root
+            / profile
+            / "mnemosyne"
+            / "data"
+            / "mnemosyne.db"
+        )
+
         try:
-            mem_rows = list(extract_memories(db_path))
-        except Exception as exc:  # pragma: no cover
-            print(f"[ingest] failed to read {db_path}: {exc}")
-            continue
+            memories = extract_memories(db_path)
 
-        count = len(mem_rows)
-        if dry_run:
-            summary[profile_dir.name] = count
-            continue
+            content = None
 
-        for mem in mem_rows:
-            # The legacy schema may use 'id' or 'memory_id'.  We normalise to a string.
-            origin_id = str(mem.get("id") or mem.get("memory_id"))
-            if not origin_id:
-                continue  # skip malformed rows
-            # Avoid duplicate proposals – the DAO contains idempotency check via get_by_source.
-            existing = dao.get_by_source(profile_dir.name, origin_id)
-            if existing:
+            for memory in memories:
+                if memory["id"] == memory_id:
+                    content = memory["content"]
+                    break
+
+            if content is None:
                 continue
-            pm.propose(source_profile=profile_dir.name, origin_memory_id=origin_id)
-        summary[profile_dir.name] = count
-    return summary
 
-# ---------------------------------------------------------------------------
-# CLI entry point – used in `scripts/ingest_profiles.py`.
-# ---------------------------------------------------------------------------
-if __name__ == "__main__":  # pragma: no cover - manual invocation only
-    import argparse, json
+        except (OSError, sqlite3.Error, ValueError):
+            continue
 
-    parser = argparse.ArgumentParser(description="Ingest Mnemosyne memories from live Hermes profiles")
-    parser.add_argument("--dry-raw", action="store_true", dest="dry_run", help="Perform a dry run – report counts but do not write to the collective db.")
-    args = parser.parse_args()
+        digest = content_hash(content)
 
-    result = ingest_profiles(dry_run=args.dry_run)
-    print(json.dumps(result, indent=2))
+        if digest not in seen:
+            seen[digest] = entry_id
+            continue
+
+        dao.revoke_entry(
+            entry_id,
+            f"Exact duplicate of collective entry {seen[digest]}",
+        )
+
+        duplicates += 1
+
+    return {
+        "duplicates_revoked": duplicates,
+        "unique_content": len(seen),
+    }

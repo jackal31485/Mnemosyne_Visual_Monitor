@@ -51,6 +51,7 @@ class CollectiveDAO:
     # ---------------------------------------------------------------------
     # Schema helpers
     # ---------------------------------------------------------------------
+    
     def ensure_schema(self) -> None:
         """Create the collective schema and migrate legacy databases.
 
@@ -72,6 +73,7 @@ class CollectiveDAO:
             )
 
         self.conn.commit()
+        _ensure_provenance_schema(self.conn)
 
     def reset(self) -> None:
         """Reset the collective database to an empty state."""
@@ -342,3 +344,105 @@ class CollectiveDAO:
         )
         self.conn.commit()
         return int(cur.lastrowid)
+
+
+    def add_provenance(
+        self,
+        collective_entry_id: int,
+        source_profile: str,
+        origin_memory_id: str,
+    ) -> None:
+        self.conn.execute(
+            """
+            INSERT OR IGNORE INTO collective_provenance (
+                collective_entry_id,
+                source_profile,
+                origin_memory_id
+            )
+            VALUES (?, ?, ?)
+            """,
+            (
+                collective_entry_id,
+                source_profile,
+                origin_memory_id,
+            ),
+        )
+        self.conn.commit()
+
+    def get_provenance(self, collective_entry_id: int):
+        return self.conn.execute(
+            """
+            SELECT
+                source_profile,
+                origin_memory_id,
+                created_at
+            FROM collective_provenance
+            WHERE collective_entry_id = ?
+            ORDER BY source_profile, origin_memory_id
+            """,
+            (collective_entry_id,),
+        ).fetchall()
+
+    def find_by_content_hash(self, content_hash: str):
+        return self.conn.execute(
+            """
+            SELECT *
+            FROM collective_entries
+            WHERE content_hash = ?
+            ORDER BY id
+            LIMIT 1
+            """,
+            (content_hash,),
+        ).fetchone()
+
+def _ensure_provenance_schema(conn):
+    """
+    Maintain source-memory provenance separately from canonical
+    collective entries.
+
+    Multiple Hermes memories may contain identical content. They may
+    therefore map to one canonical collective entry while retaining
+    every original (profile, memory_id) reference.
+    """
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS collective_provenance (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            collective_entry_id INTEGER NOT NULL,
+            source_profile TEXT NOT NULL,
+            origin_memory_id TEXT NOT NULL,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+            UNIQUE(
+                collective_entry_id,
+                source_profile,
+                origin_memory_id
+            ),
+
+            FOREIGN KEY (collective_entry_id)
+                REFERENCES collective_entries(id)
+                ON DELETE CASCADE
+        )
+        """
+    )
+
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS
+        idx_collective_provenance_entry
+        ON collective_provenance(collective_entry_id)
+        """
+    )
+
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS
+        idx_collective_provenance_source
+        ON collective_provenance(
+            source_profile,
+            origin_memory_id
+        )
+        """
+    )
+
+    conn.commit()

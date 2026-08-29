@@ -77,6 +77,95 @@ function deduplicateEdges(edges) {
     return result;
 }
 
+async function nukeAndRebuildEverything() {
+    const button = document.getElementById("nuke-rebuild-button");
+
+    if (!confirm(
+        "NUKE AND REBUILD EVERYTHING?\n\n" +
+        "This will delete the current collective database contents " +
+        "and rebuild it from all discovered Hermes agents."
+    )) {
+        return;
+    }
+
+    if (button) {
+        button.disabled = true;
+        button.textContent = "Rebuilding...";
+    }
+
+    try {
+        const response = await fetch(
+            "http://127.0.0.1:8000/api/admin/collective/nuke-rebuild",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({}),
+            }
+        );
+
+        const payload = await response.json();
+
+        if (!response.ok || !payload.success) {
+            throw new Error(
+                payload.detail ||
+                payload.message ||
+                `HTTP ${response.status}`
+            );
+        }
+
+        const collective = payload.collective || {};
+        const graph = payload.graph || {};
+
+        const message =
+            "Collective rebuilt successfully.\n\n" +
+            `Profiles discovered: ${payload.profiles_discovered ?? 0}\n` +
+            `Memories discovered: ${payload.memories_discovered ?? 0}\n` +
+            `Promoted: ${collective.promoted ?? 0}\n` +
+            `Proposed: ${collective.proposed ?? 0}\n` +
+            `Revoked: ${collective.revoked ?? 0}\n` +
+            `Embedded: ${collective.embedded ?? 0}\n\n` +
+            `Graph rebuilt: ${graph.rebuilt ? "yes" : "no"}`;
+
+        alert(message);
+
+        // Reload the constellation so the newly rebuilt collective is
+        // actually fetched from the API.
+        window.location.reload();
+
+    } catch (error) {
+        console.error("Collective rebuild failed:", error);
+
+        alert(
+            "Collective rebuild failed:\n\n" +
+            (error?.message || String(error))
+        );
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = "Nuke & Rebuild Everything";
+        }
+    }
+}
+
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+        const button = document.getElementById(
+            "nuke-rebuild-button"
+        );
+
+        if (button) {
+            button.addEventListener(
+                "click",
+                nukeAndRebuildEverything
+            );
+        }
+    }
+);
+
 async function fetchProfiles() {
     try {
         const response = await fetch(`${API_BASE}/api/profiles`);
