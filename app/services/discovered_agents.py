@@ -1,41 +1,54 @@
 from __future__ import annotations
 
+import sqlite3
+
 from src.domain.agent_rebuild import AgentEndpoint
+from app.discovery import DB_PATH
 
 
 def get_discovered_agents() -> list[AgentEndpoint]:
     """
-    Adapt the existing Phase 6.5C discovery records into rebuild endpoints.
+    Return adopted, currently-online agents as rebuild endpoints.
 
-    Replace only the database query below with the existing discovery
-    DAO/query already used by app/routes/discovery.py if the column names
-    differ.
+    Discovery is the authority for endpoint information.
     """
 
-    from app.db.discovery import get_discovered_clients
+    agents = []
 
-    rows = get_discovered_clients()
+    with sqlite3.connect(str(DB_PATH)) as conn:
+        conn.row_factory = sqlite3.Row
 
-    agents: list[AgentEndpoint] = []
+        rows = conn.execute(
+            """
+            SELECT
+                client_id,
+                hostname,
+                address,
+                api_port,
+                last_seen,
+                state
+            FROM discovery_records
+            WHERE state = 'ADOPTED'
+            ORDER BY hostname
+            """
+        ).fetchall()
 
-    for row in rows:
-        agent_id = row["client_id"]
-        hostname = row["hostname"]
+        for row in rows:
+            address = row["address"]
+            api_port = row["api_port"] or 8000
+            last_seen = row["last_seen"]
 
-        # Discovery must advertise the HTTP API address/port.
-        address = row.get("address") or row.get("ip_address")
+            if not address:
+                continue
 
-        if not address:
-            continue
-
-        port = row.get("port", 8000)
-
-        agents.append(
-            AgentEndpoint(
-                agent_id=agent_id,
-                hostname=hostname,
-                base_url=f"http://{address}:{port}",
+            agents.append(
+                AgentEndpoint(
+                    agent_id=row["client_id"],
+                    hostname=row["hostname"] or row["client_id"],
+                    base_url=(
+                        f"http://{address}:{api_port}"
+                    ),
+                )
             )
-        )
 
     return agents

@@ -3,12 +3,13 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from src.domain.profile_ingest import (
     discover_profile_paths,
     extract_memories,
 )
+from src.domain.live_memory_gateway import LiveMemoryGateway
 
 router = APIRouter(
     prefix="/api/memories",
@@ -21,11 +22,7 @@ def memory_inventory():
     """
     Return references to all memories owned by this agent.
 
-    IMPORTANT:
-    Raw memory content is never returned.
-
-    The source Mnemosyne databases are opened read-only by
-    extract_memories().
+    Raw memory content is never included in the inventory.
     """
 
     result = {
@@ -68,3 +65,49 @@ def memory_inventory():
         result["profiles"].append(profile)
 
     return result
+
+
+@router.get("/content")
+def memory_content_compatibility():
+    """
+    Browser API compatibility endpoint.
+
+    The actual source-memory retrieval endpoint remains:
+    /api/memories/{profile}/{memory_id}
+    """
+    return {
+        "available": True,
+        "endpoint": "/api/memories/{profile}/{memory_id}",
+    }
+
+
+@router.get("/{profile}/{memory_id}")
+def get_memory_content(
+    profile: str,
+    memory_id: str,
+):
+    """
+    Retrieve source memory content for Browser inspection.
+
+    The content is returned transiently and is NEVER stored in
+    collective.db.
+    """
+
+    gateway = LiveMemoryGateway()
+
+    try:
+        content = gateway.get_memory(
+            profile,
+            memory_id,
+        )
+    except KeyError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "profile": profile,
+        "memory_id": memory_id,
+        "content": content,
+    }

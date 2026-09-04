@@ -12,7 +12,7 @@ from typing import Final, Optional
 
 # Configuration – overridable via environment
 DEFAULT_GROUP: Final[str] = "224.10.0.1"
-DEFAULT_PORT: Final[int] = 34600
+DEFAULT_PORT: Final[int] = 34567
 LAN_DISCOVERY_GROUP: Final[str] = os.getenv("LAN_DISCOVERY_GROUP", DEFAULT_GROUP)
 LAN_DISCOVERY_PORT: Final[int] = int(os.getenv("LAN_DISCOVERY_PORT", str(DEFAULT_PORT)))
 
@@ -23,11 +23,16 @@ DB_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH: Final[pathlib.Path] = DB_DIR / "discovery.db"
 
 # Table schema – exact as per spec
+# The discovery table originally omitted address/api_port; this caused agents to be
+# considered "unknown" after adoption and prevented rebuilds. The schema now
+# records the network endpoint used for distributed operations.
 TABLE_SCHEMA = (
     "CREATE TABLE IF NOT EXISTS discovery_records ("
     "  client_id TEXT PRIMARY KEY,"
     "  hostname TEXT,"
     "  installed_version TEXT,"
+    "  address TEXT,"      # IP or hostname where the agent can be reached
+    "  api_port INTEGER,"   # TCP port of the FastAPI service
     "  first_seen INTEGER,"
     "  last_seen INTEGER,"
     "  state TEXT NOT NULL DEFAULT 'DISCOVERED'"
@@ -41,6 +46,7 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 REQUIRED_KEYS = {"client_id", "hostname", "installed_version"}
+OPTIONAL_KEYS = {"api_port"}
 
 
 def _is_valid_uuid4(value: str) -> bool:
@@ -58,8 +64,10 @@ def validate_payload(payload: dict) -> None:
 
     Raises ValueError on any validation error.
     """
-    if set(payload.keys()) != REQUIRED_KEYS:
-        raise ValueError("payload must contain exactly client_id, hostname, installed_version")
+    if not REQUIRED_KEYS.issubset(payload.keys()):
+        raise ValueError("payload must contain client_id, hostname, installed_version")
+    if set(payload.keys()) - REQUIRED_KEYS - OPTIONAL_KEYS:
+        raise ValueError("payload contains unsupported fields")
 
     client_id = payload["client_id"]
     hostname = payload["hostname"]
@@ -67,6 +75,12 @@ def validate_payload(payload: dict) -> None:
 
     if not isinstance(client_id, str) or not _is_valid_uuid4(client_id):
         raise ValueError("client_id must be a UUID‑v4 string")
+
+    api_port = payload.get("api_port")
+    if api_port is not None and (
+        not isinstance(api_port, int) or not 1 <= api_port <= 65535
+    ):
+        raise ValueError("api_port must be an integer between 1 and 65535")
 
     for field in (hostname, installed_version):
         if field is not None and not isinstance(field, str):
@@ -164,7 +178,7 @@ class DiscoveryListener:
 
         while not self.shutdown_event.is_set():
             try:
-                data, _ = sock.recvfrom(65535)
+                data, sender = sock.recvfrom(65535)
             except socket.timeout:
                 continue
             except OSError:  # pragma: no cover
@@ -192,22 +206,44 @@ class DiscoveryListener:
             installed_version = payload["installed_version"]
             ts = int(time.time())
 
+            # recvfrom() gives us the address of the machine that sent
+            # the discovery beacon. Do not use getsockname(), because the
+            # listener is bound to 0.0.0.0.
+            source_ip = sender[0]
+
             with _DB(self.db_path) as conn:
                 cur = conn.cursor()
                 cur.execute(
-                    "SELECT first_seen FROM discovery_records WHERE client_id=?",
+                    "SELECT first_seen, address, api_port FROM discovery_records WHERE client_id=?",
                     (client_id,),
                 )
                 row = cur.fetchone()
+
+                incoming_api_port = payload.get("api_port", 8000)
                 if row is None:
                     cur.execute(
-                        "INSERT INTO discovery_records (client_id, hostname, installed_version, first_seen, last_seen) VALUES (?, ?, ?, ?, ?)",  # noqa: E501
-                        (client_id, hostname, installed_version, ts, ts),
+                        "INSERT INTO discovery_records (client_id, hostname, installed_version, address, api_port, first_seen, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?)",  # noqa: E501
+                        (
+                            client_id,
+                            hostname,
+                            installed_version,
+                            source_ip,
+                            incoming_api_port,
+                            ts,
+                            ts,
+                        ),
                     )
                 else:
                     cur.execute(
-                        "UPDATE discovery_records SET hostname=?, installed_version=?, last_seen=? WHERE client_id=?",
-                        (hostname, installed_version, ts, client_id),
+                        "UPDATE discovery_records SET hostname=?, installed_version=?, address=?, api_port=?, last_seen=? WHERE client_id=?",
+                        (
+                            hostname,
+                            installed_version,
+                            source_ip,
+                            incoming_api_port,
+                            ts,
+                            client_id,
+                        ),
                     )
 
         sock.close()

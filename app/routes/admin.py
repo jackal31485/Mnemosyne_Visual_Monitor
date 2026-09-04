@@ -2,126 +2,63 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+from urllib.error import URLError
+from urllib.request import Request, urlopen
+import json
 
 from fastapi import APIRouter, HTTPException
 
 from src.domain.collective import CollectiveDAO
-from src.domain.profile_ingest import discover_profile_paths, extract_memories
+from src.domain.agent_rebuild import (
+    AgentEndpoint,
+    AgentMemoryClient,
+)
 from src.services.embedding_backfill import backfill
-from src.domain.live_memory_gateway import LiveMemoryGateway
+from src.domain.distributed_memory_gateway import DistributedMemoryGateway
+from app.services.discovered_agents import (
+    get_discovered_agents,
+)
 
 router = APIRouter()
-
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 COLLECTIVE_DB = PROJECT_ROOT / "data" / "collective.db"
 
 
-def _wipe_collective(dao: CollectiveDAO) -> None:
+def _wipe_collective(dao: CollectiveDAO) -> int:
     """
-    Completely remove the current collective contents while preserving
-    the collective schema.
+    Reset Mnemosyne's reconstructed collective and LAN adoption state.
+
+    This removes only Mnemosyne's reconstructed collective data and
+    adoption decisions. Source Hermes profiles and memories are never
+    modified.
     """
-    dao.conn.execute("DELETE FROM collective_entries")
+
+    row = dao.conn.execute(
+        "SELECT COUNT(*) FROM collective_entries"
+    ).fetchone()
+
+    removed = int(row[0] or 0)
+
+    dao.conn.execute(
+        "DELETE FROM collective_entries"
+    )
     dao.conn.commit()
 
+    # Nuke also releases all adopted LAN agents. Source agent databases
+    # remain completely untouched.
+    discovery_db = PROJECT_ROOT / "app" / "db" / "discovery.db"
 
-def _rebuild_from_profiles(dao: CollectiveDAO) -> dict:
-    """
-    Rebuild the collective from the actual Hermes/Mnemosyne profile
-    databases discovered on this machine.
-
-    Only source profile + memory ID are copied into the collective.
-    Raw memory content never enters the collective database.
-    """
-    profiles = discover_profile_paths()
-
-    discovered = {}
-    total = 0
-
-    for profile_path in profiles:
-        profile_name = profile_path.name
-
-        # Locate the profile's Mnemosyne database.
-        db_path = (
-            profile_path
-            / "mnemosyne"
-            / "data"
-            / "mnemosyne.db"
-        )
-
-        if not db_path.is_file():
-            continue
-
-        count = 0
-
-        for memory in extract_memories(db_path):
-            memory_id = memory["id"]
-
-            # Reference-only collective entry.
-            existing = dao.get_by_source(
-                profile_name,
-                memory_id,
-            )
-
-            if existing is None:
-                dao.insert_collective_entry(
-                    profile_name,
-                    memory_id,
-                )
-
-            count += 1
-            total += 1
-
-        discovered[profile_name] = count
-
-    dao.conn.commit()
-
-    return {
-        "memories_discovered": total,
-        "profiles_discovered": len(discovered),
-        "profiles": discovered,
-    }
-
-
-def _promote_everything(dao: CollectiveDAO) -> int:
-    """
-    Promote every freshly rebuilt, non-revoked collective entry.
-
-    Nuke & Rebuild is intentionally an administrative rebuild operation:
-    the purpose is to reconstruct the complete visible collective rather
-    than leave every recovered memory sitting in 'proposed' state.
-    """
-    rows = dao.conn.execute(
-        """
-        SELECT id
-        FROM collective_entries
-        WHERE is_revoked = 0
-          AND is_promoted = 0
-        ORDER BY id
-        """
-    ).fetchall()
-
-    promoted = 0
-
-    for row in rows:
-        entry_id = row[0]
-
-        dao.conn.execute(
+    with sqlite3.connect(str(discovery_db)) as conn:
+        conn.execute(
             """
-            UPDATE collective_entries
-            SET is_promoted = 1
-            WHERE id = ?
-              AND is_revoked = 0
-            """,
-            (entry_id,),
+            UPDATE discovery_records
+            SET state = 'DISCOVERED'
+            """
         )
+        conn.commit()
 
-        promoted += 1
-
-    dao.conn.commit()
-
-    return promoted
+    return removed
 
 
 def _collective_counts(dao: CollectiveDAO) -> dict:
@@ -169,28 +106,27 @@ def _collective_counts(dao: CollectiveDAO) -> dict:
 
 
 def _rebuild_graph() -> dict:
-    """
-    Rebuild the graph cache/index if the project's GraphService supports
-    an explicit rebuild operation.
-    """
     try:
         from app.utils import build_graph_service
 
         service = build_graph_service()
-
-        rebuild = getattr(service, "rebuild", None)
+        rebuild = getattr(
+            service,
+            "rebuild",
+            None,
+        )
 
         if callable(rebuild):
-            result = rebuild()
-
             return {
                 "rebuilt": True,
-                "result": result,
+                "result": rebuild(),
             }
 
         return {
             "rebuilt": False,
-            "reason": "GraphService has no rebuild() method.",
+            "reason": (
+                "GraphService has no rebuild() method."
+            ),
         }
 
     except Exception as exc:
@@ -200,75 +136,239 @@ def _rebuild_graph() -> dict:
         }
 
 
-@router.post("/api/admin/collective/nuke-rebuild")
-def nuke_and_rebuild_everything():
+def _inventory_for_agent(
+    agent: AgentEndpoint,
+) -> dict:
+
+    client = AgentMemoryClient(agent)
+
+    return client.inventory()
+
+
+def _import_agent_inventory(
+    dao: CollectiveDAO,
+    agent: AgentEndpoint,
+) -> dict:
+
+    inventory = _inventory_for_agent(agent)
+
+    memories_discovered = 0
+    entries_created = 0
+    profiles = {}
+
+    for profile in inventory.get(
+        "profiles",
+        [],
+    ):
+        profile_name = profile.get("profile")
+
+        if not profile_name:
+            continue
+
+        count = 0
+
+        # Namespace source profiles by agent identity.
+        # This prevents two agents from having colliding
+        # profile/memory IDs.
+        source_profile = (
+            f"{agent.agent_id}:{profile_name}"
+        )
+
+        for memory in profile.get(
+            "memories",
+            [],
+        ):
+            memory_id = memory.get(
+                "memory_id"
+            )
+
+            if memory_id is None:
+                continue
+
+            memory_id = str(memory_id)
+
+            existing = dao.get_by_source(
+                source_profile,
+                memory_id,
+            )
+
+            if existing is None:
+                dao.insert_collective_entry(
+                    source_profile=source_profile,
+                    origin_memory_id=memory_id,
+                )
+                entries_created += 1
+
+            memories_discovered += 1
+            count += 1
+
+        profiles[
+            source_profile
+        ] = count
+
+    return {
+        "memories_discovered": memories_discovered,
+        "entries_created": entries_created,
+        "profiles": profiles,
+    }
+
+
+@router.post("/api/admin/collective/nuke")
+def nuke_collective():
     """
-    Administrative full reconstruction.
+    Reset the collective reconstruction and LAN adoption state.
 
-    Pipeline:
+    This does NOT:
+      - delete Hermes profiles
+      - delete source memories
+      - delete agent source databases
+      - rebuild anything
 
-        1. Wipe collective
-        2. Discover Hermes profiles
-        3. Import reference-only memory IDs
-        4. Promote all recovered memories
-        5. Rebuild graph
-        6. Return complete status
-
-    Raw memory content is never copied into collective.db.
+    Discovery records are retained but returned to DISCOVERED state.
     """
+
     dao = None
 
     try:
         dao = CollectiveDAO(COLLECTIVE_DB)
         dao.ensure_schema()
 
-        # ------------------------------------------------------------
-        # 1. NUKE
-        # ------------------------------------------------------------
-        _wipe_collective(dao)
+        removed = _wipe_collective(dao)
 
-        # ------------------------------------------------------------
-        # 2–3. DISCOVER + INGEST
-        # ------------------------------------------------------------
-        discovery = _rebuild_from_profiles(dao)
-
-        # ------------------------------------------------------------
-        # 4. PROMOTE EVERYTHING
-        # ------------------------------------------------------------
-        promoted = _promote_everything(dao)
-
-        # ------------------------------------------------------------
-        # 5. EMBEDDING BACKFILL
-        # ------------------------------------------------------------
-        #
-        # Use the project's existing embedding service.  It reads the
-        # source Mnemosyne memories, generates local embeddings, and
-        # stores only the embedding vector in collective.db.
-        #
-        # This must happen AFTER promotion and BEFORE graph rebuild.
-        # ------------------------------------------------------------
-        gateway = LiveMemoryGateway()
-        embedding_failures = backfill(dao, gateway)
-
-        # ------------------------------------------------------------
-        # 6. GRAPH REBUILD
-        # ------------------------------------------------------------
         graph = _rebuild_graph()
 
-        # ------------------------------------------------------------
-        # 6. FINAL COUNTS
-        # ------------------------------------------------------------
-        collective = _collective_counts(dao)
+        from app.routes.discovery import _load_records
 
         return {
             "success": True,
-            "message": "Collective rebuilt successfully.",
-            "memories_discovered": discovery["memories_discovered"],
-            "profiles_discovered": discovery["profiles_discovered"],
-            "profiles": discovery["profiles"],
-            "promoted_this_run": promoted,
-            "embeddings": embedding_failures,
-            "collective": collective,
+            "operation": "nuke",
+            "entries_removed": removed,
+            "collective": _collective_counts(dao),
+            "discovery": {
+                "agents": _load_records(
+                    PROJECT_ROOT / "app" / "db" / "discovery.db",
+                    include_stale=False,
+                ),
+                "scanning": False,
+            },
+            "graph": graph,
+        }
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Collective nuke failed: {exc}",
+        ) from exc
+
+    finally:
+        if dao is not None:
+            dao.close()
+
+
+@router.post("/api/admin/collective/rebuild")
+def rebuild_collective():
+    """
+    Rebuild the collective from ADOPTED LAN agents only.
+
+    This operation does NOT nuke first.
+    """
+
+    agents = get_discovered_agents()
+
+    if not agents:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "No adopted online LAN agents are "
+                "available for rebuild."
+            ),
+        )
+
+    dao = None
+
+    results = []
+    total_memories = 0
+    total_created = 0
+
+    try:
+        dao = CollectiveDAO(COLLECTIVE_DB)
+        dao.ensure_schema()
+
+        for agent in agents:
+            try:
+                result = _import_agent_inventory(
+                    dao,
+                    agent,
+                )
+
+                total_memories += result[
+                    "memories_discovered"
+                ]
+
+                total_created += result[
+                    "entries_created"
+                ]
+
+                results.append(
+                    {
+                        "agent_id": agent.agent_id,
+                        "hostname": agent.hostname,
+                        "base_url": agent.base_url,
+                        "success": True,
+                        **result,
+                    }
+                )
+
+            except Exception as exc:
+                results.append(
+                    {
+                        "agent_id": agent.agent_id,
+                        "hostname": agent.hostname,
+                        "base_url": agent.base_url,
+                        "success": False,
+                        "error": str(exc),
+                    }
+                )
+
+        dao.conn.execute(
+            """
+            UPDATE collective_entries
+            SET is_promoted = 1
+            WHERE is_revoked = 0
+            """
+        )
+
+        dao.conn.commit()
+
+        # Local source memories can still be embedded by the
+        # existing gateway when their source_profile is local.
+        #
+        # Remote agent references are left without embeddings
+        # until the remote memory gateway stage is available.
+        embedding_failures = []
+
+        try:
+            gateway = DistributedMemoryGateway()
+            embedding_failures = backfill(
+                dao,
+                gateway,
+            )
+        except Exception as exc:
+            embedding_failures = [
+                ("embedding", "system", str(exc))
+            ]
+
+        graph = _rebuild_graph()
+
+        return {
+            "success": True,
+            "operation": "rebuild",
+            "agents": results,
+            "agents_discovered": len(agents),
+            "memories_discovered": total_memories,
+            "entries_created": total_created,
+            "embedding_failures": embedding_failures,
+            "collective": _collective_counts(dao),
             "graph": graph,
         }
 
@@ -276,8 +376,22 @@ def nuke_and_rebuild_everything():
         raise HTTPException(
             status_code=500,
             detail=f"Collective rebuild failed: {exc}",
-        )
+        ) from exc
 
     finally:
         if dao is not None:
             dao.close()
+
+
+# Backward compatibility only.
+# The old endpoint is deliberately no longer the Browser operation.
+@router.post("/api/admin/collective/nuke-rebuild")
+def legacy_nuke_rebuild():
+    raise HTTPException(
+        status_code=410,
+        detail=(
+            "The combined nuke-rebuild operation has been removed. "
+            "Use /api/admin/collective/nuke followed by "
+            "/api/admin/collective/rebuild."
+        ),
+    )

@@ -76,7 +76,25 @@ class GraphService:
                 raise ValueError("edge_limit cannot be negative")
 
         all_nodes = self.get_nodes()
-        filtered_nodes = [n for n in all_nodes if source_profile is None or n.source_profile == source_profile]
+
+        if source_profile is None:
+            filtered_nodes = all_nodes
+        elif ":" in source_profile:
+            # Fully-qualified distributed profile: require an exact match.
+            filtered_nodes = [
+                n for n in all_nodes
+                if n.source_profile == source_profile
+            ]
+        else:
+            # Human-facing profile name: match the profile suffix of
+            # namespaced collective sources such as "<agent_id>:athena".
+            suffix = f":{source_profile}"
+            filtered_nodes = [
+                n for n in all_nodes
+                if n.source_profile == source_profile
+                or n.source_profile.endswith(suffix)
+            ]
+
         node_map = {n.graph_id: n for n in filtered_nodes}
         serialized_nodes = [self._to_node_dict(n) for n in filtered_nodes]
         adjacency: dict[str, list[dict]] = {}

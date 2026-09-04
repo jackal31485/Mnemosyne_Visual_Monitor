@@ -6,7 +6,7 @@ from urllib.request import Request, urlopen
 import json
 
 
-@dataclass
+@dataclass(frozen=True)
 class AgentEndpoint:
     agent_id: str
     hostname: str
@@ -14,41 +14,37 @@ class AgentEndpoint:
 
 
 class AgentMemoryClient:
-    """
-    Read-only client for the memory inventory exposed by an agent.
+    """Read-only HTTP client for an adopted Mnemosyne agent."""
 
-    This client only requests references. It never writes to the
-    remote Mnemosyne database.
-    """
-
-    def __init__(
-        self,
-        endpoint: AgentEndpoint,
-        timeout: float = 5.0,
-    ) -> None:
+    def __init__(self, endpoint: AgentEndpoint, timeout: float = 5.0):
         self.endpoint = endpoint
         self.timeout = timeout
 
-    def inventory(self) -> dict[str, Any]:
-        url = (
-            self.endpoint.base_url.rstrip("/")
-            + "/api/memories/inventory"
-        )
-
-        request = Request(
-            url,
-            method="GET",
-            headers={
-                "Accept": "application/json",
-            },
-        )
-
+    def _get_json(self, path: str) -> dict[str, Any]:
+        url = self.endpoint.base_url.rstrip("/") + path
+        request = Request(url, method="GET", headers={"Accept": "application/json"})
         with urlopen(request, timeout=self.timeout) as response:
             if response.status != 200:
                 raise RuntimeError(
-                    f"Agent returned HTTP {response.status}"
+                    f"Agent {self.endpoint.hostname} returned HTTP {response.status}"
                 )
+            return json.loads(response.read().decode("utf-8"))
 
-            payload = response.read()
+    def inventory(self) -> dict[str, Any]:
+        return self._get_json("/api/memories/inventory")
 
-        return json.loads(payload.decode("utf-8"))
+    def get_memory(self, profile: str, memory_id: str) -> str:
+        data = self._get_json(
+            f"/api/memories/{_quote(profile)}/{_quote(memory_id)}"
+        )
+        content = data.get("content")
+        if not isinstance(content, str):
+            raise KeyError(
+                f"Memory {memory_id} not available for profile {profile}"
+            )
+        return content
+
+
+def _quote(value: str) -> str:
+    from urllib.parse import quote
+    return quote(str(value), safe="")

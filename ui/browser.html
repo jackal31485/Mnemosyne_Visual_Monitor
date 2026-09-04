@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mnemosyne Visual Monitor – Browser</title>
+    <link rel="stylesheet" href="/static/browser.css" />
+</head>
+
+<body class="browser">
+
+<header class="browser-header">
+    <div>
+        <h1>Mnemosyne</h1>
+        <span class="subtitle">Collective Memory Browser</span>
+    </div>
+
+    <div class="header-actions">
+        <button id="refresh-button" type="button">Refresh</button>
+        <button id="clear-profile-button" type="button">All Profiles</button>
+    </div>
+</header>
+
+<main class="browser-layout">
+
+    <!-- ============================================================
+         LEFT: CONTROL CENTER
+         ============================================================ -->
+    <aside id="control-center" class="pane pane-left">
+
+        <div class="pane-header">
+            <h2>Control Center</h2>
+        </div>
+
+        <!-- Profiles -->
+        <section class="control-section">
+            <h3>Profiles</h3>
+
+            <ul id="profile-list" class="profile-list">
+                <li class="loading">Loading…</li>
+            </ul>
+        </section>
+
+        <!-- LAN / Collective -->
+        <section class="control-section">
+            <h3>LAN / Collective</h3>
+
+            <div class="operation-buttons">
+                <button id="scan-lan-button" type="button">
+                    Scan LAN
+                </button>
+
+                <button id="stop-scan-button" type="button" disabled>
+                    Stop Scan
+                </button>
+            </div>
+
+            <div
+                id="discovery-summary"
+                class="discovery-summary"
+            >
+                0 discovered · 0 adopted
+            </div>
+
+            <div
+                id="agent-list"
+                class="discovered-agents"
+            >
+                <div class="empty-state">
+                    No agents discovered.
+                </div>
+            </div>
+        </section>
+
+        
+                <!-- Collective Operations -->
+        <section class="control-section">
+            <h3>Collective Operations</h3>
+
+            <div class="operation-buttons">
+                <button
+                    id="rebuild-button"
+                    type="button"
+                    class="operation-primary"
+                >
+                    Rebuild Collective
+                </button>
+
+                <button
+                    id="nuke-button"
+                    type="button"
+                    class="operation-danger"
+                >
+                    ⚠ Nuke Collective
+                </button>
+            </div>
+
+            <div
+                id="operation-status"
+                class="operation-status"
+                aria-live="polite"
+            ></div>
+        </section>
+
+        <!-- Visualization -->
+        <section class="control-section">
+            <h3>Visualization</h3>
+
+            <label for="view-mode">View</label>
+
+            <select id="view-mode">
+                <option value="graph">Constellation</option>
+                <option value="table">Data Table</option>
+            </select>
+
+            <label for="edge-limit">Edges per node</label>
+
+            <select id="edge-limit">
+                <option value="">All</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="5" selected>5</option>
+                <option value="10">10</option>
+            </select>
+
+            <div id="profile-legend" class="profile-legend"></div>
+        </section>
+
+        <!-- Statistics -->
+        <section class="control-section">
+            <h3>Statistics</h3>
+
+            <dl id="statistics">
+                <div>
+                    <dt>Profiles</dt>
+                    <dd id="stat-profiles">—</dd>
+                </div>
+
+                <div>
+                    <dt>Memories</dt>
+                    <dd id="stat-memories">—</dd>
+                </div>
+
+                <div>
+                    <dt>Nodes</dt>
+                    <dd id="stat-nodes">—</dd>
+                </div>
+
+                <div>
+                    <dt>Edges</dt>
+                    <dd id="stat-edges">—</dd>
+                </div>
+            </dl>
+        </section>
+
+    </aside>
+
+
+    <!-- ============================================================
+         CENTER: WORKSPACE
+         ============================================================ -->
+    <section id="workspace" class="pane pane-middle">
+
+        <div class="pane-header workspace-header">
+
+            <div>
+                <h2>Collective Constellation</h2>
+                <span id="workspace-subtitle">
+                    All profiles
+                </span>
+            </div>
+
+            <div class="graph-controls">
+                <button
+                    id="zoom-in"
+                    type="button"
+                    title="Zoom in"
+                >
+                    +
+                </button>
+
+                <button
+                    id="zoom-out"
+                    type="button"
+                    title="Zoom out"
+                >
+                    −
+                </button>
+
+                <button
+                    id="zoom-reset"
+                    type="button"
+                    title="Reset view"
+                >
+                    Reset
+                </button>
+            </div>
+
+        </div>
+
+        <div
+            id="graph-view"
+            class="graph-view"
+            aria-label="Mnemosyne graph"
+        >
+            <div class="loading-state">
+                Loading graph…
+            </div>
+        </div>
+
+        <div
+            id="table-view"
+            class="table-view hidden"
+        >
+            <div class="loading-state">
+                Loading data…
+            </div>
+        </div>
+
+    </section>
+
+
+    <!-- ============================================================
+         RIGHT: INSPECTOR
+         ============================================================ -->
+    <aside id="inspector" class="pane pane-right">
+
+        <div class="pane-header">
+            <h2>Inspector</h2>
+        </div>
+
+        <div
+            id="inspector-content"
+            class="inspector-content"
+        >
+            <div class="empty-state">
+                <strong>No selection</strong>
+
+                <p>
+                    Select a node to inspect its collective-memory
+                    metadata and source content.
+                </p>
+            </div>
+        </div>
+
+    </aside>
+
+</main>
+
+
+<!-- ================================================================
+     STATUS BAR
+     ================================================================ -->
+<footer id="status-bar" class="status-bar">
+    <span id="status-message">Ready.</span>
+    <span id="status-selection"></span>
+</footer>
+
+
+<script src="/static/browser.js"></script>
+<script type="module">
+    import {
+        render3D,
+        destroy3D,
+        zoomIn,
+        zoomOut,
+        reset3D,
+    } from "/static/browser3d.js";
+
+    window.Mnemosyne3D = {
+        render: render3D,
+        destroy: destroy3D,
+        zoomIn,
+        zoomOut,
+        reset: reset3D,
+    };
+
+    window.dispatchEvent(new Event("mnemosyne-3d-ready"));
+</script>
+
+</body>
+</html>
