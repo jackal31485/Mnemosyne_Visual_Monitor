@@ -12,7 +12,7 @@ const state = {
     selectedProfile: null,
     graph: {nodes: [], edges: {}},
     selectedNode: null,
-    viewMode: "graph",
+    viewMode: "2d",
     edgeLimit: 5,
     zoom: 1, panX: 0, panY: 0,
     dragging: false,
@@ -95,7 +95,7 @@ function profileLabel(sourceProfile) {
     return colon >= 0 ? value.slice(colon + 1) : value;
 }
 
-const PROFILE_COLORS = [
+const DEFAULT_PROFILE_COLORS = [
     "#6ea8fe",
     "#7bd88f",
     "#f6c85f",
@@ -106,7 +106,27 @@ const PROFILE_COLORS = [
     "#d0d0d0",
 ];
 
-function colorForProfile(profile) {
+const COLOR_STORAGE_KEY = "mnemosyne-profile-colours";
+
+function loadProfileColours() {
+    try {
+        const stored = JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) || "{}");
+        if (!stored || typeof stored !== "object") return {};
+
+        return Object.fromEntries(
+            Object.entries(stored).filter(
+                ([, value]) => typeof value === "string" &&
+                    /^#[0-9a-fA-F]{6}$/.test(value)
+            )
+        );
+    } catch (_) {
+        return {};
+    }
+}
+
+const profileColours = loadProfileColours();
+
+function defaultColourForProfile(profile) {
     const value = profileLabel(profile);
     let hash = 0;
 
@@ -115,7 +135,21 @@ function colorForProfile(profile) {
         hash |= 0;
     }
 
-    return PROFILE_COLORS[Math.abs(hash) % PROFILE_COLORS.length];
+    return DEFAULT_PROFILE_COLORS[
+        Math.abs(hash) % DEFAULT_PROFILE_COLORS.length
+    ];
+}
+
+function colorForProfile(profile) {
+    const label = profileLabel(profile);
+    return profileColours[label] || defaultColourForProfile(label);
+}
+
+function saveProfileColours() {
+    localStorage.setItem(
+        COLOR_STORAGE_KEY,
+        JSON.stringify(profileColours),
+    );
 }
 
 function renderProfiles(profiles) {
@@ -255,6 +289,15 @@ function createSVGElement(name, attributes = {}) {
 }
 
 function renderGraph(graph) {
+    if (state.viewMode === "3d") {
+        renderGraph3D(graph);
+        return;
+    }
+
+    renderGraph2D(graph);
+}
+
+function renderGraph3D(graph) {
     const container = $("graph-view");
 
     if (window.Mnemosyne3D?.render) {
@@ -267,11 +310,6 @@ function renderGraph(graph) {
         return;
     }
 
-    /*
-     * The Three.js module is loaded separately from browser.js.
-     * If renderGraph runs before it becomes available, wait for the
-     * module-ready event and render the current graph once.
-     */
     container.innerHTML =
         '<div class="loading-state">Loading 3D constellation…</div>';
 
@@ -282,7 +320,7 @@ function renderGraph(graph) {
             "mnemosyne-3d-ready",
             () => {
                 window.__mnemosyne3d_waiting = false;
-                renderGraph(state.graph);
+                renderGraph3D(state.graph);
             },
             { once: true },
         );
@@ -598,11 +636,31 @@ async function loadTableMemoryPreview(node, target){
     }
 }
 
-function setViewMode(mode){
-    state.viewMode=mode;
-    $("graph-view").classList.toggle("hidden",mode==="table");
-    $("table-view").classList.toggle("hidden",mode!=="table");
-    if(mode==="table") renderTable(state.graph); else renderGraph(state.graph);
+function setViewMode(mode) {
+    if (!["2d", "3d", "table"].includes(mode)) {
+        mode = "2d";
+    }
+
+    const previousMode = state.viewMode;
+    state.viewMode = mode;
+
+    localStorage.setItem("mnemosyne-view-mode", mode);
+    $("view-mode").value = mode;
+
+    $("graph-view").classList.toggle("hidden", mode === "table");
+    $("table-view").classList.toggle("hidden", mode !== "table");
+
+    if (previousMode === "3d" && mode !== "3d") {
+        window.Mnemosyne3D?.destroy?.();
+    }
+
+    if (mode === "table") {
+        renderTable(state.graph);
+    } else if (mode === "3d") {
+        renderGraph3D(state.graph);
+    } else {
+        renderGraph2D(state.graph);
+    }
 }
 
 async function selectProfile(profile){
@@ -851,6 +909,7 @@ async function refresh(){
     try{
         setStatus("Refreshing…");
         state.profiles=await fetchProfiles(); renderProfiles(state.profiles);
+        renderColourControls();
         const diagnostics=await fetchDiagnostics(); renderStatistics(diagnostics);
         state.graph=await fetchGraph(state.selectedProfile);
         state.viewMode==="table" ? renderTable(state.graph) : renderGraph(state.graph);
@@ -874,10 +933,67 @@ function escapeHTML(value){
         .replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 }
 
+function renderColourControls() {
+    const container = $("profile-colour-controls");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    for (const profile of state.profiles) {
+        const row = document.createElement("div");
+        row.className = "profile-colour-row";
+
+        const label = document.createElement("label");
+        label.textContent = profile.name;
+        label.htmlFor = `profile-colour-${profile.id}`;
+
+        const input = document.createElement("input");
+        input.type = "color";
+        input.id = `profile-colour-${profile.id}`;
+        input.value = colorForProfile(profile.id);
+        input.title = `Colour for ${profile.name}`;
+
+        input.addEventListener("input", () => {
+            profileColours[profileLabel(profile.id)] = input.value;
+            saveProfileColours();
+            renderProfiles(state.profiles);
+
+            if (state.viewMode === "2d") {
+                renderGraph2D(state.graph);
+            } else if (state.viewMode === "3d") {
+                renderGraph3D(state.graph);
+            }
+        });
+
+        row.append(label, input);
+        container.appendChild(row);
+    }
+}
+
+function resetProfileColours() {
+    localStorage.removeItem(COLOR_STORAGE_KEY);
+
+    for (const key of Object.keys(profileColours)) {
+        delete profileColours[key];
+    }
+
+    renderColourControls();
+    renderProfiles(state.profiles);
+
+    if (state.viewMode === "2d") {
+        renderGraph2D(state.graph);
+    } else if (state.viewMode === "3d") {
+        renderGraph3D(state.graph);
+    }
+
+    setStatus("Profile colours reset to defaults.");
+}
+
 function bindControls(){
     $("refresh-button").addEventListener("click",refresh);
     $("clear-profile-button").addEventListener("click",()=>selectProfile(null));
     $("view-mode").addEventListener("change",e=>setViewMode(e.target.value));
+    $("reset-colours-button").addEventListener("click",resetProfileColours);
     $("edge-limit").addEventListener("change",async e=>{
         state.edgeLimit=e.target.value===""?null:Number(e.target.value);
         await selectProfile(state.selectedProfile);
@@ -907,9 +1023,17 @@ function bindControls(){
 
 async function init(){
     bindControls();
+
+    const savedViewMode = localStorage.getItem("mnemosyne-view-mode");
+    if (["2d", "3d", "table"].includes(savedViewMode)) {
+        state.viewMode = savedViewMode;
+        $("view-mode").value = savedViewMode;
+    }
+
     try{
         setStatus("Loading profiles…");
         state.profiles=await fetchProfiles(); renderProfiles(state.profiles);
+        renderColourControls();
         const diagnostics=await fetchDiagnostics(); renderStatistics(diagnostics);
         await refreshDiscovery();
         state.graph=await fetchGraph(state.selectedProfile);

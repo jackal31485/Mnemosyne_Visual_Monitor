@@ -1,7 +1,7 @@
 import * as THREE from "/static/vendor/three/three.module.min.js";
 import { OrbitControls } from "/static/vendor/three/OrbitControls.js";
 
-const PROFILE_COLORS = [
+const DEFAULT_PROFILE_COLORS = [
     0x6ea8fe,
     0x7bd88f,
     0xf6c85f,
@@ -23,17 +23,40 @@ function hashString(value) {
     return Math.abs(hash);
 }
 
-function colorForProfile(profile) {
+function profileLabel(profile) {
     const value = String(profile || "");
     const separator = value.indexOf(":");
-    const profileName = separator >= 0
+
+    return separator >= 0
         ? value.slice(separator + 1)
         : value;
+}
 
-    return PROFILE_COLORS[
-        hashString(profileName) % PROFILE_COLORS.length
+function colorForProfile(profile) {
+    const label = profileLabel(profile);
+
+    try {
+        const stored = JSON.parse(
+            localStorage.getItem("mnemosyne-profile-colours") || "{}"
+        );
+
+        const configured = stored[label];
+
+        if (
+            typeof configured === "string" &&
+            /^#[0-9a-fA-F]{6}$/.test(configured)
+        ) {
+            return Number.parseInt(configured.slice(1), 16);
+        }
+    } catch (_) {
+        // Fall back to the deterministic default palette.
+    }
+
+    return DEFAULT_PROFILE_COLORS[
+        hashString(label) % DEFAULT_PROFILE_COLORS.length
     ];
 }
+
 
 function createRenderer(container) {
     const renderer = new THREE.WebGLRenderer({

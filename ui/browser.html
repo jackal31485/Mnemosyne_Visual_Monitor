@@ -109,7 +109,8 @@
             <label for="view-mode">View</label>
 
             <select id="view-mode">
-                <option value="graph">Constellation</option>
+                <option value="2d">2D Constellation</option>
+                <option value="3d">3D Constellation</option>
                 <option value="table">Data Table</option>
             </select>
 
@@ -125,6 +126,22 @@
             </select>
 
             <div id="profile-legend" class="profile-legend"></div>
+        </section>
+
+        <!-- Profile Colours -->
+        <section class="control-section">
+            <h3>Profile Colours</h3>
+
+            <div id="profile-colour-controls" class="profile-colour-controls">
+                <div class="empty-state">Loading colours…</div>
+            </div>
+
+            <button
+                id="reset-colours-button"
+                type="button"
+            >
+                Reset Default Colours
+            </button>
         </section>
 
         <!-- Statistics -->
