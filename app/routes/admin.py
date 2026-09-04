@@ -15,6 +15,7 @@ from src.domain.agent_rebuild import (
 )
 from src.services.embedding_backfill import backfill
 from src.domain.distributed_memory_gateway import DistributedMemoryGateway
+from src.domain.incremental_scan import IncrementalCollectiveScanner
 from app.services.discovered_agents import (
     get_discovered_agents,
 )
@@ -376,6 +377,141 @@ def rebuild_collective():
         raise HTTPException(
             status_code=500,
             detail=f"Collective rebuild failed: {exc}",
+        ) from exc
+
+    finally:
+        if dao is not None:
+            dao.close()
+
+
+
+@router.post("/api/admin/collective/scan")
+def scan_collective():
+    """
+    Incrementally scan adopted LAN agents for genuinely new memories.
+
+    This operation is strictly non-destructive:
+      - existing collective entries are preserved
+      - existing embeddings are preserved
+      - existing provenance is preserved
+      - revoked entries are never deleted
+      - LAN adoption state is never changed
+      - the graph is rebuilt only when new entries are imported
+
+    A failed agent does not prevent successful agents from being scanned.
+    """
+
+    agents = get_discovered_agents()
+
+    if not agents:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "No adopted online LAN agents are "
+                "available for incremental scan."
+            ),
+        )
+
+    dao = None
+
+    try:
+        dao = CollectiveDAO(COLLECTIVE_DB)
+        dao.ensure_schema()
+
+        scanner = IncrementalCollectiveScanner(dao)
+        result = scanner.scan(agents)
+
+        # Promote only entries created by THIS scan.
+        # Existing collective entries are never modified.
+        if result.created_entry_ids:
+            placeholders = ",".join(
+                "?" for _ in result.created_entry_ids
+            )
+            dao.conn.execute(
+                f"""
+                UPDATE collective_entries
+                SET is_promoted = 1
+                WHERE id IN ({placeholders})
+                  AND is_revoked = 0
+                """,
+                result.created_entry_ids,
+            )
+            dao.conn.commit()
+
+        embedding_failures = []
+
+        if result.created_entry_ids:
+            try:
+                gateway = DistributedMemoryGateway()
+                embedding_failures = backfill(
+                    dao,
+                    gateway,
+                    entry_ids=result.created_entry_ids,
+                )
+            except Exception as exc:
+                embedding_failures = [
+                    ("embedding", "system", str(exc))
+                ]
+
+        if result.created_entry_ids:
+            graph = _rebuild_graph()
+        else:
+            graph = {
+                "rebuilt": False,
+                "reason": "No new memories were imported.",
+            }
+
+        agent_results = []
+
+        for agent_result in result.agents:
+            agent_results.append(
+                {
+                    "agent_id": agent_result.agent_id,
+                    "hostname": agent_result.hostname,
+                    "success": agent_result.success,
+                    "memories_discovered": (
+                        agent_result.memories_discovered
+                    ),
+                    "already_known": (
+                        agent_result.already_known
+                    ),
+                    "new_memories": (
+                        agent_result.new_memories
+                    ),
+                    "entries_created": (
+                        agent_result.entries_created
+                    ),
+                    "failures": agent_result.failures,
+                }
+            )
+
+        return {
+            "success": True,
+            "operation": "scan",
+            "agents_scanned": result.agents_scanned,
+            "agents_failed": result.agents_failed,
+            "memories_discovered": (
+                result.memories_discovered
+            ),
+            "memories_existing": (
+                result.memories_existing
+            ),
+            "memories_new": result.memories_new,
+            "entries_created": result.entries_created,
+            "embedding_failures": embedding_failures,
+            "failures": result.failures,
+            "agents": agent_results,
+            "collective": _collective_counts(dao),
+            "graph": graph,
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Collective incremental scan failed: {exc}",
         ) from exc
 
     finally:

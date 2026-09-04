@@ -20,6 +20,7 @@ def test_browser_page_contains_operational_controls():
     assert response.status_code == 200
     for control in (
         'id="scan-lan-button"',
+        'id="scan-memories-button"',
         'id="rebuild-button"',
         'id="nuke-button"',
         'id="agent-list"',

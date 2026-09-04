@@ -23,8 +23,19 @@ logger = logging.getLogger(__name__)
 # Backward‑compatible alias used by older callers
 _embed_text = embed_sanitized
 
-def backfill(dao: CollectiveDAO, gateway: MemoryGateway) -> List[Tuple[int, str, str]]:
+def backfill(
+    dao: CollectiveDAO,
+    gateway: MemoryGateway,
+    entry_ids: List[int] | None = None,
+) -> List[Tuple[int, str, str]]:
     """Generate embeddings for collective entries that lack them.
+
+    When ``entry_ids`` is provided, only those collective entries are
+    considered.  This allows incremental operations to embed exactly the
+    entries they created without modifying unrelated existing entries.
+
+    When ``entry_ids`` is omitted, the legacy behavior is preserved and all
+    collective entries missing embeddings are processed.
 
     Parameters
     ----------
@@ -32,6 +43,8 @@ def backfill(dao: CollectiveDAO, gateway: MemoryGateway) -> List[Tuple[int, str,
         Data access object providing read/write on the collective table.
     gateway:
         Reads raw memory content by (profile, id).
+    entry_ids:
+        Optional list of collective entry IDs to process.
 
     Returns
     -------
@@ -41,14 +54,31 @@ def backfill(dao: CollectiveDAO, gateway: MemoryGateway) -> List[Tuple[int, str,
         source_profile, origin_memory_id)``.
     """
     failures: List[Tuple[int, str, str]] = []
-    cursor = dao.conn.execute(
-        """
-        SELECT id, source_profile, origin_memory_id
-        FROM collective_entries
-        WHERE embedding IS NULL
-        ORDER BY id
-        """
-    )
+
+    if entry_ids is not None and not entry_ids:
+        return failures
+
+    if entry_ids is None:
+        cursor = dao.conn.execute(
+            """
+            SELECT id, source_profile, origin_memory_id
+            FROM collective_entries
+            WHERE embedding IS NULL
+            ORDER BY id
+            """
+        )
+    else:
+        placeholders = ",".join("?" for _ in entry_ids)
+        cursor = dao.conn.execute(
+            f"""
+            SELECT id, source_profile, origin_memory_id
+            FROM collective_entries
+            WHERE embedding IS NULL
+              AND id IN ({placeholders})
+            ORDER BY id
+            """,
+            [int(entry_id) for entry_id in entry_ids],
+        )
     for row in cursor:
         entry_id: int = int(row["id"])
         source_profile: str = row["source_profile"]

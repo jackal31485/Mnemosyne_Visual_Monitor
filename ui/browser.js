@@ -831,6 +831,87 @@ async function nukeCollective(){
     }
 }
 
+async function scanNewMemories(){
+    const adopted=state.agents.filter(a=>a.state==="ADOPTED");
+
+    if(!adopted.length){
+        showOperationError(
+            new Error(
+                "No adopted LAN agents. Scan the LAN and adopt at least one agent first."
+            )
+        );
+        return;
+    }
+
+    try{
+        setStatus("Scanning adopted agents for new memories…");
+        setOperationStatus(
+            "Incremental scan: checking adopted agents for new memories…"
+        );
+
+        $("scan-memories-button").disabled=true;
+        $("rebuild-button").disabled=true;
+        $("nuke-button").disabled=true;
+
+        const result=await postJSON("/api/admin/collective/scan");
+
+        const embeddingFailures=Array.isArray(result.embedding_failures)
+            ? result.embedding_failures.length
+            : Number(result.embedding_failures || 0);
+
+        const collective=result.collective || {};
+        const embedded=Number(collective.embedded || 0);
+        const totalEntries=Number(collective.total_entries || 0);
+        const newMemories=Number(result.memories_new || 0);
+        const failures=Array.isArray(result.failures)
+            ? result.failures.length
+            : 0;
+
+        setOperationStatus(
+            `Scan complete: ${result.memories_discovered || 0} memories checked, ` +
+            `${newMemories} new memories imported, ` +
+            `${embedded}/${totalEntries} embeddings available, ` +
+            `${embeddingFailures} embedding failures, ` +
+            `${failures} scan failures.`,
+            Boolean(result.success) &&
+            embeddingFailures === 0 &&
+            failures === 0
+        );
+
+        if(newMemories > 0){
+            state.profiles=await fetchProfiles();
+            renderProfiles(state.profiles);
+
+            state.graph=await fetchGraph(state.selectedProfile);
+
+            renderStatistics(await fetchDiagnostics());
+
+            if(state.viewMode==="table"){
+                renderTable(state.graph);
+            }else{
+                renderGraph(state.graph);
+            }
+        }else{
+            renderStatistics(await fetchDiagnostics());
+        }
+
+        await refreshDiscovery();
+
+        setStatus(
+            `Scan complete — ${newMemories} new memories imported, ` +
+            `${state.graph.nodes.length} nodes, ` +
+            `${countEdges(state.graph.edges)} edges.`
+        );
+
+    }catch(error){
+        showOperationError(error);
+    }finally{
+        $("scan-memories-button").disabled=false;
+        $("rebuild-button").disabled=false;
+        $("nuke-button").disabled=false;
+    }
+}
+
 async function rebuildCollective(){
     const adopted=state.agents.filter(a=>a.state==="ADOPTED");
     if(!adopted.length){
@@ -1017,6 +1098,7 @@ function bindControls(){
     $("zoom-reset").addEventListener("click",resetGraphView);
     $("scan-lan-button").addEventListener("click",scanLAN);
     $("stop-scan-button").addEventListener("click",stopScan);
+    $("scan-memories-button").addEventListener("click",scanNewMemories);
     $("rebuild-button").addEventListener("click",rebuildCollective);
     $("nuke-button").addEventListener("click",nukeCollective);
 }
