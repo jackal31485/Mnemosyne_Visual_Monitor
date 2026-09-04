@@ -33,17 +33,17 @@
         </div>
 
         <!-- Profiles -->
-        <section class="control-section">
-            <h3>Profiles</h3>
+        <details class="control-section" open>
+            <summary>Profiles</summary>
 
             <ul id="profile-list" class="profile-list">
                 <li class="loading">Loading…</li>
             </ul>
-        </section>
+        </details>
 
         <!-- LAN / Collective -->
-        <section class="control-section">
-            <h3>LAN / Collective</h3>
+        <details class="control-section">
+            <summary>LAN / Collective</summary>
 
             <div class="operation-buttons">
                 <button id="scan-lan-button" type="button">
@@ -70,12 +70,12 @@
                     No agents discovered.
                 </div>
             </div>
-        </section>
+        </details>
 
         
                 <!-- Collective Operations -->
-        <section class="control-section">
-            <h3>Collective Operations</h3>
+        <details class="control-section">
+            <summary>Collective Operations</summary>
 
             <div class="operation-buttons">
                 <button
@@ -100,11 +100,11 @@
                 class="operation-status"
                 aria-live="polite"
             ></div>
-        </section>
+        </details>
 
         <!-- Visualization -->
-        <section class="control-section">
-            <h3>Visualization</h3>
+        <details class="control-section" open>
+            <summary>Visualization</summary>
 
             <label for="view-mode">View</label>
 
@@ -114,7 +114,15 @@
                 <option value="table">Data Table</option>
             </select>
 
-            <label for="edge-limit">Edges per node</label>
+            <label for="edge-limit" class="help-label">
+                Edges per node
+                <span
+                    class="help-icon"
+                    title="An edge is a relationship between two memory nodes based on their similarity. This controls how many of the strongest relationships are drawn from each node. More edges reveal more connections but can make the constellation harder to read."
+                    aria-label="Help: Edges per node"
+                    tabindex="0"
+                >ⓘ</span>
+            </label>
 
             <select id="edge-limit">
                 <option value="">All</option>
@@ -125,12 +133,19 @@
                 <option value="10">10</option>
             </select>
 
+            <p class="control-help">
+                Controls how many of the strongest connections are shown for
+                each memory. Lower values create a cleaner constellation;
+                higher values reveal more relationships. <strong>All</strong>
+                shows every detected connection.
+            </p>
+
             <div id="profile-legend" class="profile-legend"></div>
-        </section>
+        </details>
 
         <!-- Profile Colours -->
-        <section class="control-section">
-            <h3>Profile Colours</h3>
+        <details class="control-section">
+            <summary>Profile Colours</summary>
 
             <div id="profile-colour-controls" class="profile-colour-controls">
                 <div class="empty-state">Loading colours…</div>
@@ -142,11 +157,11 @@
             >
                 Reset Default Colours
             </button>
-        </section>
+        </details>
 
         <!-- Statistics -->
-        <section class="control-section">
-            <h3>Statistics</h3>
+        <details class="control-section" open>
+            <summary>Statistics</summary>
 
             <dl id="statistics">
                 <div>
@@ -169,7 +184,7 @@
                     <dd id="stat-edges">—</dd>
                 </div>
             </dl>
-        </section>
+        </details>
 
     </aside>
 
