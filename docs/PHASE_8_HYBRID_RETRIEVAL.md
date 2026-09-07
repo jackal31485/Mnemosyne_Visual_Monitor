@@ -1,8 +1,8 @@
 # Phase 8 — Hybrid Retrieval
 
-**Status:** IN PROGRESS — 8A COMPLETE  
+**Status:** IN PROGRESS — 8A + 8B COMPLETE  
 **Started:** 2026-09-07  
-**Current:** Phase 8B — Semantic Retrieval Hardening  
+**Current:** Phase 8C — Graph-Aware Retrieval  
 **Target:** Build a deterministic, explainable hybrid retrieval layer.
 
 ## Objective
@@ -122,17 +122,80 @@ Lifecycle authorization is rechecked against `collective.db` when search results
 
 ## 8B — Semantic retrieval hardening
 
-Review the current vector retrieval implementation and define a stable retrieval contract.
+**Status: COMPLETE — 2026-09-07**
 
-Verify:
+Phase 8B established a stable, governed semantic retrieval contract without changing the existing embedding-generation backend.
 
-- embedding availability;
-- normalization;
-- similarity calculation;
-- filtering;
-- result limits;
-- deterministic tie handling;
-- provenance.
+Implemented:
+
+- dedicated `SemanticSearcher` retrieval service;
+- rich `SemanticResult` records containing entry ID, source profile, origin memory ID, semantic score, and provenance;
+- strict 384-dimensional query validation;
+- rejection of non-finite query values;
+- rejection of zero-norm query vectors;
+- validation of stored embedding dimensions;
+- rejection of malformed, non-finite, and zero-norm stored embeddings;
+- promoted and non-revoked lifecycle filtering;
+- optional source-profile filtering;
+- normalized cosine similarity;
+- deterministic ordering by semantic score descending, then entry ID ascending;
+- provenance preservation through the authoritative collective DAO;
+- compatibility preservation for the existing `AthenaAPI.search_by_embedding()` contract.
+
+The existing legacy Athena method remains available for compatibility. Its historical arbitrary-dimension and zero-vector behavior is preserved rather than silently changed by the new strict semantic retrieval contract.
+
+### Governance
+
+`collective.db` remains authoritative for:
+
+- promotion;
+- revocation;
+- source identity;
+- provenance;
+- retrieval authorization.
+
+Semantic retrieval does not treat the presence of an embedding as authorization.
+
+Governance invariant:
+
+> **Embedded ≠ authorized to retrieve.**
+
+### Validation
+
+Focused semantic retrieval and legacy compatibility tests:
+
+- **19 passed**
+
+Full project regression:
+
+- **219 passed**
+- **4 skipped**
+- **4 warnings**
+- **0 failures**
+
+Production validation:
+
+- eligible embedded collective entries: **567**
+- returned semantic results: **10**
+- query embedding dimensions: **384**
+- query entry self-match: **1.000000**
+- top result: **entry 2841**
+- status: **PASS**
+
+The production semantic ranking matched the established Phase 8B baseline, confirming that the richer retrieval contract did not alter the underlying cosine-ranking behavior.
+
+### Architectural boundary
+
+Phase 8B intentionally does not:
+
+- replace the embedding generator;
+- introduce graph retrieval;
+- introduce temporal retrieval;
+- introduce rank fusion;
+- introduce reranking;
+- duplicate private profile memory into `collective.db`.
+
+Those concerns remain isolated to subsequent Phase 8 stages.
 
 ## 8C — Graph-aware retrieval
 
@@ -258,8 +321,8 @@ are integrated, tested, documented, and compatible with Mnemosyne's governance i
 
 ## Next implementation task
 
-**Begin with 8B: Semantic retrieval hardening.**
+**Begin with 8C: Graph-aware retrieval.**
 
-Review the existing semantic/vector retrieval implementation and establish a stable retrieval contract before integrating it with the Phase 8A lexical layer.
+Use the existing graph infrastructure to add bounded graph expansion as a complementary retrieval signal.
 
-Do not implement graph, temporal, fusion, or reranking in the same change. Build and validate the semantic retrieval foundation first.
+Do not implement temporal scoring, rank fusion, reranking, or explainability integration in the same change. Build and validate graph-aware candidate retrieval first.

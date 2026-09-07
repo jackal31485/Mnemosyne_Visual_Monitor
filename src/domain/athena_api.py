@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+from src.retrieval.semantic_search import SemanticSearcher
+
 from dataclasses import dataclass
+import math
+import numpy as np
 from typing import Optional, List, Tuple
 
 from .athena_interface import AthenaCollectiveInterface
@@ -45,98 +49,115 @@ class AthenaAPI:
     # ------------------------------------------------------------------
     # Phase 5C – similarity search by embedding.
     # ------------------------------------------------------------------
+    def search_semantic(
+        self,
+        vector: List[float],
+        top_k: int = 10,
+        profile: str | None = None,
+    ):
+        """Return rich, governed semantic retrieval results."""
+        searcher = SemanticSearcher(self._iface._dao)
+        return searcher.search(vector, top_k=top_k, profile=profile)
+
     def search_by_embedding(self, vector: List[float], top_n: int) -> List[int]:
-        """Return promoted, non‑revoked entries whose embedded vectors
-        are nearest to ``vector`` using cosine similarity.
+        """Return semantic matches using the historical Athena contract.
 
-        The method filters out entries with a NULL or invalid embedding.  It
-        does not expose the raw embedding in its output -- callers receive only IDs
-        sorted from highest to lowest similarity.
+        Phase 8B adds :meth:`search_semantic` as the strict, production
+        semantic retrieval surface. This legacy method intentionally retains
+        the historical behavior used by existing callers and tests, including
+        arbitrary embedding dimensions and zero-vector handling.
         """
-        import math
-        import numpy as np
+        if not isinstance(top_n, int) or isinstance(top_n, bool) or top_n < 1:
+            raise ValueError("top_n must be a positive integer")
 
-        # Ensure list-like and compute query norm.
         try:
-            q = [float(v) for v in vector]
-        except Exception as e:  # pragma: no cover - defensive
-            raise ValueError("query vector must be iterable of numbers")
-        denom_q_sq = sum(x * x for x in q)
-        if denom_q_sq == 0:
-            # Zero query vector: consider all promoted & non‑revoked entries that
-            # have a *valid* embedding.  Entries whose embedding is a zero
-            # vector rank before those with any non‑zero vector.
-            cur = self._iface._dao.conn.execute(
-                "SELECT id, embedding FROM collective_entries WHERE is_promoted=1 AND is_revoked=0"
-            )
-            zero_ids: List[int] = []
-            other_ids: List[int] = []
-            for row in cur.fetchall():
-                eid = int(row["id"] if isinstance(row, dict) else row[0])
-                blob = row["embedding"] if isinstance(row, dict) else row[1]
+            values = [float(value) for value in vector]
+        except (TypeError, ValueError):
+            raise ValueError("query embedding must contain numeric values")
+
+        if not values:
+            raise ValueError("query embedding cannot be empty")
+
+        query = np.asarray(values, dtype=np.float32)
+
+        if not np.all(np.isfinite(query)):
+            raise ValueError("query embedding must contain only finite values")
+
+        query_norm = float(np.linalg.norm(query))
+
+        rows = self._iface._dao.conn.execute(
+            """
+            SELECT id, embedding
+            FROM collective_entries
+            WHERE is_promoted = 1
+              AND is_revoked = 0
+            ORDER BY id ASC
+            """
+        ).fetchall()
+
+        # Preserve the historical zero-vector behavior.
+        if query_norm == 0.0:
+            zero_vectors = []
+            other_vectors = []
+
+            for row in rows:
+                blob = row["embedding"]
                 if blob is None:
                     continue
+
                 try:
-                    emb_vec = np.frombuffer(
-                        blob,
-                        dtype=np.float32,
-                    )
-                    if not np.all(np.isfinite(emb_vec)):
-                        continue
-                except Exception:
-                    continue  # malformed or unreadable embedding
-                # skip entries with mismatched dimensionality
-                if len(emb_vec) != len(q):
+                    candidate = np.frombuffer(blob, dtype=np.float32)
+                except (TypeError, ValueError):
                     continue
-                if all(float(v) == 0.0 for v in emb_vec):
-                    zero_ids.append(eid)
+
+                if candidate.size != query.size:
+                    continue
+                if not np.all(np.isfinite(candidate)):
+                    continue
+
+                candidate_norm = float(np.linalg.norm(candidate))
+
+                if candidate_norm == 0.0:
+                    zero_vectors.append(int(row["id"]))
                 else:
-                    other_ids.append(eid)
+                    other_vectors.append(int(row["id"]))
 
-            # No valid entries → empty result
-            if not zero_ids and not other_ids:
-                return []
-            # Sort each group for deterministic output
-            zero_ids.sort()
-            other_ids.sort()
-            combined = zero_ids + other_ids
-            return combined[:top_n]
-        denom_q = math.sqrt(denom_q_sq)
+            return (zero_vectors + other_vectors)[:top_n]
 
-        # Gather non‑zero query candidates
-        cur = self._iface._dao.conn.execute(
-            "SELECT id, embedding FROM collective_entries WHERE is_promoted=1 AND is_revoked=0",
-        )
-        candidates: List[tuple[int, float]] = []
-        for row in cur.fetchall():
-            eid = int(row["id"])
+        results = []
+
+        for row in rows:
             blob = row["embedding"]
             if blob is None:
                 continue
+
             try:
-                r_vec = np.frombuffer(
-                    blob,
-                    dtype=np.float32,
-                )
-                if not np.all(np.isfinite(r_vec)):
-                    continue
-            except Exception:  # pragma: no cover
+                candidate = np.frombuffer(blob, dtype=np.float32)
+            except (TypeError, ValueError):
                 continue
 
-            if len(r_vec) != len(q):
+            if candidate.size != query.size:
+                continue
+            if not np.all(np.isfinite(candidate)):
                 continue
 
-            denom_r_sq = float(np.dot(r_vec, r_vec))
-            if denom_r_sq == 0:
+            candidate_norm = float(np.linalg.norm(candidate))
+            if candidate_norm == 0.0:
                 continue
-            denom_r = math.sqrt(denom_r_sq)
-            dot = sum(a * b for a, b in zip(q, r_vec))
-            similarity = dot / (denom_q * denom_r)
-            candidates.append((eid, similarity))
 
-        # Sort and slice
-        candidates.sort(key=lambda x: -x[1])
-        return [cid for cid, _ in candidates[:top_n]]
+            similarity = float(
+                np.dot(query, candidate)
+                / (query_norm * candidate_norm)
+            )
+
+            if not math.isfinite(similarity):
+                continue
+
+            results.append((similarity, int(row["id"])))
+
+        results.sort(key=lambda item: (-item[0], item[1]))
+
+        return [entry_id for _, entry_id in results[:top_n]]
 
     def find_by_source(self, src: str, orig_mem: str) -> Tuple[int, ...] | None:
         return self._iface.find_by_source(src, orig_mem)

@@ -33,7 +33,7 @@ The following remain mandatory throughout all phases:
 | 5 | Semantic Embeddings & Vector Search | COMPLETE |
 | 6 | Collective Visualization & Distributed Discovery | COMPLETE |
 | 7 | Browser / Visual Monitor | COMPLETE |
-| 8 | Hybrid Retrieval | IN PROGRESS — 8A COMPLETE |
+| 8 | Hybrid Retrieval | IN PROGRESS — 8A + 8B COMPLETE |
 | 9 | Entity & Relationship Intelligence | PLANNED |
 | 10 | Temporal Intelligence | PLANNED |
 | 11 | Evidence Consolidation & Memory Synthesis | PLANNED |
@@ -108,16 +108,34 @@ Governance invariant:
 
 ### 8B — Semantic retrieval hardening
 
-Normalize the existing vector retrieval path.
+**Status: COMPLETE — 2026-09-07**
 
-Requirements:
+Established a governed semantic retrieval contract through `SemanticSearcher`.
 
-- deterministic filtering;
-- explicit retrieval scope;
-- stable similarity scoring;
-- consistent handling of missing embeddings;
-- provenance-aware results;
-- regression tests.
+Completed:
+
+- strict 384-dimensional query validation;
+- finite/non-zero query validation;
+- stored embedding validation;
+- promoted/non-revoked filtering;
+- optional source-profile filtering;
+- normalized cosine similarity;
+- deterministic score/entry-ID ordering;
+- rich scored results;
+- provenance preservation;
+- legacy Athena compatibility.
+
+Validation:
+
+- 19 focused tests passed;
+- 219 full regression tests passed;
+- 4 tests skipped;
+- 0 failures;
+- production validation: 567 eligible embedded entries;
+- production top result self-match: 1.000000;
+- production semantic validation: PASS.
+
+`collective.db` remains authoritative for lifecycle authorization, provenance, promotion, revocation, and source identity.
 
 ### 8C — Graph-aware retrieval
 
