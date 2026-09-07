@@ -16,8 +16,36 @@
     </div>
 
     <div class="header-actions">
-        <button id="refresh-button" type="button">Refresh</button>
-        <button id="clear-profile-button" type="button">All Profiles</button>
+        <div class="global-filter">
+            <label for="global-search">Search memories</label>
+            <input
+                id="global-search"
+                type="search"
+                placeholder="Search memory content…"
+                autocomplete="off"
+            />
+        </div>
+
+        <div class="global-filter global-date-filter">
+            <label for="global-date-from">From</label>
+            <input id="global-date-from" type="date" />
+        </div>
+
+        <div class="global-filter global-date-filter">
+            <label for="global-date-to">To</label>
+            <input id="global-date-to" type="date" />
+        </div>
+
+        <div class="global-filter">
+            <label for="global-profile-scope">Profiles</label>
+            <select id="global-profile-scope">
+                <option value="all">All Profiles</option>
+            </select>
+        </div>
+
+        <button id="clear-filters-button" type="button">
+            Clear Filters
+        </button>
     </div>
 </header>
 
@@ -114,13 +142,24 @@
         <details class="control-section" open>
             <summary>Visualization</summary>
 
-            <label for="view-mode">View</label>
+            <label for="view-mode">Visualization</label>
 
             <select id="view-mode">
-                <option value="2d">2D Constellation</option>
-                <option value="3d">3D Constellation</option>
-                <option value="table">Data Table</option>
+                <option value="2d">2D Constellation (All Profiles)</option>
+                <option value="3d">3D Constellation (All Profiles)</option>
+                <option value="table">Data Table (All Profiles)</option>
+                <option value="profile-views">Profile Views (All Profiles)</option>
+                <option value="activity">Activity (All Profiles)</option>
+                <option value="status">Collective Status (All Profiles)</option>
+                <option value="validation">Validation (All Profiles)</option>
+                <option value="tiles">Profile Tiles</option>
             </select>
+
+            <p class="control-help">
+                Choose the collective visualization. Profile Tiles provides
+                an independently configurable dashboard for individual
+                profiles.
+            </p>
 
             <label for="edge-limit" class="help-label">
                 Edges per node
@@ -202,6 +241,7 @@
          ============================================================ -->
     <section id="workspace" class="pane pane-middle">
 
+
         <div class="pane-header workspace-header">
 
             <div>
@@ -258,6 +298,8 @@
             </div>
         </div>
 
+        <div id="tile-view" class="tile-view hidden"></div>
+
     </section>
 
 
@@ -306,6 +348,7 @@
         zoomIn,
         zoomOut,
         reset3D,
+        render3DInstance,
     } from "/static/browser3d.js";
 
     window.Mnemosyne3D = {
@@ -314,6 +357,7 @@
         zoomIn,
         zoomOut,
         reset: reset3D,
+        createInstance: render3DInstance,
     };
 
     window.dispatchEvent(new Event("mnemosyne-3d-ready"));

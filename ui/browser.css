@@ -26,8 +26,58 @@ button:active:not(:disabled) { transform:translateY(1px); }
 }
 .browser-header h1 { margin:0; font-size:18px; font-weight:650; }
 .subtitle { color:var(--muted); font-size:11px; }
-.header-actions,.operation-buttons { display:flex; gap:8px; }
-.header-actions button { padding:6px 10px; }
+.header-actions,.operation-buttons {
+    display:flex;
+    align-items:flex-end;
+    gap:8px;
+}
+
+.header-actions {
+    min-width:0;
+}
+
+.header-actions button {
+    padding:6px 10px;
+    height:32px;
+}
+
+.global-filter {
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+    min-width:180px;
+}
+
+.global-filter label {
+    color:var(--muted);
+    font-size:9px;
+    line-height:1;
+}
+
+.global-filter input {
+    height:32px;
+    min-width:0;
+    padding:6px 8px;
+    border:1px solid var(--border);
+    border-radius:5px;
+    background:var(--panel-alt);
+    color:var(--text);
+    font:inherit;
+    font-size:11px;
+}
+
+.global-filter input:focus {
+    outline:none;
+    border-color:var(--accent);
+}
+
+.global-date-filter {
+    min-width:125px;
+}
+
+#clear-filters-button {
+    white-space:nowrap;
+}
 .browser-layout { display:grid; grid-template-columns:270px minmax(0,1fr) 360px; min-height:0; }
 .pane { min-width:0; min-height:0; overflow:hidden; }
 .pane-left,.pane-right { background:var(--panel); }
@@ -81,6 +131,13 @@ button:active:not(:disabled) { transform:translateY(1px); }
 .graph-controls { display:flex; gap:4px; }
 .graph-controls button { min-width:32px; min-height:28px; padding:3px 8px; }
 .graph-view { position:relative; flex:1; min-height:0; overflow:hidden; cursor:grab; user-select:none; }
+.information-view {
+    height:100%;
+    min-height:0;
+    overflow-y:auto;
+    overflow-x:hidden;
+    padding:14px;
+}
 .graph-view.dragging { cursor:grabbing; }
 .graph-svg { display:block; width:100%; height:100%; }
 .graph-edge { stroke:var(--edge); stroke-width:1; pointer-events:none; }
@@ -90,7 +147,7 @@ button:active:not(:disabled) { transform:translateY(1px); }
 .graph-node.selected { stroke:white; stroke-width:3; }
 .graph-node.dimmed { opacity:.22; }
 .table-view { flex:1; min-height:0; overflow:auto; padding:12px; }
-.table-view.hidden,.graph-view.hidden { display:none; }
+.table-view.hidden,.graph-view.hidden,.tile-view.hidden { display:none; }
 .data-table { width:100%; border-collapse:collapse; font-size:11px; }
 .data-table th,.data-table td { padding:6px 8px; border:1px solid var(--border); text-align:left; }
 .data-table th { position:sticky; top:0; background:var(--panel); color:var(--muted); }
@@ -515,4 +572,460 @@ button:active:not(:disabled) { transform:translateY(1px); }
     color: var(--muted);
     font-size: 10px;
     line-height: 1.45;
+}
+
+/* ============================================================
+   Configurable Profile Tile Dashboard
+   ============================================================ */
+
+.tile-view {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 14px;
+    box-sizing: border-box;
+}
+
+.tile-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--panel);
+}
+
+.tile-toolbar-title {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.tile-toolbar-title strong {
+    font-size: 12px;
+}
+
+.tile-toolbar-title span {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.tile-count-control {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.tile-count-control select,
+.tile-profile-select,
+.tile-view-select {
+    background: var(--panel-alt);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 7px;
+    font-size: 10px;
+}
+
+.tile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    align-content: start;
+}
+
+.tile-card {
+    min-height: 190px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--panel);
+    overflow: hidden;
+    cursor: pointer;
+    transition:
+        border-color 120ms ease,
+        transform 120ms ease,
+        background 120ms ease;
+}
+
+.tile-card:hover {
+    border-color: var(--accent);
+    background: var(--panel-alt);
+    transform: translateY(-1px);
+}
+
+.tile-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.tile-number {
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.tile-card-controls {
+    padding: 7px 10px 0;
+}
+
+.tile-profile-select,
+.tile-view-select {
+    width: 100%;
+}
+
+.tile-card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 14px;
+}
+
+.tile-card-body h3 {
+    margin: 0 0 7px;
+    font-size: 18px;
+}
+
+.tile-memory-count {
+    font-size: 32px;
+    line-height: 1;
+    font-weight: 700;
+}
+
+.tile-memory-label {
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+}
+
+.tile-progress {
+    height: 5px;
+    margin-top: 18px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: rgba(255,255,255,.07);
+}
+
+.tile-progress-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--accent);
+}
+
+.tile-empty {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+@media (max-width: 900px) {
+    .tile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Multi-view tile dashboard */
+
+.tile-kpi {
+    font-size: 32px;
+    line-height: 1;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.tile-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 7px;
+    margin-top: 16px;
+}
+
+.tile-stat-grid > div {
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--panel-alt);
+}
+
+.tile-stat-grid strong,
+.tile-stat-grid span {
+    display: block;
+}
+
+.tile-stat-grid strong {
+    font-size: 15px;
+}
+
+.tile-stat-grid span {
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.tile-stat-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.tile-stat-row strong {
+    color: var(--text);
+}
+
+.tile-status-primary {
+    margin-top: 4px;
+}
+
+.tile-status-primary strong {
+    display: block;
+    font-size: 30px;
+    line-height: 1;
+}
+
+.tile-status-primary span {
+    display: block;
+    margin-top: 5px;
+    color: var(--muted);
+    font-size: 10px;
+}
+
+.tile-status-message {
+    margin-top: 15px;
+    padding: 8px;
+    border-left: 2px solid var(--accent);
+    color: var(--muted);
+    font-size: 9px;
+    line-height: 1.5;
+}
+
+.tile-latest {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.tile-latest strong {
+    color: var(--text);
+}
+
+.tile-loading {
+    color: var(--muted);
+    font-size: 10px;
+}
+
+@media (max-width: 1100px) {
+    .tile-stat-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* Phase 7 canonical visualization tile views */
+
+.tile-mini-table {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.tile-mini-row {
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 5px 8px;
+    padding: 7px 8px;
+    border-radius: 6px;
+    background: rgba(255,255,255,.035);
+}
+
+.tile-mini-row small {
+    grid-column: 1 / -1;
+    opacity: .65;
+}
+
+/* Profile Tile Data Table */
+.tile-data-table-wrapper {
+    flex: 1;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+.tile-data-table {
+    width: max-content;
+    min-width: 775px;
+}
+
+.tile-data-table th {
+    white-space: nowrap;
+}
+
+.tile-data-table td {
+    vertical-align: top;
+}
+
+.tile-data-table .memory-preview {
+    min-width: 320px;
+    max-width: 620px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.4;
+}
+
+
+.tile-constellation {
+    display: block;
+    width: 100%;
+    height: 150px;
+}
+
+.tile-graph-edge {
+    stroke: currentColor;
+    opacity: .22;
+}
+
+.tile-graph-node {
+    fill: currentColor;
+    opacity: .72;
+}
+
+.tile-graph-center {
+    fill: currentColor;
+}
+
+.tile-card-body:has(.tile-3d-constellation) {
+    min-height: 220px;
+    padding: 0;
+}
+
+.tile-3d-host {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 220px;
+    position: relative;
+}
+
+.tile-3d-host .graph-3d-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 220px;
+}
+
+.tile-3d-constellation {
+    min-height: 220px;
+    width: 100%;
+    height: 100%;
+}
+
+    position: relative;
+    height: 150px;
+    overflow: hidden;
+    perspective: 500px;
+    transform-style: preserve-3d;
+}
+
+.tile-3d-center,
+.tile-3d-node {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 12px currentColor;
+}
+
+.tile-3d-center {
+    left: 50%;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    transform: translate(-50%, -50%);
+}
+
+.tile-3d-node {
+    opacity: .7;
+}
+
+.tile-message-content {
+    grid-column:1 / -1;
+    width:100%;
+    min-width:0;
+    margin-top:7px;
+    padding:8px;
+    border-left:2px solid currentColor;
+    line-height:1.45;
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+    font-size:.88rem;
+}
+
+
+@media (max-width: 1050px) {
+    .browser-header {
+        height:auto;
+        min-height:64px;
+        padding:8px 12px;
+        gap:8px;
+    }
+
+    .header-actions {
+        flex-wrap:wrap;
+        justify-content:flex-end;
+    }
+
+    .global-filter {
+        min-width:140px;
+    }
+
+    .global-date-filter {
+        min-width:115px;
+    }
+}
+
+@media (max-width: 760px) {
+    .header-actions {
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        width:100%;
+    }
+
+    .global-filter {
+        min-width:0;
+    }
+
+    .browser-header {
+        align-items:flex-start;
+        flex-direction:column;
+    }
+
+    body.browser {
+        grid-template-rows:auto minmax(0,1fr) 30px;
+    }
 }

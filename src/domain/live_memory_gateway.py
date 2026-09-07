@@ -21,6 +21,62 @@ class LiveMemoryGateway:
             profiles_root or Path.home() / ".hermes" / "profiles"
         ).expanduser().resolve()
 
+    def get_memory_metadata(
+        self,
+        profile: str,
+        memory_id: str,
+    ) -> dict[str, object]:
+        """Retrieve source-memory date metadata read-only.
+
+        Source databases are never modified.
+        """
+        db_path = (
+            self.profiles_root
+            / profile
+            / "mnemosyne"
+            / "data"
+            / "mnemosyne.db"
+        )
+
+        if not db_path.is_file():
+            raise KeyError(
+                f"Mnemosyne database not found for profile {profile}: {db_path}"
+            )
+
+        uri = f"file:{db_path}?mode=ro"
+
+        conn = sqlite3.connect(uri, uri=True)
+        conn.row_factory = sqlite3.Row
+
+        try:
+            row = conn.execute(
+                """
+                SELECT
+                    event_date,
+                    timestamp,
+                    created_at
+                FROM working_memory
+                WHERE id = ?
+                LIMIT 1
+                """,
+                (memory_id,),
+            ).fetchone()
+
+            if row is None:
+                raise KeyError(
+                    f"Memory {memory_id} not found for profile {profile}"
+                )
+
+            return {
+                "event_date": row["event_date"],
+                "timestamp": row["timestamp"],
+                "created_at": row["created_at"],
+            }
+
+        finally:
+            conn.close()
+
+
     def get_memory(self, profile: str, memory_id: str) -> str:
         db_path = (
             self.profiles_root

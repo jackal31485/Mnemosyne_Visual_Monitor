@@ -13,6 +13,7 @@ const DEFAULT_PROFILE_COLORS = [
 ];
 
 let active = null;
+const instances = new Set();
 
 function hashString(value) {
     let hash = 0;
@@ -71,7 +72,7 @@ function createRenderer(container) {
     return renderer;
 }
 
-function calculatePositions(nodes, edges) {
+function calculatePositions(nodes, edges, compact = false) {
     const positions = new Map();
     const velocities = new Map();
     const nodeById = new Map(nodes.map(node => [node.graph_id, node]));
@@ -100,7 +101,9 @@ function calculatePositions(nodes, edges) {
      * topology pull related memories together.
      */
     const count = Math.max(nodes.length, 1);
-    const radius = Math.max(180, Math.min(520, Math.sqrt(count) * 22));
+    const radius = compact
+        ? Math.max(90, Math.min(250, Math.sqrt(count) * 12))
+        : Math.max(180, Math.min(520, Math.sqrt(count) * 22));
 
     nodes.forEach((node, index) => {
         const seed = hashString(String(node.graph_id));
@@ -132,7 +135,9 @@ function calculatePositions(nodes, edges) {
      *
      * The simulation runs only during layout creation, not every frame.
      */
-    const iterations = count > 700 ? 55 : 85;
+    const iterations = compact
+        ? (count > 300 ? 24 : 34)
+        : (count > 700 ? 55 : 85);
     const idealDistance = 58;
     const repulsion = count > 700 ? 1450 : 1900;
 
@@ -346,11 +351,30 @@ function getGraphEdges(edges) {
         return edges;
     }
 
-    if (typeof window.flattenEdges === "function") {
-        return window.flattenEdges(edges);
+    if (!edges || typeof edges !== "object") {
+        return [];
     }
 
-    return [];
+    const result = [];
+
+    for (const [sourceId, values] of Object.entries(edges)) {
+        if (!Array.isArray(values)) {
+            continue;
+        }
+
+        for (const edge of values) {
+            if (!edge || typeof edge !== "object") {
+                continue;
+            }
+
+            result.push({
+                ...edge,
+                source_id: edge.source_id ?? sourceId,
+            });
+        }
+    }
+
+    return result;
 }
 
 function disposeObject(object) {
@@ -369,38 +393,32 @@ function disposeObject(object) {
     });
 }
 
-export function destroy3D() {
-    if (!active) {
-        return;
-    }
-
-    cancelAnimationFrame(active.animationFrame);
-
-    if (active.resizeObserver) {
-        active.resizeObserver.disconnect();
-    }
-
-    active.controls.dispose();
-
-    disposeObject(active.scene);
-
-    active.renderer.dispose();
-
-    active.container.innerHTML = "";
-
-    active = null;
-}
-
-export function render3D(container, graph, state, onSelect) {
-    destroy3D();
-
+function create3DInstance(
+    container,
+    graph,
+    state,
+    onSelect,
+    options = {},
+) {
     if (!graph?.nodes?.length) {
         container.innerHTML =
             '<div class="loading-state">No graph data available.</div>';
-        return;
+
+        return {
+            destroy() {
+                container.innerHTML = "";
+            },
+        };
     }
 
+    // The caller may have placed a loading placeholder in the
+    // container. The 3D renderer owns this container, so replace
+    // its contents before attaching the canvas.
+    container.replaceChildren();
+
     const scene = new THREE.Scene();
+
+    const cameraDistance = options.compact ? 520 : 700;
 
     const camera = new THREE.PerspectiveCamera(
         55,
@@ -410,30 +428,39 @@ export function render3D(container, graph, state, onSelect) {
         5000,
     );
 
-    camera.position.set(0, 0, 700);
+    camera.position.set(0, 0, cameraDistance);
 
     const renderer = createRenderer(container);
     container.appendChild(renderer.domElement);
 
     renderer.domElement.className = "graph-3d-canvas";
-    renderer.domElement.setAttribute(
-        "aria-label",
-        "Mnemosyne 3D constellation graph",
+
+    const controls = new OrbitControls(
+        camera,
+        renderer.domElement,
     );
 
-    const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
-    controls.minDistance = 120;
-    controls.maxDistance = 2500;
+    controls.minDistance = options.compact ? 80 : 120;
+    controls.maxDistance = options.compact ? 1600 : 2500;
     controls.rotateSpeed = 0.55;
     controls.zoomSpeed = 0.8;
     controls.panSpeed = 0.6;
 
     const graphEdges = getGraphEdges(graph.edges);
-    const positions = calculatePositions(graph.nodes, graphEdges);
 
-    const edgeGroup = createEdges({ ...graph, edges: graphEdges }, positions);
+    const positions = calculatePositions(
+        graph.nodes,
+        graphEdges,
+        Boolean(options.compact),
+    );
+
+    const edgeGroup = createEdges(
+        { ...graph, edges: graphEdges },
+        positions,
+    );
+
     scene.add(edgeGroup);
 
     const nodeGroup = new THREE.Group();
@@ -449,7 +476,11 @@ export function render3D(container, graph, state, onSelect) {
             state.selectedNode?.graph_id === node.graph_id;
 
         nodeGroup.add(
-            createNodeMesh(node, position, selected),
+            createNodeMesh(
+                node,
+                position,
+                selected,
+            ),
         );
     }
 
@@ -459,7 +490,12 @@ export function render3D(container, graph, state, onSelect) {
     const pointer = new THREE.Vector2();
 
     function handlePointer(event) {
-        const rect = renderer.domElement.getBoundingClientRect();
+        const rect =
+            renderer.domElement.getBoundingClientRect();
+
+        if (!rect.width || !rect.height) {
+            return;
+        }
 
         pointer.x =
             ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -497,31 +533,195 @@ export function render3D(container, graph, state, onSelect) {
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
 
-        renderer.setSize(width, height, false);
+        renderer.setSize(
+            width,
+            height,
+            false,
+        );
     });
 
     resizeObserver.observe(container);
 
+    const instance = {
+        destroyed: false,
+        animationFrame: null,
+
+        // Expose the camera and controls to the main-view
+        // controller for zoom/reset operations.
+        camera,
+        controls,
+
+        destroy() {
+            if (this.destroyed) {
+                return;
+            }
+
+            this.destroyed = true;
+
+            cancelAnimationFrame(
+                this.animationFrame,
+            );
+
+            resizeObserver.disconnect();
+
+            renderer.domElement.removeEventListener(
+                "pointerup",
+                handlePointer,
+            );
+
+            controls.dispose();
+            disposeObject(scene);
+            renderer.dispose();
+
+            if (
+                renderer.domElement.parentNode ===
+                container
+            ) {
+                container.removeChild(
+                    renderer.domElement,
+                );
+            }
+
+            instances.delete(this);
+        },
+
+        zoomIn() {
+            const offset =
+                camera.position
+                    .clone()
+                    .sub(controls.target);
+
+            const distance = offset.length();
+
+            if (
+                distance <=
+                controls.minDistance
+            ) {
+                return;
+            }
+
+            offset.setLength(
+                Math.max(
+                    controls.minDistance,
+                    distance * 0.8,
+                ),
+            );
+
+            camera.position
+                .copy(controls.target)
+                .add(offset);
+
+            controls.update();
+        },
+
+        zoomOut() {
+            const offset =
+                camera.position
+                    .clone()
+                    .sub(controls.target);
+
+            const distance = offset.length();
+
+            if (
+                distance >=
+                controls.maxDistance
+            ) {
+                return;
+            }
+
+            offset.setLength(
+                Math.min(
+                    controls.maxDistance,
+                    distance * 1.25,
+                ),
+            );
+
+            camera.position
+                .copy(controls.target)
+                .add(offset);
+
+            controls.update();
+        },
+
+        reset() {
+            camera.position.set(
+                0,
+                0,
+                cameraDistance,
+            );
+
+            controls.target.set(
+                0,
+                0,
+                0,
+            );
+
+            controls.update();
+        },
+    };
+
+    instances.add(instance);
+
     function animate() {
-        if (active?.renderer !== renderer) {
+        if (instance.destroyed) {
             return;
         }
 
         controls.update();
         renderer.render(scene, camera);
 
-        active.animationFrame = requestAnimationFrame(animate);
+        instance.animationFrame =
+            requestAnimationFrame(animate);
     }
 
-    active = {
+    instance.animationFrame =
+        requestAnimationFrame(animate);
+
+    return instance;
+}
+
+export function destroy3D() {
+    if (!active) {
+        return;
+    }
+
+    active.destroy();
+    active = null;
+}
+
+export function render3DInstance(
+    container,
+    graph,
+    state,
+    onSelect,
+    options = {},
+) {
+    return create3DInstance(
         container,
-        scene,
-        camera,
-        renderer,
-        controls,
-        resizeObserver,
-        animationFrame: requestAnimationFrame(animate),
-    };
+        graph,
+        state,
+        onSelect,
+        options,
+    );
+}
+
+export function render3D(
+    container,
+    graph,
+    state,
+    onSelect,
+) {
+    destroy3D();
+
+    active = create3DInstance(
+        container,
+        graph,
+        state,
+        onSelect,
+        { compact: false },
+    );
+
+    return active;
 }
 
 export function zoomIn() {
@@ -569,7 +769,12 @@ export function zoomOut() {
 }
 
 export function reset3D() {
-    if (!active) {
+    if (
+        !active ||
+        active.destroyed ||
+        !active.camera ||
+        !active.controls
+    ) {
         return;
     }
 
@@ -584,4 +789,5 @@ window.Mnemosyne3D = {
     zoomIn,
     zoomOut,
     reset: reset3D,
+    createInstance: render3DInstance,
 };

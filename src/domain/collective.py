@@ -38,7 +38,7 @@ class CollectiveDAO:
     @property
     def conn(self) -> sqlite3.Connection:
         if not hasattr(self, "_conn") or self._conn is None:
-            self._conn = sqlite3.connect(str(self._db_path), detect_types=sqlite3.PARSE_DECLTYPES)
+            self._conn = sqlite3.connect(str(self._db_path), detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
             # Return rows as tuples (default).
             self._conn.row_factory = sqlite3.Row
         return self._conn

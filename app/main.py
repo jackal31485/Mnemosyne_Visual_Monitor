@@ -20,6 +20,7 @@ from app.routes.discovery import router as discovery_router
 from app.routes.browser import router as browser_router
 from app.routes.diagnostics import router as diagnostics_router
 from app.routes.memories import router as memories_router
+from app.routes.timeline import router as timeline_router
 
 # Helper for legacy admin route registration.
 def _register_router_directly(application: FastAPI, router) -> None:
@@ -64,6 +65,7 @@ def create_app() -> FastAPI:
     # Diagnostics endpoints
     application.include_router(diagnostics_router)
     _register_router_directly(application, memories_router)
+    _register_router_directly(application, timeline_router)
 
     return application
 

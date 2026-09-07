@@ -12,7 +12,8 @@ const state = {
     selectedProfile: null,
     graph: {nodes: [], edges: {}},
     selectedNode: null,
-    viewMode: "2d",
+    viewMode: "tiles",
+    informationView: "overview",
     edgeLimit: 5,
     zoom: 1, panX: 0, panY: 0,
     dragging: false,
@@ -21,6 +22,14 @@ const state = {
     scanning: false,
     agentMap: new Map(),
     localAgentId: null,
+
+    globalFilter: {
+        search: "",
+        dateFrom: "",
+        dateTo: "",
+        profileScope: "all",
+    },
+    globalEvents: null,
 };
 
 function $(id) { return document.getElementById(id); }
@@ -60,13 +69,32 @@ async function postJSON(path) {
 
 function normalizeProfiles(data) {
     if (!Array.isArray(data)) throw new Error("Invalid profile response.");
-    return data.map((entry) => Array.isArray(entry)
-        ? {id: entry[0], name: entry[1], memory_count: entry[2]}
-        : {id: entry.id, name: entry.name, memory_count: entry.memory_count});
+
+    return data.map((entry) => {
+        const profile = Array.isArray(entry)
+            ? {
+                id: entry[0],
+                name: entry[1],
+                memory_count: entry[2],
+            }
+            : {
+                id: entry.id,
+                name: entry.name,
+                memory_count: entry.memory_count,
+            };
+
+        const rawName = String(profile.name || profile.id || "unknown");
+        const displayName = profileLabel(rawName);
+
+        return {
+            ...profile,
+            name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
+        };
+    });
 }
 
 async function fetchProfiles() {
-    return normalizeProfiles(await fetchJSON("/profiles/"));
+    return normalizeProfiles(await fetchJSON("/api/collective/profiles"));
 }
 
 async function fetchGraph(profile = null) {
@@ -87,6 +115,22 @@ async function fetchDiagnostics() {
 
 async function fetchAgents() {
     return fetchJSON("/api/discovery");
+}
+
+function countEdges(edges) {
+    if (!edges || typeof edges !== "object") return 0;
+
+    return Object.values(edges).reduce((total, connections) => {
+        if (Array.isArray(connections)) {
+            return total + connections.length;
+        }
+
+        if (connections && typeof connections === "object") {
+            return total + Object.keys(connections).length;
+        }
+
+        return total;
+    }, 0);
 }
 
 function profileLabel(sourceProfile) {
@@ -152,9 +196,59 @@ function saveProfileColours() {
     );
 }
 
+function renderGlobalProfileFilter() {
+    const select = $("global-profile-scope");
+
+    if (!select) {
+        return;
+    }
+
+    const currentValue = state.globalFilter.profileScope || "all";
+
+    select.innerHTML = "";
+
+    const allOption = document.createElement("option");
+    allOption.value = "all";
+    allOption.textContent = "All Profiles";
+    select.appendChild(allOption);
+
+    const profiles = Array.isArray(state.profiles)
+        ? state.profiles
+        : [];
+
+    for (const profile of profiles) {
+        const id = String(profile?.id || "").trim();
+
+        if (!id) {
+            continue;
+        }
+
+        const option = document.createElement("option");
+        option.value = profileLabel(id);
+        option.textContent =
+            profile?.name || profileLabel(id);
+
+        select.appendChild(option);
+    }
+
+    const validValues = new Set(
+        Array.from(select.options).map(option => option.value)
+    );
+
+    state.globalFilter.profileScope =
+        validValues.has(currentValue)
+            ? currentValue
+            : "all";
+
+    select.value = state.globalFilter.profileScope;
+}
+
+
 function renderProfiles(profiles) {
     const list = $("profile-list");
     list.innerHTML = "";
+
+    renderGlobalProfileFilter();
 
     const addProfile = (profile, all = false) => {
         const item = document.createElement("li");
@@ -208,27 +302,6 @@ function renderLegend(profiles) {
     }
 }
 
-function renderStatistics(diagnostics = null) {
-    $("stat-profiles").textContent =
-        diagnostics?.profiles?.total_profiles ?? state.profiles.length ?? "—";
-
-    const fallbackMemoryCount = state.profiles.reduce(
-        (sum, profile) => sum + Number(profile.memory_count || 0), 0
-    );
-    $("stat-memories").textContent =
-        diagnostics?.profiles?.total_memories ?? fallbackMemoryCount;
-
-    $("stat-nodes").textContent = state.graph.nodes.length;
-    $("stat-edges").textContent = countEdges(state.graph.edges);
-}
-
-function countEdges(edges) {
-    if (!edges || typeof edges !== "object") return 0;
-    return Object.values(edges).reduce(
-        (total, outgoing) => total + (Array.isArray(outgoing) ? outgoing.length : 0), 0
-    );
-}
-
 function flattenEdges(edges) {
     const result = [];
     if (!edges || typeof edges !== "object") return result;
@@ -247,6 +320,38 @@ function flattenEdges(edges) {
     }
     return result;
 }
+
+function renderGraph3D(graph) {
+    const container = $("graph-view");
+
+    if (window.Mnemosyne3D?.render) {
+        window.Mnemosyne3D.render(
+            container,
+            graph,
+            state,
+            (node, selectedGraph) => selectNode(node, selectedGraph),
+        );
+        return;
+    }
+
+    container.innerHTML =
+        '<div class="loading-state">Loading 3D constellation…</div>';
+
+    if (!window.__mnemosyne3d_waiting) {
+        window.__mnemosyne3d_waiting = true;
+
+        window.addEventListener(
+            "mnemosyne-3d-ready",
+            () => {
+                window.__mnemosyne3d_waiting = false;
+                renderGraph3D(state.graph);
+            },
+            { once: true },
+        );
+    }
+}
+
+
 
 function calculateLayout(nodes, width, height) {
     const centerX = width / 2, centerY = height / 2;
@@ -284,47 +389,33 @@ function calculateLayout(nodes, width, height) {
 
 function createSVGElement(name, attributes = {}) {
     const element = document.createElementNS("http://www.w3.org/2000/svg", name);
-    for (const [key,value] of Object.entries(attributes)) element.setAttribute(key,value);
+    for (const [key, value] of Object.entries(attributes)) {
+        element.setAttribute(key, value);
+    }
     return element;
 }
 
-function renderGraph(graph) {
-    if (state.viewMode === "3d") {
-        renderGraph3D(graph);
-        return;
-    }
-
-    renderGraph2D(graph);
-}
-
-function renderGraph3D(graph) {
-    const container = $("graph-view");
-
-    if (window.Mnemosyne3D?.render) {
-        window.Mnemosyne3D.render(
-            container,
-            graph,
-            state,
-            (node, selectedGraph) => selectNode(node, selectedGraph),
-        );
-        return;
-    }
-
-    container.innerHTML =
-        '<div class="loading-state">Loading 3D constellation…</div>';
-
-    if (!window.__mnemosyne3d_waiting) {
-        window.__mnemosyne3d_waiting = true;
-
-        window.addEventListener(
-            "mnemosyne-3d-ready",
-            () => {
-                window.__mnemosyne3d_waiting = false;
-                renderGraph3D(state.graph);
-            },
-            { once: true },
-        );
-    }
+function bindGraphInteraction(container) {
+    container.onwheel = e => {
+        e.preventDefault();
+        state.zoom = Math.max(.2,Math.min(8,state.zoom*(e.deltaY < 0 ? 1.15 : .87)));
+        applyTransform();
+    };
+    container.onmousedown = e => {
+        if(e.target.closest(".graph-node")) return;
+        state.dragging=true; state.dragStartX=e.clientX; state.dragStartY=e.clientY;
+        state.panStartX=state.panX; state.panStartY=state.panY;
+        container.classList.add("dragging");
+    };
+    window.onmousemove = e => {
+        if(!state.dragging) return;
+        state.panX=state.panStartX+(e.clientX-state.dragStartX);
+        state.panY=state.panStartY+(e.clientY-state.dragStartY);
+        applyTransform();
+    };
+    window.onmouseup = () => {
+        state.dragging=false; container.classList.remove("dragging");
+    };
 }
 
 function renderGraph2D(graph) {
@@ -386,202 +477,1201 @@ function renderGraph2D(graph) {
     applyTransform();
 }
 
-function bindGraphInteraction(container) {
-    container.onwheel = e => {
-        e.preventDefault();
-        state.zoom = Math.max(.2,Math.min(8,state.zoom*(e.deltaY < 0 ? 1.15 : .87)));
-        applyTransform();
-    };
-    container.onmousedown = e => {
-        if(e.target.closest(".graph-node")) return;
-        state.dragging=true; state.dragStartX=e.clientX; state.dragStartY=e.clientY;
-        state.panStartX=state.panX; state.panStartY=state.panY;
-        container.classList.add("dragging");
-    };
-    window.onmousemove = e => {
-        if(!state.dragging) return;
-        state.panX=state.panStartX+(e.clientX-state.dragStartX);
-        state.panY=state.panStartY+(e.clientY-state.dragStartY);
-        applyTransform();
-    };
-    window.onmouseup = () => {
-        state.dragging=false; container.classList.remove("dragging");
-    };
+/* Tile View helpers */
+
+const INFORMATION_VIEW_TYPES = [
+    {
+        id: "2d",
+        label: "2D Constellation",
+        scope: "all",
+    },
+    {
+        id: "3d",
+        label: "3D Constellation",
+        scope: "all",
+    },
+    {
+        id: "table",
+        label: "Data Table",
+        scope: "all",
+    },
+    {
+        id: "profile-views",
+        label: "Profile Views",
+        scope: "all",
+    },
+    {
+        id: "activity",
+        label: "Activity",
+        scope: "all",
+    },
+    {
+        id: "status",
+        label: "Collective Status",
+        scope: "all",
+    },
+    {
+        id: "validation",
+        label: "Validation",
+        scope: "all",
+    },
+];
+
+const PROFILE_TILE_VIEW_TYPES = INFORMATION_VIEW_TYPES.slice();
+
+const tileEventCache = new Map();
+
+async function fetchTileEvents(profileId) {
+    if (!profileId) {
+        return [];
+    }
+
+    if (tileEventCache.has(profileId)) {
+        return tileEventCache.get(profileId);
+    }
+
+    const response = await fetch(
+        `/api/events?profile=${encodeURIComponent(profileId)}`
+    );
+
+    if (!response.ok) {
+        throw new Error(`Event request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const events = Array.isArray(data.events) ? data.events : [];
+
+    tileEventCache.set(profileId, events);
+    return events;
 }
 
-function applyTransform() {
-    const viewport = document.querySelector(".graph-viewport");
-    if(viewport) viewport.setAttribute(
-        "transform",`translate(${state.panX} ${state.panY}) scale(${state.zoom})`
+async function fetchTileGraph(profileId) {
+    if (!profileId) {
+        return { nodes: [], edges: {} };
+    }
+
+    const params = new URLSearchParams();
+    params.set("source_profile", profileId);
+
+    if (state.edgeLimit !== null) {
+        params.set("edge_limit", String(state.edgeLimit));
+    }
+
+    return fetchJSON(`/api/graph?${params.toString()}`);
+}
+
+function flattenTileEdges(edges) {
+    if (Array.isArray(edges)) {
+        return edges;
+    }
+
+    if (!edges || typeof edges !== "object") {
+        return [];
+    }
+
+    const result = [];
+
+    for (const [sourceId, values] of Object.entries(edges)) {
+        if (!Array.isArray(values)) {
+            continue;
+        }
+
+        for (const edge of values) {
+            if (!edge || typeof edge !== "object") {
+                continue;
+            }
+
+            result.push({
+                ...edge,
+                source_id: edge.source_id ?? sourceId,
+            });
+        }
+    }
+
+    return result;
+}
+
+function sortProfilesByMemoryCount(a, b) {
+    return Number(b.memory_count || 0) - Number(a.memory_count || 0);
+}
+
+function getDefaultTileProfiles(profiles, count) {
+    return [...profiles]
+        .sort(sortProfilesByMemoryCount)
+        .slice(0, count)
+        .map(profile => ({
+            profileId: profile.id,
+            viewType: "profile-views",
+        }));
+}
+
+function loadTileConfiguration(profiles) {
+    const requestedCount =
+        Number(localStorage.getItem("mnemosyne-tile-view-count")) || 4;
+
+    const count = Math.max(
+        1,
+        Math.min(requestedCount, Math.max(profiles.length, 1)),
+    );
+
+    let saved = null;
+
+    try {
+        saved = JSON.parse(
+            localStorage.getItem("mnemosyne-tile-configuration") || "null"
+        );
+    } catch (_) {
+        saved = null;
+    }
+
+    if (!Array.isArray(saved) || saved.length === 0) {
+        return getDefaultTileProfiles(profiles, count);
+    }
+
+    const validIds = new Set(profiles.map(profile => profile.id));
+
+    const defaults = getDefaultTileProfiles(profiles, count);
+
+    const configuration = saved
+        .slice(0, count)
+        .map((tile, index) => ({
+            profileId: validIds.has(tile?.profileId)
+                ? tile.profileId
+                : (defaults[index]?.profileId || null),
+            viewType: INFORMATION_VIEW_TYPES.some(
+                type => type.id === tile?.viewType
+            )
+                ? tile.viewType
+                : (defaults[index]?.viewType || "profile-views"),
+        }));
+
+    while (configuration.length < count) {
+        configuration.push(
+            defaults[configuration.length] || {
+                profileId: null,
+                viewType: "profile-views",
+            }
+        );
+    }
+
+    return configuration;
+}
+
+function saveTileConfiguration() {
+    localStorage.setItem(
+        "mnemosyne-tile-view-count",
+        String(state.tileViewCount),
+    );
+
+    localStorage.setItem(
+        "mnemosyne-tile-configuration",
+        JSON.stringify(state.tileProfiles),
     );
 }
-function resetGraphView(){
-    state.zoom=1;
-    state.panX=0;
-    state.panY=0;
 
-    if(window.Mnemosyne3D?.reset){
-        window.Mnemosyne3D.reset();
+function initTiles(profiles) {
+    state.tileViewCount =
+        Number(localStorage.getItem("mnemosyne-tile-view-count")) || 4;
+
+    state.tileViewCount = Math.max(
+        1,
+        Math.min(state.tileViewCount, Math.max(profiles.length, 1)),
+    );
+
+    state.tileProfiles = loadTileConfiguration(profiles);
+
+    // Persist repaired/default tile assignments so stale null
+    // profile IDs do not return on the next page load.
+    saveTileConfiguration();
+
+    renderTileView();
+}
+
+function setTileCount(count) {
+    const nextCount = Math.max(
+        1,
+        Math.min(Number(count) || 4, Math.max(state.profiles.length, 1)),
+    );
+
+    state.tileViewCount = nextCount;
+
+    const current = Array.isArray(state.tileProfiles)
+        ? state.tileProfiles
+        : [];
+
+    const next = current.slice(0, nextCount);
+
+    while (next.length < nextCount) {
+        const profile = [...state.profiles]
+            .sort(sortProfilesByMemoryCount)
+            .find(candidate =>
+                !next.some(tile => tile.profileId === candidate.id)
+            );
+
+        next.push({
+            profileId: profile?.id || null,
+            viewType: "profile-views",
+        });
+    }
+
+    state.tileProfiles = next;
+    saveTileConfiguration();
+    renderTileView();
+}
+
+function updateTile(index, field, value) {
+    if (!state.tileProfiles[index]) {
         return;
     }
 
-    applyTransform();
+    state.tileProfiles[index][field] = value;
+    saveTileConfiguration();
+    renderTileView();
 }
+
+function formatTileDate(value) {
+    if (!value) {
+        return "Not recorded";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return String(value);
+    }
+
+    return date.toLocaleString();
+}
+
+function renderTileOverview(body, profile, events) {
+    const total = Number(profile.memory_count || 0);
+    const collectiveTotal = state.profiles.reduce(
+        (sum, candidate) => sum + Number(candidate.memory_count || 0),
+        0,
+    );
+
+    const share = collectiveTotal
+        ? ((total / collectiveTotal) * 100).toFixed(1)
+        : "0.0";
+
+    body.innerHTML = `
+        <h3>${escapeHTML(profile.name)}</h3>
+        <div class="tile-memory-count">${total.toLocaleString()}</div>
+        <div class="tile-memory-label">collective memories</div>
+        <div class="tile-stat-row">
+            <span>Collective share</span>
+            <strong>${share}%</strong>
+        </div>
+        <div class="tile-progress">
+            <div class="tile-progress-fill" style="width:${Math.max(3, Number(share))}%"></div>
+        </div>
+    `;
+}
+
+function renderTileActivity(body, profile, events) {
+    const promoted = events.filter(event => event.is_promoted).length;
+    const revoked = events.filter(event => event.is_revoked).length;
+    const validated = events.filter(event => event.validated_at).length;
+
+    const latest = events.length
+        ? events[events.length - 1]
+        : null;
+
+    body.innerHTML = `
+        <h3>${escapeHTML(profile.name)}</h3>
+        <div class="tile-kpi">${events.length.toLocaleString()}</div>
+        <div class="tile-memory-label">collective events</div>
+        <div class="tile-stat-grid">
+            <div><strong>${promoted}</strong><span>Promoted</span></div>
+            <div><strong>${validated}</strong><span>Validated</span></div>
+            <div><strong>${revoked}</strong><span>Revoked</span></div>
+        </div>
+        <div class="tile-latest">
+            <span>Latest entry</span>
+            <strong>${latest ? `#${latest.id}` : "None"}</strong>
+        </div>
+    `;
+}
+
+function renderTileStatus(body, profile, events) {
+    const promoted = events.filter(event => event.is_promoted).length;
+    const revoked = events.filter(event => event.is_revoked).length;
+    const pending = events.filter(
+        event => !event.is_promoted && !event.is_revoked
+    ).length;
+
+    body.innerHTML = `
+        <h3>${escapeHTML(profile.name)}</h3>
+        <div class="tile-status-primary">
+            <strong>${promoted.toLocaleString()}</strong>
+            <span>promoted to collective</span>
+        </div>
+        <div class="tile-stat-grid">
+            <div><strong>${pending}</strong><span>Pending</span></div>
+            <div><strong>${revoked}</strong><span>Revoked</span></div>
+        </div>
+        <div class="tile-status-message">
+            ${revoked === 0 && pending === 0
+                ? "All recorded memories are currently promoted."
+                : "Collective entries have mixed lifecycle states."}
+        </div>
+    `;
+}
+
+function renderTileValidation(body, profile, events) {
+    const scored = events.filter(
+        event => event.validation_score !== null &&
+                 event.validation_score !== undefined
+    );
+
+    const validated = events.filter(event => event.validated_at).length;
+
+    if (!scored.length && !validated) {
+        body.innerHTML = `
+            <h3>${escapeHTML(profile.name)}</h3>
+            <div class="tile-kpi">—</div>
+            <div class="tile-memory-label">validation score</div>
+            <div class="tile-status-message">
+                No validation data recorded yet.
+            </div>
+        `;
+        return;
+    }
+
+    const average = scored.reduce(
+        (sum, event) => sum + Number(event.validation_score || 0),
+        0,
+    ) / scored.length;
+
+    body.innerHTML = `
+        <h3>${escapeHTML(profile.name)}</h3>
+        <div class="tile-kpi">${average.toFixed(2)}</div>
+        <div class="tile-memory-label">average validation score</div>
+        <div class="tile-stat-row">
+            <span>Validated entries</span>
+            <strong>${validated}</strong>
+        </div>
+        <div class="tile-stat-row">
+            <span>Scored entries</span>
+            <strong>${scored.length}</strong>
+        </div>
+    `;
+}
+
+
+
+
+function renderTileProfileViews(body, profile, events) {
+    const total = Number(profile.memory_count || 0);
+
+    const latest = events.length
+        ? events[events.length - 1]
+        : null;
+
+    body.innerHTML = `
+        <h3>${escapeHTML(profile.name)}</h3>
+
+        <div class="tile-memory-count">
+            ${total.toLocaleString()}
+        </div>
+
+        <div class="tile-memory-label">
+            memories
+        </div>
+
+        <div class="tile-stat-grid">
+            <div>
+                <strong>${events.length.toLocaleString()}</strong>
+                <span>Collective events</span>
+            </div>
+
+            <div>
+                <strong>${events.filter(e => e.validated_at).length}</strong>
+                <span>Validated</span>
+            </div>
+        </div>
+
+        <div class="tile-latest">
+            <span>Latest event</span>
+            <strong>
+                ${latest ? `#${escapeHTML(String(latest.id))}` : "None"}
+            </strong>
+        </div>
+    `;
+}
+
+
+function renderTileDataTable(body, profile, events) {
+    const recent = events.slice(-8).reverse();
+
+    const lifecycleState = event => {
+        if (event?.lifecycle_state) {
+            return event.lifecycle_state;
+        }
+
+        if (event?.is_revoked) {
+            return "Revoked";
+        }
+
+        if (event?.is_promoted) {
+            return "Promoted";
+        }
+
+        if (event?.validated_at) {
+            return "Validated";
+        }
+
+        return "Pending";
+    };
+
+    body.innerHTML = "";
+
+    const heading = document.createElement("h3");
+    heading.textContent = profile.name;
+    body.appendChild(heading);
+
+    const label = document.createElement("div");
+    label.className = "tile-memory-label";
+    label.textContent = "Recent entries";
+    body.appendChild(label);
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "tile-data-table-wrapper";
+
+    const table = document.createElement("table");
+    table.className = "data-table tile-data-table";
+
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th>Memory Content</th>
+                <th>Agent / Profile</th>
+                <th>Date / Time</th>
+                <th>Lifecycle</th>
+                <th>Memory ID</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    `;
+
+    const tableBody = table.querySelector("tbody");
+
+    for (const event of recent) {
+        const row = document.createElement("tr");
+
+        const contentCell = document.createElement("td");
+        contentCell.className = "memory-preview";
+        contentCell.textContent =
+            event?.memory_content ||
+            "No memory content available.";
+
+        const profileCell = document.createElement("td");
+        profileCell.textContent =
+            event?.profile ||
+            profile?.name ||
+            profileLabel(event?.source_profile);
+
+        const dateCell = document.createElement("td");
+        dateCell.className = "memory-date";
+        dateCell.textContent = formatMemoryDate(event);
+
+        const lifecycleCell = document.createElement("td");
+        lifecycleCell.textContent = lifecycleState(event);
+
+        const idCell = document.createElement("td");
+        idCell.className = "memory-id";
+        idCell.textContent =
+            `#${String(event?.id ?? "")}`;
+
+        row.appendChild(contentCell);
+        row.appendChild(profileCell);
+        row.appendChild(dateCell);
+        row.appendChild(lifecycleCell);
+        row.appendChild(idCell);
+
+        row.addEventListener("click", () => {
+            const graphNode = state.graph.nodes.find(node =>
+                String(node?.source_profile || "").trim() ===
+                    String(event?.source_profile || "").trim() &&
+                String(node?.origin_memory_id || "").trim() ===
+                    String(event?.origin_memory_id || "").trim()
+            );
+
+            if (graphNode) {
+                selectNode(graphNode, state.graph);
+            }
+        });
+
+        tableBody.appendChild(row);
+    }
+
+    if (!recent.length) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+
+        cell.colSpan = 5;
+        cell.className = "tile-empty";
+        cell.textContent = "No entries.";
+
+        row.appendChild(cell);
+        tableBody.appendChild(row);
+    }
+
+    wrapper.appendChild(table);
+    body.appendChild(wrapper);
+}
+
+function renderTileConstellation3D(body, profile, graph) {
+    body.innerHTML = "";
+
+    const heading = document.createElement("h3");
+    heading.textContent = profile.name;
+    heading.className = "tile-3d-title";
+
+    const host = document.createElement("div");
+    host.className = "tile-3d-host";
+
+    body.classList.add("tile-3d-constellation");
+
+    body.appendChild(heading);
+    body.appendChild(host);
+
+    if (!window.Mnemosyne3D?.createInstance) {
+        host.innerHTML =
+            '<div class="loading-state">3D constellation unavailable.</div>';
+        return;
+    }
+
+    const instance = window.Mnemosyne3D.createInstance(
+        host,
+        graph,
+        state,
+        (node, selectedGraph) => selectNode(node, selectedGraph),
+        { compact: true },
+    );
+
+    body._mnemosyne3dInstance = instance;
+}
+
+async function renderTileCardBody(body, profile, viewType) {
+    if (!profile) {
+        body.innerHTML =
+            '<div class="tile-empty">Select a profile for this tile.</div>';
+        return;
+    }
+
+    if (body._mnemosyne3dInstance?.destroy) {
+        body._mnemosyne3dInstance.destroy();
+        body._mnemosyne3dInstance = null;
+    }
+
+    body.innerHTML =
+        '<div class="tile-loading">Loading tile data…</div>';
+
+    try {
+        if (viewType === "2d" || viewType === "3d") {
+            let graph = await fetchTileGraph(profile.id);
+
+            const hasFilters =
+                Boolean(state.globalFilter.search?.trim()) ||
+                Boolean(state.globalFilter.dateFrom) ||
+                Boolean(state.globalFilter.dateTo) ||
+                (
+                    state.globalFilter.profileScope !== "all" &&
+                    Boolean(state.globalFilter.profileScope)
+                );
+
+            if (hasFilters) {
+                graph = await getGloballyFilteredGraph(graph);
+            }
+
+            if (viewType === "2d") {
+                renderTileConstellation2D(
+                    body,
+                    profile,
+                    graph,
+                );
+            } else {
+                renderTileConstellation3D(
+                    body,
+                    profile,
+                    graph,
+                );
+            }
+
+            return;
+        }
+
+        const rawEvents = await fetchTileEvents(profile.id);
+        const events = filterTimelineEvents(rawEvents);
+
+        switch (viewType) {
+            case "table":
+                renderTileDataTable(body, profile, events);
+                break;
+
+            case "profile-views":
+                renderTileProfileViews(body, profile, events);
+                break;
+
+            case "activity":
+                renderTileActivity(body, profile, events);
+                break;
+
+            case "status":
+                renderTileStatus(body, profile, events);
+                break;
+
+            case "validation":
+                renderTileValidation(body, profile, events);
+                break;
+
+            default:
+                renderTileProfileViews(body, profile, events);
+                break;
+        }
+    } catch (error) {
+        console.error("Tile data error:", error);
+
+        body.innerHTML =
+            '<div class="tile-empty">Unable to load tile data.</div>';
+    }
+}
+
+
+function renderTileView() {
+    const container = $("tile-view");
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = "";
+
+    const toolbar = document.createElement("div");
+    toolbar.className = "tile-toolbar";
+
+    const title = document.createElement("div");
+    title.className = "tile-toolbar-title";
+    title.innerHTML =
+        "<strong>Profile Dashboard</strong>" +
+        "<span>Configure what information each tile displays.</span>";
+
+    const countLabel = document.createElement("label");
+    countLabel.className = "tile-count-control";
+    countLabel.innerHTML = "<span>Tiles</span>";
+
+    const countSelect = document.createElement("select");
+
+    [1, 2, 4, 6, 8].forEach(count => {
+        if (count > Math.max(state.profiles.length, 1)) {
+            return;
+        }
+
+        const option = document.createElement("option");
+        option.value = String(count);
+        option.textContent = String(count);
+
+        if (count === state.tileViewCount) {
+            option.selected = true;
+        }
+
+        countSelect.appendChild(option);
+    });
+
+    countSelect.addEventListener("change", event => {
+        setTileCount(event.target.value);
+    });
+
+    countLabel.appendChild(countSelect);
+    toolbar.appendChild(title);
+    toolbar.appendChild(countLabel);
+    container.appendChild(toolbar);
+
+    const grid = document.createElement("div");
+    grid.className = "tile-grid";
+
+    if (!state.profiles.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent = "No profiles available.";
+        grid.appendChild(empty);
+        container.appendChild(grid);
+        return;
+    }
+
+    state.tileProfiles.forEach((tile, index) => {
+        const profile = state.profiles.find(
+            candidate => candidate.id === tile.profileId
+        );
+
+        const card = document.createElement("article");
+        card.className = "tile-card";
+
+        const header = document.createElement("div");
+        header.className = "tile-card-header";
+
+        const number = document.createElement("span");
+        number.className = "tile-number";
+        number.textContent = `Tile ${index + 1}`;
+
+        const profileSelect = document.createElement("select");
+        profileSelect.className = "tile-profile-select";
+
+        state.profiles
+            .slice()
+            .sort(sortProfilesByMemoryCount)
+            .forEach(candidate => {
+                const option = document.createElement("option");
+                option.value = candidate.id;
+                option.textContent = candidate.name;
+
+                if (candidate.id === tile.profileId) {
+                    option.selected = true;
+                }
+
+                profileSelect.appendChild(option);
+            });
+
+        profileSelect.addEventListener("change", event => {
+            updateTile(index, "profileId", event.target.value);
+        });
+
+        header.appendChild(number);
+        header.appendChild(profileSelect);
+
+        const controls = document.createElement("div");
+        controls.className = "tile-card-controls";
+
+        const viewSelect = document.createElement("select");
+        viewSelect.className = "tile-view-select";
+
+        INFORMATION_VIEW_TYPES.forEach(type => {
+            const option = document.createElement("option");
+            option.value = type.id;
+            option.textContent = type.label;
+
+            if (type.id === tile.viewType) {
+                option.selected = true;
+            }
+
+            viewSelect.appendChild(option);
+        });
+
+        viewSelect.addEventListener("change", event => {
+            updateTile(index, "viewType", event.target.value);
+        });
+
+        controls.appendChild(viewSelect);
+
+        const body = document.createElement("div");
+        body.className = "tile-card-body";
+
+        card.appendChild(header);
+        card.appendChild(controls);
+        card.appendChild(body);
+
+        card.addEventListener("click", event => {
+            if (
+                event.target.closest("select") ||
+                !profile
+            ) {
+                return;
+            }
+
+            selectProfile(profile.id);
+        });
+
+        grid.appendChild(card);
+
+        renderTileCardBody(body, profile, tile.viewType);
+    });
+
+    container.appendChild(grid);
+}
+
 
 function renderInspector(node, graph) {
     const container = $("inspector-content");
-    if(!node){
-        container.innerHTML='<div class="empty-state"><strong>No selection</strong><p>Select a node to inspect its memory.</p></div>';
+
+    if (!node) {
+        container.innerHTML =
+            '<div class="empty-state">' +
+            '<strong>No selection</strong>' +
+            '<p>Select a node to inspect its memory.</p>' +
+            '</div>';
         return;
     }
-    const outgoing = Array.isArray(graph.edges?.[node.graph_id]) ? graph.edges[node.graph_id] : [];
-    const incoming = flattenEdges(graph.edges).filter(e=>e.target_id===node.graph_id);
 
-    container.innerHTML="";
-    const memorySection=document.createElement("section");
-    memorySection.className="inspector-section";
-    memorySection.innerHTML=`
-        <h3>Memory Content</h3>
-        <div id="memory-content" class="memory-loading">Loading source memory…</div>`;
+    const outgoing = Array.isArray(graph.edges?.[node.graph_id])
+        ? graph.edges[node.graph_id]
+        : [];
+
+    const incoming = flattenEdges(graph.edges)
+        .filter(e => e.target_id === node.graph_id);
+
+    container.innerHTML = "";
+
+    const title = document.createElement("section");
+    title.className = "inspector-section";
+    title.innerHTML = `
+        <h3>${escapeHTML(
+            INFORMATION_VIEW_TYPES.find(
+                type => type.id === state.informationView
+            )?.label || "Profile Overview"
+        )}</h3>
+    `;
+    container.appendChild(title);
+
+    if (state.informationView === "2d") {
+        renderGraph2D(graph);
+    } else if (state.informationView === "3d") {
+        renderGraph3D(graph);
+    } else if (state.informationView === "table") {
+        renderTable(graph);
+    } else if (state.informationView === "activity") {
+        renderInspectorActivity(container, node, graph);
+    } else if (state.informationView === "status") {
+        renderInspectorStatus(container, node, graph);
+    } else if (state.informationView === "validation") {
+        renderInspectorValidation(container, node, graph);
+    } else {
+        renderInspectorOverview(container, node, graph, outgoing, incoming);
+    }
+}
+
+function inspectorSection(title) {
+    const section = document.createElement("section");
+    section.className = "inspector-section";
+
+    const heading = document.createElement("h3");
+    heading.textContent = title;
+
+    section.appendChild(heading);
+    return section;
+}
+
+function renderInspectorOverview(container, node, graph, outgoing, incoming) {
+    const memorySection = inspectorSection("Memory Content");
+    memorySection.innerHTML +=
+        '<div id="memory-content" class="memory-loading">' +
+        'Loading source memory…</div>';
     container.appendChild(memorySection);
 
-    const identity=document.createElement("section");
-    identity.className="inspector-section";
-    identity.innerHTML=`
-        <h3>Identity</h3><dl class="inspector-grid">
-        <dt>Graph ID</dt><dd>${escapeHTML(node.graph_id)}</dd>
-        <dt>Profile</dt><dd>${escapeHTML(node.source_profile)}</dd>
-        <dt>Memory ID</dt><dd>${escapeHTML(node.origin_memory_id)}</dd>
+    const identity = inspectorSection("Identity");
+    identity.innerHTML += `
+        <dl class="inspector-grid">
+            <dt>Graph ID</dt><dd>${escapeHTML(node.graph_id)}</dd>
+            <dt>Profile</dt><dd>${escapeHTML(node.source_profile)}</dd>
+            <dt>Memory ID</dt><dd>${escapeHTML(node.origin_memory_id)}</dd>
         </dl>`;
     container.appendChild(identity);
 
-    const lifecycle=document.createElement("section");
-    lifecycle.className="inspector-section";
-    lifecycle.innerHTML=`
-        <h3>Lifecycle</h3><dl class="inspector-grid">
-        <dt>State</dt><dd>${escapeHTML(node.lifecycle_state)}</dd>
-        <dt>Proposed</dt><dd>${escapeHTML(node.proposed_at)}</dd>
-        <dt>Validated</dt><dd>${escapeHTML(node.validated_at)}</dd>
-        <dt>Validator</dt><dd>${escapeHTML(node.validator_profile)}</dd>
-        <dt>Validation score</dt><dd>${formatScore(node.validation_score)}</dd>
+    const lifecycle = inspectorSection("Lifecycle");
+    lifecycle.innerHTML += `
+        <dl class="inspector-grid">
+            <dt>State</dt><dd>${escapeHTML(node.lifecycle_state)}</dd>
+            <dt>Proposed</dt><dd>${escapeHTML(node.proposed_at)}</dd>
+            <dt>Validated</dt><dd>${escapeHTML(node.validated_at)}</dd>
+            <dt>Validator</dt><dd>${escapeHTML(node.validator_profile)}</dd>
+            <dt>Validation score</dt><dd>${formatScore(node.validation_score)}</dd>
         </dl>`;
     container.appendChild(lifecycle);
 
-    const relationships=document.createElement("section");
-    relationships.className="inspector-section";
-    relationships.innerHTML=`<h3>Relationships</h3><div class="relationship-count">${outgoing.length} outgoing · ${incoming.length} incoming</div>`;
-    for(const edge of outgoing){
-        const item=document.createElement("div");
-        item.className="relationship";
-        item.innerHTML=`<div><span class="relationship-type">${escapeHTML(edge.relationship_type)}</span></div>
+    const relationships = inspectorSection("Relationships");
+    relationships.innerHTML +=
+        `<div class="relationship-count">${outgoing.length} outgoing · ${incoming.length} incoming</div>`;
+
+    for (const edge of outgoing) {
+        const item = document.createElement("div");
+        item.className = "relationship";
+        item.innerHTML = `
+            <div>
+                <span class="relationship-type">
+                    ${escapeHTML(edge.relationship_type)}
+                </span>
+            </div>
             <div>→ ${escapeHTML(edge.target_id)}</div>
             <div>similarity: ${formatScore(edge.similarity_score)}</div>`;
         relationships.appendChild(item);
     }
-    if(!outgoing.length){
-        const empty=document.createElement("div");
-        empty.className="empty-state"; empty.textContent="No outgoing relationships in this view.";
+
+    if (!outgoing.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent = "No outgoing relationships in this view.";
         relationships.appendChild(empty);
     }
-    container.appendChild(relationships);
 
+    container.appendChild(relationships);
     loadMemoryContent(node);
 }
 
-async function loadMemoryContent(node) {
-    const target=$("memory-content");
-    if(!target) return;
-    try {
-        const source=String(node.source_profile || "");
-        let data;
-        if(source.includes(":")){
-            const separator=source.indexOf(":");
-            const agentId=source.slice(0,separator);
-            const profile=source.slice(separator+1);
+function renderInspectorActivity(container, node, graph) {
+    const outgoing = Array.isArray(graph.edges?.[node.graph_id])
+        ? graph.edges[node.graph_id]
+        : [];
 
-            if(agentId === state.localAgentId){
-                data=await fetchJSON(
+    const section = inspectorSection("Activity");
+    section.innerHTML += `
+        <div class="tile-stat-grid">
+            <div>
+                <strong>${outgoing.length}</strong>
+                <span>Outgoing relationships</span>
+            </div>
+            <div>
+                <strong>${flattenEdges(graph.edges)
+                    .filter(e => e.target_id === node.graph_id).length}</strong>
+                <span>Incoming relationships</span>
+            </div>
+        </div>
+
+        <dl class="inspector-grid">
+            <dt>Lifecycle</dt>
+            <dd>${escapeHTML(node.lifecycle_state)}</dd>
+            <dt>Proposed</dt>
+            <dd>${escapeHTML(node.proposed_at)}</dd>
+            <dt>Validated</dt>
+            <dd>${escapeHTML(node.validated_at)}</dd>
+        </dl>`;
+    container.appendChild(section);
+
+    const memory = inspectorSection("Memory Content");
+    memory.innerHTML +=
+        '<div id="memory-content" class="memory-loading">' +
+        'Loading source memory…</div>';
+    container.appendChild(memory);
+    loadMemoryContent(node);
+}
+
+function renderInspectorStatus(container, node) {
+    const section = inspectorSection("Collective Status");
+
+    const promoted = node.is_promoted !== false;
+    const revoked = Boolean(node.is_revoked);
+
+    section.innerHTML += `
+        <div class="tile-status-primary">
+            <strong>${revoked ? "Revoked" : promoted ? "Promoted" : "Pending"}</strong>
+            <span>current collective lifecycle</span>
+        </div>
+
+        <dl class="inspector-grid">
+            <dt>Profile</dt>
+            <dd>${escapeHTML(node.source_profile)}</dd>
+            <dt>Lifecycle state</dt>
+            <dd>${escapeHTML(node.lifecycle_state)}</dd>
+            <dt>Revoked</dt>
+            <dd>${revoked ? "Yes" : "No"}</dd>
+        </dl>`;
+
+    container.appendChild(section);
+}
+
+function renderInspectorValidation(container, node) {
+    const section = inspectorSection("Validation");
+
+    section.innerHTML += `
+        <dl class="inspector-grid">
+            <dt>Validation score</dt>
+            <dd>${formatScore(node.validation_score)}</dd>
+            <dt>Validated</dt>
+            <dd>${escapeHTML(node.validated_at)}</dd>
+            <dt>Validator</dt>
+            <dd>${escapeHTML(node.validator_profile)}</dd>
+        </dl>`;
+
+    if (
+        node.validation_score === null ||
+        node.validation_score === undefined
+    ) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent = "No validation data recorded yet.";
+        section.appendChild(empty);
+    }
+
+    container.appendChild(section);
+}
+async function loadMemoryContent(node) {
+    const target = $("memory-content");
+    if (!target) return;
+
+    try {
+        const source = String(node.source_profile || "");
+        let data;
+
+        if (source.includes(":")) {
+            const separator = source.indexOf(":");
+            const agentId = source.slice(0, separator);
+            const profile = source.slice(separator + 1);
+
+            if (agentId === state.localAgentId) {
+                data = await fetchJSON(
                     `/api/memories/${encodeURIComponent(profile)}/${encodeURIComponent(node.origin_memory_id)}`
                 );
-            }else{
-                const agent=state.agentMap.get(agentId);
+            } else {
+                const agent = state.agentMap.get(agentId);
 
-                if(!agent?.base_url) throw new Error(
-                    `Source agent ${agentId} is not available through LAN discovery.`
-                );
+                if (!agent?.base_url) {
+                    throw new Error(
+                        `Source agent ${agentId} is not available through LAN discovery.`
+                    );
+                }
 
-                data=await fetchJSON(
+                data = await fetchJSON(
                     `${agent.base_url}/api/memories/${encodeURIComponent(profile)}/${encodeURIComponent(node.origin_memory_id)}`
                 );
             }
-        }else{
-            data=await fetchJSON(
+        } else {
+            data = await fetchJSON(
                 `/api/memories/${encodeURIComponent(source)}/${encodeURIComponent(node.origin_memory_id)}`
             );
         }
-        target.className="memory-content";
-        target.textContent=data.content;
-    }catch(error){
-        target.className="error-state";
-        target.textContent=`Unable to retrieve source memory: ${error.message}`;
+
+        target.className = "memory-content";
+        target.textContent = data.content;
+    } catch (error) {
+        target.className = "error-state";
+        target.textContent =
+            `Unable to retrieve source memory: ${error.message}`;
     }
 }
 
-function selectNode(node,graph=state.graph){
-    state.selectedNode=node;
-    renderInspector(node,graph);
-    setSelectionStatus(`Selected ${node.source_profile}:${node.origin_memory_id}`);
-    document.querySelectorAll(".graph-node").forEach(e =>
-        e.classList.toggle("selected",e.dataset.graphId===node.graph_id));
-    document.querySelectorAll(".data-table tbody tr").forEach(e =>
-        e.classList.toggle("selected",e.dataset.graphId===node.graph_id));
+function selectNode(node, graph = state.graph) {
+    state.selectedNode = node;
+
+    renderInspector(node, graph);
+
+    setSelectionStatus(
+        `Selected ${node.source_profile}:${node.origin_memory_id}`
+    );
+
+    document.querySelectorAll(".graph-node").forEach(element =>
+        element.classList.toggle(
+            "selected",
+            element.dataset.graphId === node.graph_id
+        )
+    );
+
+    document.querySelectorAll(".data-table tbody tr").forEach(element =>
+        element.classList.toggle(
+            "selected",
+            element.dataset.graphId === node.graph_id
+        )
+    );
 }
 
-function renderTable(graph){
-    const container=$("table-view"); container.innerHTML="";
-    if(!graph.nodes.length){
-        container.innerHTML='<div class="loading-state">No graph data available.</div>';
+async function renderTable(graph){
+    const container = $("table-view");
+    container.innerHTML = "";
+
+    if (!graph.nodes.length) {
+        container.innerHTML =
+            '<div class="loading-state">No graph data available.</div>';
         return;
     }
 
-    const table=document.createElement("table");
-    table.className="data-table";
-    table.innerHTML=`<thead><tr>
+    let events = [];
+
+    try {
+        events = await fetchGlobalEvents();
+    } catch (error) {
+        console.warn(
+            "Unable to load event metadata for Data Table:",
+            error
+        );
+    }
+
+    const eventMap = new Map();
+
+    for (const event of events) {
+        const source = String(
+            event?.source_profile || ""
+        ).trim();
+
+        const memoryId = String(
+            event?.origin_memory_id || ""
+        ).trim();
+
+        if (!source || !memoryId) {
+            continue;
+        }
+
+        eventMap.set(
+            `${source}::${memoryId}`,
+            event
+        );
+    }
+
+    const table = document.createElement("table");
+    table.className = "data-table";
+    table.innerHTML = `<thead><tr>
         <th>Memory Content</th>
         <th>Agent / Profile</th>
+        <th>Date / Time</th>
         <th>Lifecycle</th>
         <th>Memory ID</th>
     </tr></thead><tbody></tbody>`;
 
-    const body=table.querySelector("tbody");
+    const body = table.querySelector("tbody");
 
-    for(const node of graph.nodes){
-        const row=document.createElement("tr");
-        row.dataset.graphId=node.graph_id;
+    for (const node of graph.nodes) {
+        const row = document.createElement("tr");
+        row.dataset.graphId = node.graph_id;
 
-        const contentCell=document.createElement("td");
-        contentCell.className="memory-preview";
-        contentCell.textContent="Loading…";
+        const contentCell = document.createElement("td");
+        contentCell.className = "memory-preview";
+        contentCell.textContent = "Loading…";
 
-        const profileCell=document.createElement("td");
-        profileCell.textContent=profileLabel(node.source_profile);
+        const profileCell = document.createElement("td");
+        profileCell.textContent =
+            profileLabel(node.source_profile);
 
-        const lifecycleCell=document.createElement("td");
-        lifecycleCell.textContent=node.lifecycle_state || "—";
+        const source = String(
+            node?.source_profile || ""
+        ).trim();
 
-        const idCell=document.createElement("td");
-        idCell.className="memory-id";
-        idCell.textContent=node.origin_memory_id;
+        const memoryId = String(
+            node?.origin_memory_id || ""
+        ).trim();
+
+        const event = eventMap.get(
+            `${source}::${memoryId}`
+        );
+
+        const dateCell = document.createElement("td");
+        dateCell.className = "memory-date";
+        dateCell.textContent = event
+            ? formatMemoryDate(event)
+            : "Date not recorded";
+
+        const lifecycleCell = document.createElement("td");
+        lifecycleCell.textContent =
+            node.lifecycle_state || "—";
+
+        const idCell = document.createElement("td");
+        idCell.className = "memory-id";
+        idCell.textContent =
+            node.origin_memory_id;
 
         row.appendChild(contentCell);
         row.appendChild(profileCell);
+        row.appendChild(dateCell);
         row.appendChild(lifecycleCell);
         row.appendChild(idCell);
 
-        row.addEventListener("click",()=>selectNode(node,graph));
+        row.addEventListener(
+            "click",
+            () => selectNode(node, graph)
+        );
+
         body.appendChild(row);
 
-        loadTableMemoryPreview(node, contentCell);
+        loadTableMemoryPreview(
+            node,
+            contentCell
+        );
     }
 
     container.appendChild(table);
@@ -636,8 +1726,557 @@ async function loadTableMemoryPreview(node, target){
     }
 }
 
+
+function setInformationView(view) {
+    if (!INFORMATION_VIEW_TYPES.some(type => type.id === view)) {
+        view = "profile-views";
+    }
+
+    state.informationView = view;
+
+    localStorage.setItem(
+        "mnemosyne-information-view",
+        view
+    );
+
+    const select = $("information-view");
+    if (select) {
+        select.value = view;
+    }
+
+    if (state.viewMode === "tiles") {
+        renderTileView();
+        return;
+    }
+
+    if (state.viewMode === "table") {
+        renderTable(state.graph);
+    }
+
+    if (state.selectedNode) {
+        renderInspector(state.selectedNode, state.graph);
+    }
+}
+
+
+function normalizedSearchText(value) {
+    return String(value || "")
+        .toLocaleLowerCase()
+        .trim();
+}
+
+function eventMatchesGlobalFilters(event) {
+    const profileFilter =
+        String(state.globalFilter.profileScope || "all").trim();
+
+    if (profileFilter && profileFilter !== "all") {
+        const eventProfile = profileLabel(
+            event?.source_profile
+        ).trim();
+
+        if (
+            eventProfile !== profileFilter
+        ) {
+            return false;
+        }
+    }
+
+    const search = normalizedSearchText(state.globalFilter.search);
+
+    if (search) {
+        const content = normalizedSearchText(
+            timelineMemoryContent(event)
+        );
+
+        if (!content.includes(search)) {
+            return false;
+        }
+    }
+
+    const eventDate = timelineEventDate(event);
+
+    if (state.globalFilter.dateFrom) {
+        if (!eventDate) return false;
+
+        const eventTime = new Date(eventDate).getTime();
+        const fromTime = new Date(
+            `${state.globalFilter.dateFrom}T00:00:00`
+        ).getTime();
+
+        if (
+            !Number.isFinite(eventTime) ||
+            !Number.isFinite(fromTime) ||
+            eventTime < fromTime
+        ) {
+            return false;
+        }
+    }
+
+    if (state.globalFilter.dateTo) {
+        if (!eventDate) return false;
+
+        const eventTime = new Date(eventDate).getTime();
+        const toTime = new Date(
+            `${state.globalFilter.dateTo}T23:59:59.999`
+        ).getTime();
+
+        if (
+            !Number.isFinite(eventTime) ||
+            !Number.isFinite(toTime) ||
+            eventTime > toTime
+        ) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function filterTimelineEvents(events) {
+    return (Array.isArray(events) ? events : [])
+        .filter(eventMatchesGlobalFilters);
+}
+
+function timelineEventDate(event) {
+    return (
+        event?.memory_date ||
+        event?.event_date ||
+        event?.timestamp ||
+        event?.created_at ||
+        event?.proposed_at ||
+        event?.validated_at ||
+        null
+    );
+}
+
+function formatMemoryDate(event) {
+    const value = timelineEventDate(event);
+
+    if (!value) {
+        return "Date not recorded";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return String(value);
+    }
+
+    return date.toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+    });
+}
+
+async function fetchGlobalEvents() {
+    /*
+     * The left profile selector controls the base graph scope.
+     * The header Profiles selector is an independent filter applied
+     * by filterTimelineEvents() after the events are loaded.
+     */
+    const profile = state.selectedProfile || null;
+
+    const query = profile
+        ? `/api/events?profile=${encodeURIComponent(profile)}`
+        : "/api/events";
+
+    const response = await fetch(query);
+
+    if (!response.ok) {
+        throw new Error(`Events request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    return Array.isArray(data?.events)
+        ? data.events
+        : [];
+}
+
+async function getFilteredEvents() {
+    const events = await fetchGlobalEvents();
+    state.globalEvents = events;
+    return filterTimelineEvents(events);
+}
+
+
+async function getGloballyFilteredGraph(graph) {
+    if (!graph || !Array.isArray(graph.nodes)) {
+        return graph;
+    }
+
+    const hasFilters =
+        Boolean(state.globalFilter.search?.trim()) ||
+        Boolean(state.globalFilter.dateFrom) ||
+        Boolean(state.globalFilter.dateTo) ||
+        (
+            state.globalFilter.profileScope !== "all" &&
+            Boolean(state.globalFilter.profileScope)
+        );
+
+    if (!hasFilters) {
+        return graph;
+    }
+
+    const events = await getFilteredEvents();
+
+    const matchingKeys = new Set(
+        events.map(event => {
+            const source = String(
+                event?.source_profile || ""
+            ).trim();
+
+            const memoryId = String(
+                event?.origin_memory_id || ""
+            ).trim();
+
+            return `${source}::${memoryId}`;
+        })
+    );
+
+    const nodes = graph.nodes.filter(node => {
+        const source = String(
+            node?.source_profile || ""
+        ).trim();
+
+        const memoryId = String(
+            node?.origin_memory_id || ""
+        ).trim();
+
+        return matchingKeys.has(`${source}::${memoryId}`);
+    });
+
+    const allowedGraphIds = new Set(
+        nodes.map(node => node.graph_id)
+    );
+
+    const edges = {};
+
+    for (const [sourceId, values] of Object.entries(
+        graph.edges || {}
+    )) {
+        if (!allowedGraphIds.has(sourceId)) {
+            continue;
+        }
+
+        const filteredEdges = Array.isArray(values)
+            ? values.filter(edge =>
+                allowedGraphIds.has(edge.target_id)
+            )
+            : [];
+
+        if (filteredEdges.length) {
+            edges[sourceId] = filteredEdges;
+        }
+    }
+
+    return {
+        ...graph,
+        nodes,
+        edges,
+    };
+}
+
+function applyGlobalFilters() {
+    setViewMode(state.viewMode);
+}
+
+function bindGlobalFilters() {
+    const search = $("global-search");
+    const from = $("global-date-from");
+    const to = $("global-date-to");
+    const profileScope = $("global-profile-scope");
+    const clear = $("clear-filters-button");
+
+    if (search) {
+        search.value = state.globalFilter.search;
+
+        search.addEventListener("input", event => {
+            state.globalFilter.search = event.target.value;
+            localStorage.setItem(
+                "mnemosyne-global-search",
+                state.globalFilter.search
+            );
+            applyGlobalFilters();
+        });
+    }
+
+    if (from) {
+        from.value = state.globalFilter.dateFrom;
+
+        from.addEventListener("change", event => {
+            state.globalFilter.dateFrom = event.target.value;
+            localStorage.setItem(
+                "mnemosyne-global-date-from",
+                state.globalFilter.dateFrom
+            );
+            applyGlobalFilters();
+        });
+    }
+
+    if (to) {
+        to.value = state.globalFilter.dateTo;
+
+        to.addEventListener("change", event => {
+            state.globalFilter.dateTo = event.target.value;
+            localStorage.setItem(
+                "mnemosyne-global-date-to",
+                state.globalFilter.dateTo
+            );
+            applyGlobalFilters();
+        });
+    }
+
+    if (profileScope) {
+        renderGlobalProfileFilter();
+
+        profileScope.addEventListener("change", event => {
+            const value = String(
+                event.target.value || "all"
+            ).trim();
+
+            state.globalFilter.profileScope =
+                value || "all";
+
+            localStorage.setItem(
+                "mnemosyne-global-profile-scope",
+                state.globalFilter.profileScope
+            );
+
+            applyGlobalFilters();
+        });
+    }
+
+    if (clear) {
+        clear.addEventListener("click", () => {
+            state.globalFilter.search = "";
+            state.globalFilter.dateFrom = "";
+            state.globalFilter.dateTo = "";
+            state.globalFilter.profileScope = "all";
+
+            localStorage.removeItem("mnemosyne-global-search");
+            localStorage.removeItem("mnemosyne-global-date-from");
+            localStorage.removeItem("mnemosyne-global-date-to");
+            localStorage.removeItem("mnemosyne-global-profile-scope");
+
+            if (search) search.value = "";
+            if (from) from.value = "";
+            if (to) to.value = "";
+            if (profileScope) profileScope.value = "all";
+
+            applyGlobalFilters();
+        });
+    }
+}
+
+
+async function renderMainInformationView(mode, graph) {
+    const container = $("graph-view");
+
+    if (!container) {
+        return;
+    }
+
+    if (!graph?.nodes?.length) {
+        container.innerHTML =
+            '<div class="loading-state">No graph data available.</div>';
+        return;
+    }
+
+    const nodes = Array.isArray(graph.nodes) ? graph.nodes : [];
+
+    const promoted = nodes.filter(
+        node => node.is_promoted || node.lifecycle_state === "promoted"
+    ).length;
+
+    const revoked = nodes.filter(
+        node => node.is_revoked || node.lifecycle_state === "revoked"
+    ).length;
+
+    const validated = nodes.filter(
+        node => node.validated_at
+    ).length;
+
+    const scored = nodes.filter(
+        node =>
+            node.validation_score !== null &&
+            node.validation_score !== undefined
+    );
+
+    const averageScore = scored.length
+        ? scored.reduce(
+            (sum, node) => sum + Number(node.validation_score || 0),
+            0,
+        ) / scored.length
+        : null;
+
+    const profileCounts = new Map();
+
+    for (const node of nodes) {
+        const profile = String(
+            node.source_profile || "Unknown"
+        ).split(":").pop();
+
+        profileCounts.set(
+            profile,
+            (profileCounts.get(profile) || 0) + 1,
+        );
+    }
+
+    const profileRows = [...profileCounts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(
+            ([profile, count]) => `
+                <div class="tile-stat-row">
+                    <span>${escapeHTML(profile)}</span>
+                    <strong>${count.toLocaleString()}</strong>
+                </div>
+            `
+        )
+        .join("");
+
+    if (mode === "profile-views") {
+        container.innerHTML = `
+            <div class="information-view">
+                <h2>Profile Views</h2>
+                <p class="control-help">
+                    Memory distribution for the current profile selection.
+                </p>
+
+                <div class="tile-stat-grid">
+                    <div>
+                        <strong>${nodes.length.toLocaleString()}</strong>
+                        <span>Memories</span>
+                    </div>
+                    <div>
+                        <strong>${profileCounts.size}</strong>
+                        <span>Profiles</span>
+                    </div>
+                </div>
+
+                <section class="inspector-section">
+                    <h3>Memory Distribution</h3>
+                    ${profileRows || '<div class="empty-state">No profile data.</div>'}
+                </section>
+            </div>
+        `;
+        return;
+    }
+
+    if (mode === "activity") {
+        container.innerHTML = `
+            <div class="information-view">
+                <h2>Activity</h2>
+
+                <div class="tile-stat-grid">
+                    <div>
+                        <strong>${nodes.length.toLocaleString()}</strong>
+                        <span>Total memories</span>
+                    </div>
+                    <div>
+                        <strong>${validated.toLocaleString()}</strong>
+                        <span>Validated</span>
+                    </div>
+                    <div>
+                        <strong>${promoted.toLocaleString()}</strong>
+                        <span>Promoted</span>
+                    </div>
+                    <div>
+                        <strong>${revoked.toLocaleString()}</strong>
+                        <span>Revoked</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    if (mode === "status") {
+        const pending = Math.max(
+            0,
+            nodes.length - promoted - revoked,
+        );
+
+        container.innerHTML = `
+            <div class="information-view">
+                <h2>Collective Status</h2>
+
+                <div class="tile-stat-grid">
+                    <div>
+                        <strong>${nodes.length.toLocaleString()}</strong>
+                        <span>Total memories</span>
+                    </div>
+                    <div>
+                        <strong>${promoted.toLocaleString()}</strong>
+                        <span>Promoted</span>
+                    </div>
+                    <div>
+                        <strong>${pending.toLocaleString()}</strong>
+                        <span>Pending</span>
+                    </div>
+                    <div>
+                        <strong>${revoked.toLocaleString()}</strong>
+                        <span>Revoked</span>
+                    </div>
+                </div>
+
+                <div class="tile-status-message">
+                    ${
+                        revoked === 0 && pending === 0
+                            ? "All memories in this view are promoted."
+                            : "This view contains memories in multiple lifecycle states."
+                    }
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    if (mode === "validation") {
+        container.innerHTML = `
+            <div class="information-view">
+                <h2>Validation</h2>
+
+                <div class="tile-stat-grid">
+                    <div>
+                        <strong>
+                            ${averageScore === null
+                                ? "—"
+                                : averageScore.toFixed(2)}
+                        </strong>
+                        <span>Average score</span>
+                    </div>
+                    <div>
+                        <strong>${validated.toLocaleString()}</strong>
+                        <span>Validated</span>
+                    </div>
+                    <div>
+                        <strong>${scored.length.toLocaleString()}</strong>
+                        <span>Scored</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+
+}
+
+
 function setViewMode(mode) {
-    if (!["2d", "3d", "table"].includes(mode)) {
+    const validModes = [
+        "2d",
+        "3d",
+        "table",
+        "profile-views",
+        "activity",
+        "status",
+        "validation",
+        "tiles",
+    ];
+
+    if (!validModes.includes(mode)) {
         mode = "2d";
     }
 
@@ -645,21 +2284,154 @@ function setViewMode(mode) {
     state.viewMode = mode;
 
     localStorage.setItem("mnemosyne-view-mode", mode);
-    $("view-mode").value = mode;
 
-    $("graph-view").classList.toggle("hidden", mode === "table");
-    $("table-view").classList.toggle("hidden", mode !== "table");
+    const selector = $("view-mode");
+
+    if (selector) {
+        selector.value = mode;
+    }
+
+    const graphModes = ["2d", "3d"];
+
+    const informationModes = [
+        "profile-views",
+        "activity",
+        "status",
+        "validation",
+    ];
+
+    $("graph-view").classList.toggle(
+        "hidden",
+        !graphModes.includes(mode) &&
+        !informationModes.includes(mode),
+    );
+
+    $("table-view").classList.toggle(
+        "hidden",
+        mode !== "table",
+    );
+
+    $("tile-view").classList.toggle(
+        "hidden",
+        mode !== "tiles",
+    );
 
     if (previousMode === "3d" && mode !== "3d") {
         window.Mnemosyne3D?.destroy?.();
     }
 
-    if (mode === "table") {
-        renderTable(state.graph);
-    } else if (mode === "3d") {
-        renderGraph3D(state.graph);
-    } else {
+    if (mode === "tiles") {
+        renderTileView();
+        return;
+    }
+
+    const hasFilters =
+        Boolean(state.globalFilter.search?.trim()) ||
+        Boolean(state.globalFilter.dateFrom) ||
+        Boolean(state.globalFilter.dateTo) ||
+        (
+            state.globalFilter.profileScope !== "all" &&
+            Boolean(state.globalFilter.profileScope)
+        );
+
+    if (!hasFilters) {
+        switch (mode) {
+            case "2d":
+                renderGraph2D(state.graph);
+                break;
+
+            case "3d":
+                renderGraph3D(state.graph);
+                break;
+
+            case "table":
+                renderTable(state.graph);
+                break;
+
+            case "profile-views":
+            case "activity":
+            case "status":
+            case "validation":
+                renderMainInformationView(
+                    mode,
+                    state.graph
+                );
+                break;
+
+            default:
+                renderGraph2D(state.graph);
+                break;
+        }
+
+        return;
+    }
+
+    setStatus("Applying global filters…");
+
+    getGloballyFilteredGraph(state.graph)
+        .then(filteredGraph => {
+            switch (mode) {
+                case "2d":
+                    renderGraph2D(filteredGraph);
+                    break;
+
+                case "3d":
+                    renderGraph3D(filteredGraph);
+                    break;
+
+                case "table":
+                    renderTable(filteredGraph);
+                    break;
+
+                case "profile-views":
+                case "activity":
+                case "status":
+                case "validation":
+                    renderMainInformationView(
+                        mode,
+                        filteredGraph
+                    );
+                    break;
+
+                default:
+                    renderGraph2D(filteredGraph);
+                    break;
+            }
+
+            setStatus(
+                `Filtered view: ${filteredGraph.nodes.length.toLocaleString()} memories`
+            );
+        })
+        .catch(error => {
+            console.error(
+                "Global filter rendering error:",
+                error
+            );
+
+            setStatus(
+                `Unable to apply global filters: ${error.message}`
+            );
+        });
+}
+
+
+function applyTransform() {
+    const viewport = document.querySelector(".graph-viewport");
+    if(viewport) viewport.setAttribute(
+        "transform",`translate(${state.panX} ${state.panY}) scale(${state.zoom})`
+    );
+}
+
+function resetGraphView() {
+    state.zoom = 1;
+    state.panX = 0;
+    state.panY = 0;
+    state.dragging = false;
+
+    if (state.viewMode === "2d") {
         renderGraph2D(state.graph);
+    } else if (state.viewMode === "3d") {
+        window.Mnemosyne3D?.reset?.();
     }
 }
 
@@ -671,7 +2443,8 @@ async function selectProfile(profile){
     try{
         setStatus(profile ? `Loading ${profile} graph…` : "Loading collective graph…");
         state.graph=await fetchGraph(profile); renderStatistics();
-        state.viewMode==="table" ? renderTable(state.graph) : renderGraph(state.graph);
+        tileEventCache.clear();
+        setViewMode(state.viewMode);
         setStatus(`Loaded ${state.graph.nodes.length} nodes and ${countEdges(state.graph.edges)} edges.`);
     }catch(error){showError(error);}
 }
@@ -803,7 +2576,8 @@ async function nukeCollective(){
         if(state.viewMode==="table"){
             renderTable(state.graph);
         }else{
-            renderGraph(state.graph);
+            tileEventCache.clear();
+        setViewMode(state.viewMode);
         }
 
         $("inspector-content").innerHTML=
@@ -889,7 +2663,8 @@ async function scanNewMemories(){
             if(state.viewMode==="table"){
                 renderTable(state.graph);
             }else{
-                renderGraph(state.graph);
+                tileEventCache.clear();
+        setViewMode(state.viewMode);
             }
         }else{
             renderStatistics(await fetchDiagnostics());
@@ -962,7 +2737,8 @@ async function rebuildCollective(){
         if(state.viewMode==="table"){
             renderTable(state.graph);
         }else{
-            renderGraph(state.graph);
+            tileEventCache.clear();
+        setViewMode(state.viewMode);
         }
 
         setStatus(
@@ -989,11 +2765,12 @@ function showOperationError(error){
 async function refresh(){
     try{
         setStatus("Refreshing…");
-        state.profiles=await fetchProfiles(); renderProfiles(state.profiles);
+        state.profiles=await fetchProfiles(); renderProfiles(state.profiles); initTiles(state.profiles);
         renderColourControls();
         const diagnostics=await fetchDiagnostics(); renderStatistics(diagnostics);
         state.graph=await fetchGraph(state.selectedProfile);
-        state.viewMode==="table" ? renderTable(state.graph) : renderGraph(state.graph);
+        tileEventCache.clear();
+        setViewMode(state.viewMode);
         await refreshDiscovery();
         setStatus(`Ready — ${state.graph.nodes.length} nodes, ${countEdges(state.graph.edges)} edges.`);
     }catch(error){showError(error);}
@@ -1003,6 +2780,73 @@ function showError(error){
     console.error(error); setStatus(`Error: ${error.message || String(error)}`,true);
     const graphView=$("graph-view");
     if(graphView) graphView.innerHTML=`<div class="error-state">Unable to load Browser data.<br>${escapeHTML(error.message || String(error))}</div>`;
+}
+
+function renderStatistics(diagnostics = null) {
+    const profiles = diagnostics?.profiles;
+    const graph = diagnostics?.graph;
+
+    const profileCount = Array.isArray(profiles)
+        ? profiles.length
+        : Number(
+            diagnostics?.profiles ??
+            state.profiles.length
+        );
+
+    const memoryCount = Array.isArray(profiles)
+        ? profiles.reduce(
+            (sum, profile) => sum + Number(profile.memory_count || 0),
+            0,
+        )
+        : Number(
+            diagnostics?.memories ??
+            diagnostics?.memory_count ??
+            state.profiles.reduce(
+                (sum, profile) => sum + Number(profile.memory_count || 0),
+                0,
+            )
+        );
+
+    const nodeCount = Number(
+        graph?.nodes ??
+        diagnostics?.nodes ??
+        state.graph.nodes.length
+    );
+
+    const edgeCount = Number(
+        graph?.edges ??
+        diagnostics?.edges ??
+        countEdges(state.graph.edges)
+    );
+
+    const profilesElement = $("stat-profiles");
+    const memoriesElement = $("stat-memories");
+    const nodesElement = $("stat-nodes");
+    const edgesElement = $("stat-edges");
+
+    if (profilesElement) {
+        profilesElement.textContent = Number.isFinite(profileCount)
+            ? profileCount.toLocaleString()
+            : "—";
+    }
+
+    if (memoriesElement) {
+        memoriesElement.textContent = Number.isFinite(memoryCount)
+            ? memoryCount.toLocaleString()
+            : "—";
+    }
+
+    if (nodesElement) {
+        nodesElement.textContent = Number.isFinite(nodeCount)
+            ? nodeCount.toLocaleString()
+            : "—";
+    }
+
+    if (edgesElement) {
+        edgesElement.textContent = Number.isFinite(edgeCount)
+            ? edgeCount.toLocaleString()
+            : "—";
+    }
 }
 
 function formatScore(value){
@@ -1070,10 +2914,39 @@ function resetProfileColours() {
     setStatus("Profile colours reset to defaults.");
 }
 
+function loadGlobalFilters() {
+    state.globalFilter.search =
+        localStorage.getItem("mnemosyne-global-search") || "";
+
+    state.globalFilter.dateFrom =
+        localStorage.getItem("mnemosyne-global-date-from") || "";
+
+    state.globalFilter.dateTo =
+        localStorage.getItem("mnemosyne-global-date-to") || "";
+
+    const storedProfileScope =
+        localStorage.getItem("mnemosyne-global-profile-scope");
+
+    state.globalFilter.profileScope =
+        storedProfileScope &&
+        storedProfileScope !== "selected"
+            ? storedProfileScope
+            : "all";
+}
+
+
 function bindControls(){
-    $("refresh-button").addEventListener("click",refresh);
-    $("clear-profile-button").addEventListener("click",()=>selectProfile(null));
+    bindGlobalFilters();
+
     $("view-mode").addEventListener("change",e=>setViewMode(e.target.value));
+
+    const informationView = $("information-view");
+    if (informationView) {
+        informationView.addEventListener(
+            "change",
+            e => setInformationView(e.target.value)
+        );
+    }
     $("reset-colours-button").addEventListener("click",resetProfileColours);
     $("edge-limit").addEventListener("change",async e=>{
         state.edgeLimit=e.target.value===""?null:Number(e.target.value);
@@ -1104,23 +2977,48 @@ function bindControls(){
 }
 
 async function init(){
+    loadGlobalFilters();
     bindControls();
 
     const savedViewMode = localStorage.getItem("mnemosyne-view-mode");
-    if (["2d", "3d", "table"].includes(savedViewMode)) {
+    if ([
+        "2d",
+        "3d",
+        "table",
+        "profile-views",
+        "activity",
+        "status",
+        "validation",
+        "tiles",
+    ].includes(savedViewMode)) {
         state.viewMode = savedViewMode;
         $("view-mode").value = savedViewMode;
     }
 
+    const savedInformationView =
+        localStorage.getItem("mnemosyne-information-view");
+
+    if (INFORMATION_VIEW_TYPES.some(
+        type => type.id === savedInformationView
+    )) {
+        state.informationView = savedInformationView;
+    }
+
+    const informationView = $("information-view");
+    if (informationView) {
+        informationView.value = state.informationView;
+    }
+
     try{
         setStatus("Loading profiles…");
-        state.profiles=await fetchProfiles(); renderProfiles(state.profiles);
+        state.profiles=await fetchProfiles(); renderProfiles(state.profiles); initTiles(state.profiles);
         renderColourControls();
         const diagnostics=await fetchDiagnostics(); renderStatistics(diagnostics);
         await refreshDiscovery();
         state.graph=await fetchGraph(state.selectedProfile);
         renderStatistics(diagnostics);
-        state.viewMode==="table" ? renderTable(state.graph) : renderGraph(state.graph);
+        tileEventCache.clear();
+        setViewMode(state.viewMode);
         setStatus(`Ready — ${state.graph.nodes.length} nodes, ${countEdges(state.graph.edges)} edges.`);
     }catch(error){showError(error);}
 }
