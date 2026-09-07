@@ -1,8 +1,8 @@
 # Phase 8 — Hybrid Retrieval
 
-**Status:** IN PROGRESS — 8A + 8B COMPLETE  
-**Started:** 2026-09-07  
-**Current:** Phase 8C — Graph-Aware Retrieval  
+**Status:** IN PROGRESS — 8A + 8B + 8C COMPLETE
+**Started:** 2026-09-07
+**Current:** Phase 8D — Temporal Retrieval
 **Target:** Build a deterministic, explainable hybrid retrieval layer.
 
 ## Objective
@@ -326,3 +326,98 @@ are integrated, tested, documented, and compatible with Mnemosyne's governance i
 Use the existing graph infrastructure to add bounded graph expansion as a complementary retrieval signal.
 
 Do not implement temporal scoring, rank fusion, reranking, or explainability integration in the same change. Build and validate graph-aware candidate retrieval first.
+
+
+## Phase 8C — Graph-Aware Retrieval
+
+**Status:** COMPLETE
+**Completed:** 2026-09-07
+
+### Implementation
+
+Phase 8C adds bounded graph-aware candidate expansion on top of the
+authoritative collective graph.
+
+Implemented:
+
+- Entry-ID-oriented graph neighbor bridge in `GraphAggregator`
+- `GraphSearcher` retrieval layer
+- One-hop graph expansion from semantic/keyword seed candidates
+- Collective entry-ID preservation
+- Duplicate collective-entry preservation
+- Lifecycle authorization against authoritative `collective.db`
+- Revoked-entry exclusion
+- Unpromoted-entry exclusion
+- Optional source-profile filtering
+- Cross-seed candidate deduplication
+- Deterministic score ordering
+- Per-seed expansion limits
+- Provenance preservation
+
+Graph score remains the existing cosine-similarity score and existing graph
+threshold semantics are unchanged. Score fusion is intentionally deferred to
+Phase 8E.
+
+### Governance boundary
+
+The graph remains a candidate-discovery mechanism, not an authorization
+mechanism.
+
+A graph-connected entry is not automatically authorized for retrieval.
+`GraphSearcher` re-checks the authoritative collective lifecycle state before
+returning a candidate.
+
+The implementation deliberately operates on `collective_entries.id` rather
+than converting through presentation-oriented `graph_id` values. This
+preserves identity when duplicate `(source_profile, origin_memory_id)`
+references exist.
+
+### Validation
+
+Focused Phase 8C tests:
+
+- 9 passed
+
+Graph generation + collective-reference + graph-search integration:
+
+- 20 passed
+
+Full project regression:
+
+- 228 passed
+- 4 skipped
+- 4 existing FastAPI deprecation warnings
+
+Production validation:
+
+- Promoted entries: 567
+- Graph nodes: 567
+- Graph embeddings: 567
+- Production seed: entry 2841
+- Graph neighbors returned: 0
+- Lifecycle authorization: PASS
+- Entry-ID preservation: PASS
+- Provenance preservation: PASS
+- Deterministic ordering: PASS
+- Graph expansion: PASS
+
+The zero-neighbor production result is valid: the selected seed had no other
+production embedding meeting the existing graph similarity threshold.
+
+### Phase 8C completion criteria
+
+- [x] Graph-aware candidate expansion implemented
+- [x] Entry identity preserved
+- [x] Lifecycle governance preserved
+- [x] Revoked entries excluded
+- [x] Unpromoted entries excluded
+- [x] Profile filtering supported
+- [x] Deterministic ordering
+- [x] Provenance preserved
+- [x] Focused tests pass
+- [x] Full regression passes
+- [x] Production validation passes
+
+### Next
+
+Phase 8D — Temporal Retrieval.

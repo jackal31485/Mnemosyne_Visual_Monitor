@@ -114,6 +114,60 @@ class GraphAggregator:
     def graph_ids(self) -> List[str]:
         return sorted(self._nodes_by_graph.keys()) if self._nodes_by_graph else []
 
+    def get_neighbor_entries(
+        self,
+        entry_id: int,
+        limit: Optional[int] = None,
+    ) -> List[tuple[int, float]]:
+        """Return qualifying graph neighbors using collective entry IDs.
+
+        This retrieval-facing API deliberately preserves collective entry
+        identity rather than converting through the presentation-oriented
+        ``graph_id`` contract.
+
+        Results are sorted by descending cosine similarity and then
+        ascending collective entry ID.
+        """
+        try:
+            entry_id = int(entry_id)
+        except (TypeError, ValueError):
+            raise ValueError("entry_id must be an integer")
+
+        if limit is not None:
+            if (
+                not isinstance(limit, int)
+                or isinstance(limit, bool)
+                or limit < 1
+            ):
+                raise ValueError("limit must be a positive integer")
+
+        source_embedding = self._embeddings_by_entry.get(entry_id)
+
+        if source_embedding is None:
+            return []
+
+        results: List[tuple[int, float]] = []
+
+        for target_entry_id, target_embedding in self._embeddings_by_entry.items():
+            if target_entry_id == entry_id:
+                continue
+
+            similarity = float(np.dot(source_embedding, target_embedding))
+
+            if similarity < self.threshold:
+                continue
+
+            results.append(
+                (int(target_entry_id), similarity)
+            )
+
+        results.sort(key=lambda item: (-item[1], item[0]))
+
+        if limit is not None:
+            return results[:limit]
+
+        return results
+
     def get_edges(self, source_graph_id: str, limit: Optional[int] = None) -> List[Edge]:
         """Return all qualifying edges for *source_graph_id*.
 
