@@ -1,6 +1,6 @@
 # Mnemosyne Visual Monitor — Authoritative Project Roadmap
 
-**Status:** Phase 7 complete; Phase 8 in progress — 8A complete  
+**Status:** Phase 7 complete; Phase 8 in progress — 8A through 8E complete
 **Last updated:** 2026-09-07
 
 ## Purpose
@@ -33,7 +33,7 @@ The following remain mandatory throughout all phases:
 | 5 | Semantic Embeddings & Vector Search | COMPLETE |
 | 6 | Collective Visualization & Distributed Discovery | COMPLETE |
 | 7 | Browser / Visual Monitor | COMPLETE |
-| 8 | Hybrid Retrieval | IN PROGRESS — 8A + 8B COMPLETE |
+| 8 | Hybrid Retrieval | IN PROGRESS — 8A through 8E COMPLETE |
 | 9 | Entity & Relationship Intelligence | PLANNED |
 | 10 | Temporal Intelligence | PLANNED |
 | 11 | Evidence Consolidation & Memory Synthesis | PLANNED |
@@ -139,37 +139,96 @@ Validation:
 
 ### 8C — Graph-aware retrieval
 
-Use graph relationships to expand or prioritize candidates.
+**Status: COMPLETE — 2026-09-07**
 
-Requirements:
+Implemented bounded graph-aware candidate expansion using the existing
+authoritative collective graph.
 
-- controlled graph expansion;
-- no uncontrolled traversal explosion;
-- relationship/evidence provenance;
-- deterministic limits;
-- tests for connected and disconnected memories.
+Completed:
+
+- controlled one-hop graph expansion;
+- deterministic per-seed limits;
+- collective entry-ID preservation;
+- lifecycle authorization;
+- promoted/non-revoked filtering;
+- profile filtering;
+- provenance preservation;
+- deterministic ordering;
+- focused and full regression tests;
+- production validation.
+
+Graph expansion remains a candidate-discovery mechanism rather than an
+authorization mechanism. Score fusion is handled independently by 8E.
 
 ### 8D — Temporal retrieval
 
-Introduce time-aware retrieval.
+**Status: COMPLETE — 2026-09-07**
 
-Requirements:
+Implemented governed temporal retrieval with explicit separation between
+event-date retrieval and recording-time recency.
 
-- proposed/observed/event timestamps where available;
-- temporal relevance signals;
-- explicit handling of missing dates;
-- deterministic behavior.
+Completed:
+
+- inclusive event-date window filtering;
+- explicit `event_date_precision` handling;
+- unknown event dates are never guessed;
+- recording-time recency weighting;
+- `timestamp` then `created_at` fallback;
+- future timestamps capped at maximum recency;
+- profile filtering;
+- promoted/non-revoked filtering;
+- missing/malformed temporal metadata is skipped safely;
+- provenance preservation;
+- deterministic ordering;
+- focused temporal tests;
+- full regression validation.
+
+Temporal relationships and event-proximity reasoning remain future work and
+are intentionally deferred to the later Temporal Intelligence phase.
 
 ### 8E — Rank fusion
 
-Combine lexical, semantic, graph, and temporal candidates using deterministic Reciprocal Rank Fusion or an equivalent documented fusion method.
+**Status: COMPLETE — 2026-09-07**
 
-Requirements:
+Implemented deterministic Reciprocal Rank Fusion across the four independent
+retrieval channels:
 
-- no opaque weighting without documentation;
-- stable ordering for ties;
-- source contribution retained;
-- explainable final ranking.
+- keyword/BM25;
+- semantic;
+- graph;
+- temporal.
+
+The fusion layer consumes already-ranked candidates and does not query
+databases or interpret channel-specific scores.
+
+RRF contribution:
+
+`weight / (k + rank)`
+
+with one-based ranks and a default `k=60`.
+
+Completed:
+
+- configurable channel weights;
+- missing-channel zero contribution;
+- duplicate candidate handling;
+- deterministic score and entry-ID ordering;
+- configurable `top_k`;
+- invalid configuration validation;
+- identity preservation;
+- provenance preservation;
+- per-channel rank retention;
+- per-channel contribution retention;
+- explicit independence from raw channel scores.
+
+This preserves the underlying retrieval contributions needed for the future
+8G explainability layer.
+
+Validation:
+
+- focused 8E tests: **12 passed**;
+- full project regression: **256 passed, 4 skipped**;
+- existing FastAPI `on_event()` deprecation warnings remain unrelated to 8E.
 
 ### 8F — Optional local reranking
 

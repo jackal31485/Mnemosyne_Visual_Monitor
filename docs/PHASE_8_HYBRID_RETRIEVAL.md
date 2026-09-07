@@ -225,16 +225,101 @@ Missing temporal metadata must be handled explicitly rather than guessed.
 
 ## 8E — Rank fusion
 
-Combine retrieval sources using Reciprocal Rank Fusion or another deterministic method documented in code and tests.
+**Status: COMPLETE — 2026-09-07**
 
-The fused result should retain the underlying contributions.
+Combine retrieval sources using deterministic Reciprocal Rank Fusion.
+
+Implemented in:
+
+`src/retrieval/rank_fusion.py`
+
+### Fusion contract
+
+The fusion layer consumes already-ranked results from four independent
+retrieval channels:
+
+- keyword/BM25;
+- semantic;
+- graph;
+- temporal.
+
+It does not query databases, perform embedding operations, or interpret
+channel-specific raw scores.
+
+For each channel, the contribution is:
+
+`weight / (k + rank)`
+
+where:
+
+- `rank` is one-based;
+- `k` defaults to `60`;
+- each channel has an independently configurable weight.
+
+Missing channels contribute zero.
+
+Duplicate candidates within a channel are collapsed using their first
+effective rank so duplicates do not consume additional rank positions.
+
+Final ordering is deterministic:
+
+1. fused score descending;
+2. `entry_id` ascending for ties.
+
+The fused result retains:
+
+- canonical entry identity;
+- source profile;
+- origin memory ID;
+- provenance;
+- per-channel ranks;
+- per-channel RRF contributions;
+- final fused score.
+
+This deliberately preserves the information required for the future 8G
+retrieval-explainability layer.
+
+### Validation
+
+Focused Phase 8E tests:
+
+- **12 passed**
+
+Full project regression:
+
+- **256 passed**
+- **4 skipped**
+- **4 existing FastAPI deprecation warnings**
+
+The warnings are unrelated to Phase 8 retrieval and originate from the
+existing `on_event()` lifecycle handlers.
+
+### Phase 8E completion criteria
+
+- [x] Deterministic rank fusion implemented
+- [x] Keyword/BM25 contribution supported
+- [x] Semantic contribution supported
+- [x] Graph contribution supported
+- [x] Temporal contribution supported
+- [x] Configurable channel weights
+- [x] Missing-channel handling
+- [x] Duplicate-candidate handling
+- [x] Deterministic tie ordering
+- [x] Provenance preserved
+- [x] Per-channel contributions retained
+- [x] Focused tests pass
+- [x] Full regression passes
+
+### Next
+
+Phase 8F — Optional Local Reranking.
 
 Example conceptual result:
 
 ```text
-memory_id: 123
+entry_id: 123
 
-lexical_rank: 4
+keyword_rank: 4
 semantic_rank: 2
 graph_rank: 7
 temporal_rank: 3
