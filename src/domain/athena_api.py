@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from src.retrieval.semantic_search import SemanticSearcher
+from src.retrieval.hybrid_search import HybridRetrievalService, HybridResult
 
 from dataclasses import dataclass
+from datetime import datetime
 import math
 import numpy as np
 from typing import Optional, List, Tuple
@@ -26,9 +28,14 @@ class SanitizedMemory:
 
 
 class AthenaAPI:
-    def __init__(self, interface: AthenaCollectiveInterface | None = None) -> None:
+    def __init__(
+        self,
+        interface: AthenaCollectiveInterface | None = None,
+        hybrid_service: HybridRetrievalService | None = None,
+    ) -> None:
         # Dependency injection – default to the global singleton style used in tests.
         self._iface = interface or AthenaCollectiveInterface()
+        self._hybrid_service = hybrid_service
 
     def get_entry(self, entry_id: int) -> Tuple[int, ...] | None:
         """Return a promoted & not‑revoked collective tuple; otherwise ``None``."""
@@ -58,6 +65,49 @@ class AthenaAPI:
         """Return rich, governed semantic retrieval results."""
         searcher = SemanticSearcher(self._iface._dao)
         return searcher.search(vector, top_k=top_k, profile=profile)
+
+    def search_hybrid(
+        self,
+        query: str,
+        *,
+        top_k: int = 10,
+        candidate_limit: int = 20,
+        keyword_limit: int = 20,
+        semantic_limit: int = 20,
+        graph_seed_limit: int = 5,
+        graph_limit_per_seed: int = 4,
+        profile: str | None = None,
+        temporal_mode: str | None = None,
+        temporal_start: datetime | None = None,
+        temporal_end: datetime | None = None,
+        reference_time: datetime | None = None,
+        rerank: bool = True,
+) -> List[HybridResult]:
+        """Return unified governed hybrid retrieval results.
+
+        The production retrieval service is injected so model loading and
+        expensive retrieval dependencies are not recreated per query.
+        """
+        if self._hybrid_service is None:
+            raise RuntimeError(
+                "hybrid retrieval service is not configured"
+            )
+
+        return self._hybrid_service.search(
+            query,
+            top_k=top_k,
+            candidate_limit=candidate_limit,
+            keyword_limit=keyword_limit,
+            semantic_limit=semantic_limit,
+            graph_seed_limit=graph_seed_limit,
+            graph_limit_per_seed=graph_limit_per_seed,
+            profile=profile,
+            temporal_mode=temporal_mode,
+            temporal_start=temporal_start,
+            temporal_end=temporal_end,
+            reference_time=reference_time,
+            rerank=rerank,
+        )
 
     def search_by_embedding(self, vector: List[float], top_n: int) -> List[int]:
         """Return semantic matches using the historical Athena contract.

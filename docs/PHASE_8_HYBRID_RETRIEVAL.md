@@ -1,8 +1,8 @@
 # Phase 8 — Hybrid Retrieval
 
-**Status:** IN PROGRESS — 8A + 8B + 8C + 8D + 8E + 8F + 8G COMPLETE
+**Status:** COMPLETE — 8A + 8B + 8C + 8D + 8E + 8F + 8G + FINAL INTEGRATION COMPLETE
 **Started:** 2026-09-07
-**Current:** Phase 8 final integration/orchestration review
+**Current:** Phase 8 complete
 **Target:** Build a deterministic, explainable hybrid retrieval layer.
 
 ## Objective
@@ -863,13 +863,19 @@ are non-blocking.
 Phase 8G establishes the explanation contract and deterministic
 transformation layer.
 
-It does **not** introduce a new production hybrid-retrieval orchestrator.
-The existing architecture remains intentionally separated into retrieval
-components and the evaluation composition layer.
+The final Phase 8 integration subsequently composes the completed retrieval
+components into the production `HybridRetrievalService`.
 
-Unified production orchestration is therefore a separate architectural
-integration task and must not be represented as complete merely because the
-individual retrieval components, reranker, and explainability layer exist.
+This preserves the separation between:
+
+- individual retrieval components;
+- rank fusion;
+- optional reranking;
+- explainability; and
+- the unified production orchestration boundary.
+
+The orchestrator does not replace or bypass the individual governed
+retrieval components.
 
 ## Testing strategy
 
@@ -925,24 +931,63 @@ The entire phase is complete only when:
 - temporal;
 - fusion;
 - optional reranking;
-- explainability
+- explainability;
+- unified production orchestration;
+- Athena API integration
 
-are integrated, tested, documented, and compatible with Mnemosyne's governance invariants.
+are integrated, tested, documented, and compatible with Mnemosyne's
+governance invariants.
+
+These criteria are now satisfied.
 
 ## Current implementation status
 
-Phase 8A through Phase 8G are complete.
+Phase 8A through Phase 8G are complete, and the final production
+integration is complete.
 
-The remaining Phase 8 work is the final integration/orchestration review.
+The production retrieval architecture is:
 
-The intended retrieval architecture is:
+Keyword/BM25 → Semantic → Graph → Temporal → RRF (8E) → Top-N → Optional CrossEncoder (8F) → Explainability (8G) → `HybridResult`
 
-Keyword/BM25 → Semantic → Graph → Temporal → RRF (8E) → Top-N → Optional CrossEncoder (8F) → Final Results → Explainability (8G)
+The unified `HybridRetrievalService` orchestrates the completed retrieval
+components without replacing their individual contracts.
 
-The individual retrieval components and the evaluation pipeline are operational. However, there is not yet a single production hybrid-retrieval orchestrator that exposes the complete pipeline as one unified service/API contract. The Phase 8F evaluation harness composes the retrieval components to measure the architecture without changing production retrieval behavior.
+The service:
 
-This distinction must remain explicit until unified production orchestration is implemented and validated.
+- validates query and retrieval limits;
+- performs keyword retrieval;
+- generates a real local MiniLM query embedding;
+- performs semantic retrieval;
+- derives bounded unique graph seeds;
+- performs bounded graph expansion;
+- optionally performs temporal retrieval;
+- performs RRF rank fusion;
+- optionally reranks the bounded fused candidate pool with the local
+  CrossEncoder;
+- generates deterministic explainability;
+- returns a unified `HybridResult` contract.
 
-Phase 8G's explainability layer is ready to consume the results of that
-future orchestration without requiring changes to the existing retrieval
-contracts.
+The production Athena boundary now exposes `search_hybrid()` through
+dependency injection. Model-heavy dependencies are therefore supplied to
+Athena rather than being constructed for every query.
+
+The legacy `search_by_embedding()` contract remains unchanged.
+
+A real-corpus smoke test successfully executed the complete pipeline against
+the live 570-entry collective corpus using the local embedding and
+CrossEncoder models.
+
+The Phase 8F frozen evaluation also demonstrated improvement from adding
+CrossEncoder reranking to RRF:
+
+- Recall@5: +0.0875
+- Recall@10: +0.0375
+- MRR@5: +0.0650
+- MRR@10: +0.0594
+
+These results are engineering evidence from the frozen 20-query evaluation
+set, not a claim of statistical significance.
+
+Phase 8 is therefore complete.
+
+**Next phase: Phase 9 — Browser-facing hybrid retrieval integration.**
