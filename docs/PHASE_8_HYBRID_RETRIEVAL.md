@@ -1,8 +1,8 @@
 # Phase 8 — Hybrid Retrieval
 
-**Status:** IN PROGRESS — 8A + 8B + 8C + 8D + 8E + 8F COMPLETE
+**Status:** IN PROGRESS — 8A + 8B + 8C + 8D + 8E + 8F + 8G COMPLETE
 **Started:** 2026-09-07
-**Current:** Phase 8G — Explainability
+**Current:** Phase 8 final integration/orchestration review
 **Target:** Build a deterministic, explainable hybrid retrieval layer.
 
 ## Objective
@@ -724,11 +724,152 @@ by destabilizing the completed 8F implementation.
 
 ## 8G — Explainability
 
+**Status:** COMPLETE — 2026-09-07
+
 Every hybrid result should be capable of answering:
 
 > Why was this memory returned?
 
-The explanation should identify applicable signals and preserve provenance.
+Phase 8G establishes a deterministic explanation layer over the existing
+fusion and reranking contracts.
+
+### Implementation
+
+Implemented:
+
+- `src/retrieval/explainability.py`
+- `tests/test_explainability.py`
+
+The explanation layer introduces the immutable
+`RetrievalExplanation` contract.
+
+It preserves:
+
+- entry identity;
+- source profile;
+- origin memory ID;
+- keyword/BM25 rank;
+- semantic rank;
+- graph rank;
+- temporal rank;
+- per-channel contributions;
+- fused score;
+- fused rank;
+- CrossEncoder score;
+- reranker rank;
+- rank movement;
+- provenance.
+
+### Fused-result explanations
+
+`explain_fused()` derives `fused_rank` from the supplied ordered
+`FusedResult` sequence.
+
+Ranks are never inferred from scores.
+
+This preserves the actual ordering produced by rank fusion and makes the
+explanation layer observational rather than a second ranking mechanism.
+
+### Reranked-result explanations
+
+`explain_reranked()` accepts both:
+
+1. the ordered reranked results; and
+2. the original ordered fused results.
+
+This is required because `RerankedResult` intentionally does not carry a
+separate `fused_rank`.
+
+The explanation layer therefore reconstructs the original fused position
+from the supplied candidate sequence and reports:
+
+`rank_change = fused_rank - reranker_rank`
+
+Positive values indicate upward movement, negative values indicate downward
+movement, and zero indicates no movement.
+
+The supplied `reranker_rank` is validated against the actual reranked
+sequence. A reranked entry absent from the supplied fused sequence is
+rejected with a controlled `ValueError`.
+
+### Architectural boundary
+
+The explainability layer is intentionally a pure transformation layer.
+
+It:
+
+- does not query the database;
+- does not access source memory content;
+- does not generate embeddings;
+- does not perform retrieval;
+- does not modify ranking scores;
+- does not modify collective state;
+- does not make promotion, revocation, trust, or governance decisions.
+
+It consumes retrieval results that have already passed through the existing
+governed retrieval pipeline.
+
+### Provenance
+
+Provenance is carried through unchanged from `FusedResult` or
+`RerankedResult`.
+
+The explanation layer does not reconstruct, reinterpret, or replace
+provenance.
+
+This preserves the existing Mnemosyne rule that collective knowledge
+retains references to source memories and their provenance rather than
+copying private source content into the collective knowledge base.
+
+### Testing
+
+Focused explainability coverage verifies:
+
+- fused sequence ranking;
+- score-independent rank assignment;
+- preservation of all four retrieval-channel ranks;
+- preservation of all channel contributions;
+- optional/unranked channels;
+- fused and reranker scores;
+- identity;
+- source profile;
+- origin memory ID;
+- provenance;
+- reranker rank validation;
+- missing fused-entry validation;
+- deterministic repeated output;
+- empty input handling.
+
+Focused retrieval regression:
+
+- **63 passed**
+- `tests/test_explainability.py`
+- `tests/test_rank_fusion.py`
+- `tests/test_reranker.py`
+- `tests/test_cross_encoder.py`
+- `tests/test_keyword_search.py`
+
+The full repository regression following Phase 8F remains:
+
+- **298 passed**
+- **4 skipped**
+- **4 warnings**
+
+The warnings are the existing FastAPI `on_event` deprecation warnings and
+are non-blocking.
+
+### 8G completion boundary
+
+Phase 8G establishes the explanation contract and deterministic
+transformation layer.
+
+It does **not** introduce a new production hybrid-retrieval orchestrator.
+The existing architecture remains intentionally separated into retrieval
+components and the evaluation composition layer.
+
+Unified production orchestration is therefore a separate architectural
+integration task and must not be represented as complete merely because the
+individual retrieval components, reranker, and explainability layer exist.
 
 ## Testing strategy
 
@@ -790,9 +931,9 @@ are integrated, tested, documented, and compatible with Mnemosyne's governance i
 
 ## Current implementation status
 
-Phase 8A through Phase 8F are complete.
+Phase 8A through Phase 8G are complete.
 
-The remaining Phase 8 implementation target is **8G — Explainability**.
+The remaining Phase 8 work is the final integration/orchestration review.
 
 The intended retrieval architecture is:
 
@@ -801,3 +942,7 @@ Keyword/BM25 → Semantic → Graph → Temporal → RRF (8E) → Top-N → Opti
 The individual retrieval components and the evaluation pipeline are operational. However, there is not yet a single production hybrid-retrieval orchestrator that exposes the complete pipeline as one unified service/API contract. The Phase 8F evaluation harness composes the retrieval components to measure the architecture without changing production retrieval behavior.
 
 This distinction must remain explicit until unified production orchestration is implemented and validated.
+
+Phase 8G's explainability layer is ready to consume the results of that
+future orchestration without requiring changes to the existing retrieval
+contracts.
