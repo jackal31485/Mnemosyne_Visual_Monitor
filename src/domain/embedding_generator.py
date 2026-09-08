@@ -1,11 +1,16 @@
-"""
-Minimal semantic embedding generator for test purposes.
-The original project used sentence-transformers; however the library
-and model are not available in this isolated execution environment.
-This module provides a deterministic placeholder implementation that
-returns a 384‑dim float32 vector based on the hash of the input text.
+"""Embedding generation utilities for Mnemosyne.
+
+The module provides two embedding paths:
+
+* ``embed_sanitized`` — deterministic 384-dimensional compatibility
+  embeddings retained for legacy callers and existing tests.
+* ``SentenceTransformerEncoder`` — the production local encoder using
+  the all-MiniLM-L6-v2 SentenceTransformer model.
+
+Production model loading is local-only and requires no network access.
 """
 from __future__ import annotations
+from pathlib import Path
 
 import re
 import numpy as np
@@ -59,10 +64,76 @@ def decode_embedding(blob: bytes | bytearray | memoryview) -> np.ndarray:
         raise ValueError("invalid embedding dimensions")
     return vec.copy()
 
-# Legacy class name used by older code; provides the same minimal API.
 class SentenceTransformerEncoder:
-    def __init__(self, *_, **__):
-        pass
+    """Local SentenceTransformer encoder for production semantic embeddings.
+
+    The encoder is intentionally separate from ``embed_sanitized``.
+    ``embed_sanitized`` remains available as the deterministic compatibility
+    implementation used by existing tests and legacy callers.
+
+    Production embeddings use the locally installed all-MiniLM-L6-v2 model.
+    No network access is required at runtime.
+    """
+
+    def __init__(
+        self,
+        model_path: str | Path = "models/all-MiniLM-L6-v2",
+        *,
+        device: str = "cpu",
+    ) -> None:
+        from sentence_transformers import SentenceTransformer
+
+        self.model_path = Path(model_path)
+        self.device = device
+
+        self.model = SentenceTransformer(
+            str(self.model_path),
+            device=device,
+            local_files_only=True,
+            backend="torch",
+        )
+
+        self.dimensions = self.model.get_embedding_dimension()
+
+        if self.dimensions != DEFAULT_DIMENSIONS:
+            raise ValueError(
+                "embedding model dimensions do not match "
+                f"DEFAULT_DIMENSIONS={DEFAULT_DIMENSIONS}: "
+                f"{self.dimensions}"
+            )
 
     def generate(self, sanitized: str) -> bytes:
-        return embed_sanitized(sanitized)
+        """Generate a normalized float32 embedding as a binary blob."""
+
+        if not isinstance(sanitized, str):
+            raise TypeError("sanitized must be a string")
+
+        if not sanitized.strip():
+            raise ValueError("sanitized must not be empty")
+
+        vector = self.model.encode(
+            sanitized,
+            normalize_embeddings=True,
+            convert_to_numpy=True,
+        )
+
+        vector = np.asarray(vector, dtype=np.float32)
+
+        if vector.ndim != 1 or vector.shape[0] != self.dimensions:
+            raise ValueError(
+                "encoder returned invalid embedding dimensions"
+            )
+
+        if not np.all(np.isfinite(vector)):
+            raise ValueError(
+                "encoder returned non-finite embedding values"
+            )
+
+        norm = float(np.linalg.norm(vector))
+
+        if norm == 0.0:
+            raise ValueError(
+                "encoder returned a zero-norm embedding"
+            )
+
+        return vector.tobytes()
