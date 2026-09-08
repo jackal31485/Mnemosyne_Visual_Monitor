@@ -21,18 +21,22 @@ class LiveMemoryGateway:
             profiles_root or Path.home() / ".hermes" / "profiles"
         ).expanduser().resolve()
 
-    def get_memory_metadata(
-        self,
-        profile: str,
-        memory_id: str,
-    ) -> dict[str, object]:
-        """Retrieve source-memory date metadata read-only.
+    def _resolve_profile_database(self, profile: str) -> Path:
+        """Resolve a local or distributed profile identity to its database."""
 
-        Source databases are never modified.
-        """
+        if not isinstance(profile, str) or not profile:
+            raise KeyError("profile identity cannot be empty")
+
+        profile_name = profile.rsplit(":", 1)[-1]
+
+        if not profile_name:
+            raise KeyError(
+                f"invalid profile identity: {profile}"
+            )
+
         db_path = (
             self.profiles_root
-            / profile
+            / profile_name
             / "mnemosyne"
             / "data"
             / "mnemosyne.db"
@@ -42,6 +46,19 @@ class LiveMemoryGateway:
             raise KeyError(
                 f"Mnemosyne database not found for profile {profile}: {db_path}"
             )
+
+        return db_path
+
+    def get_memory_metadata(
+        self,
+        profile: str,
+        memory_id: str,
+    ) -> dict[str, object]:
+        """Retrieve source-memory date metadata read-only.
+
+        Source databases are never modified.
+        """
+        db_path = self._resolve_profile_database(profile)
 
         uri = f"file:{db_path}?mode=ro"
 
@@ -53,6 +70,7 @@ class LiveMemoryGateway:
                 """
                 SELECT
                     event_date,
+                    event_date_precision,
                     timestamp,
                     created_at
                 FROM working_memory
@@ -69,6 +87,7 @@ class LiveMemoryGateway:
 
             return {
                 "event_date": row["event_date"],
+                "event_date_precision": row["event_date_precision"],
                 "timestamp": row["timestamp"],
                 "created_at": row["created_at"],
             }
@@ -78,18 +97,7 @@ class LiveMemoryGateway:
 
 
     def get_memory(self, profile: str, memory_id: str) -> str:
-        db_path = (
-            self.profiles_root
-            / profile
-            / "mnemosyne"
-            / "data"
-            / "mnemosyne.db"
-        )
-
-        if not db_path.is_file():
-            raise KeyError(
-                f"Mnemosyne database not found for profile {profile}: {db_path}"
-            )
+        db_path = self._resolve_profile_database(profile)
 
         uri = f"file:{db_path}?mode=ro"
 

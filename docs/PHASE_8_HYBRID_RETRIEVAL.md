@@ -124,12 +124,17 @@ Lifecycle authorization is rechecked against `collective.db` when search results
 
 **Status: COMPLETE — 2026-09-07**
 
-Phase 8B established a stable, governed semantic retrieval contract without changing the existing embedding-generation backend.
+Phase 8B established the governed semantic retrieval contract and completed the
+migration from the deterministic compatibility embedding path to the production
+local `all-MiniLM-L6-v2` semantic encoder.
+
+### 8B.1 — Semantic retrieval contract
 
 Implemented:
 
 - dedicated `SemanticSearcher` retrieval service;
-- rich `SemanticResult` records containing entry ID, source profile, origin memory ID, semantic score, and provenance;
+- rich `SemanticResult` records containing entry ID, source profile,
+  origin memory ID, semantic score, and provenance;
 - strict 384-dimensional query validation;
 - rejection of non-finite query values;
 - rejection of zero-norm query vectors;
@@ -140,9 +145,142 @@ Implemented:
 - normalized cosine similarity;
 - deterministic ordering by semantic score descending, then entry ID ascending;
 - provenance preservation through the authoritative collective DAO;
-- compatibility preservation for the existing `AthenaAPI.search_by_embedding()` contract.
+- compatibility preservation for the existing `AthenaAPI.search_by_embedding()`
+  contract.
 
-The existing legacy Athena method remains available for compatibility. Its historical arbitrary-dimension and zero-vector behavior is preserved rather than silently changed by the new strict semantic retrieval contract.
+The existing legacy Athena method remains available for compatibility. Its
+historical arbitrary-dimension and zero-vector behavior is preserved rather
+than silently changed by the new strict semantic retrieval contract.
+
+### 8B.2 — Production local semantic encoder
+
+The production encoder is now a real local `SentenceTransformer` implementation
+using:
+
+- model: `all-MiniLM-L6-v2`;
+- embedding dimension: **384**;
+- output type: normalized `float32`;
+- runtime backend: PyTorch;
+- runtime model loading: local files only;
+- network access: not required;
+- development validation device: CPU.
+
+The deterministic `embed_sanitized()` implementation remains unchanged as a
+legacy compatibility path. It is not used as the production semantic encoder.
+
+Focused encoder validation confirmed:
+
+- correct 384-dimensional output;
+- `float32` output;
+- unit-norm embeddings;
+- semantically meaningful similarity;
+- deterministic repeated encoding;
+- rejection of invalid and empty input.
+
+Focused embedding-generator and encoder tests:
+
+- **23 passed**
+
+### 8B.3 — Controlled atomic embedding rebuild
+
+A dedicated `rebuild_embeddings()` service was introduced for the migration.
+
+The rebuild:
+
+- processes promoted and non-revoked entries only;
+- processes entries in ascending collective entry ID order;
+- retrieves source content exclusively through the `MemoryGateway` abstraction;
+- validates every generated embedding before database update;
+- replaces existing embeddings explicitly;
+- performs all SQLite updates inside one transaction;
+- rolls back the complete operation if source retrieval or encoding fails;
+- does not modify source Hermes/Mnemosyne databases.
+
+A controlled migration copy of `data/collective.db` was rebuilt successfully:
+
+- total collective entries: **567**
+- eligible entries: **567**
+- processed: **567**
+- updated: **567**
+- failures: **0**
+- valid migrated embeddings: **567**
+- invalid migrated embeddings: **0**
+- original embedding fingerprints changed: **10/10** sampled entries
+
+### 8B.4 — Migration safety gates
+
+#### Gate 1 — Collective integrity
+
+The migration copy was compared with the live database before any live
+migration.
+
+Results:
+
+- live rows: **567**
+- migration rows: **567**
+- non-embedding mismatches: **0**
+- provenance rows: **0** in both databases
+- provenance identical: **True**
+- eligible live entries: **567**
+- eligible migration entries: **567**
+- embeddings changed: **567**
+- embeddings identical: **0**
+- embedding size changes: **0**
+- SQLite integrity: **ok** on both databases
+
+**Gate 1: PASS**
+
+This establishes that the controlled migration changed semantic embedding
+content only; collective identity, lifecycle state, validation state,
+revocation state, and provenance were preserved.
+
+#### Gate 2 — Graph integrity
+
+The graph was rebuilt against the migrated embeddings.
+
+Results:
+
+- eligible entries: **567**
+- embedded entries: **567**
+- graph nodes: **567**
+- graph embeddings: **567**
+- node identity match: **True**
+- directed graph edges discovered: **3418**
+- lifecycle-invalid graph nodes: **0**
+- repeated graph expansion: deterministic
+
+**Gate 2: PASS**
+
+The migrated embeddings therefore remain compatible with the existing graph
+architecture and produce a healthy deterministic graph without bypassing
+collective lifecycle governance.
+
+### 8B.5 — Semantic retrieval quality validation
+
+A controlled comparison was performed using 12 representative retrieval
+queries against the deterministic compatibility embeddings and the new
+MiniLM embeddings.
+
+The average top-5 overlap was **0.83/5**.
+
+The low overlap is expected and is not itself a regression: the deterministic
+path and the MiniLM encoder represent fundamentally different embedding
+spaces. The important result was qualitative relevance of the new rankings.
+
+Observed results included:
+
+- architecture queries returning architecture-related memories;
+- database-schema queries returning direct Hermes schema investigations;
+- timeline queries returning timeline-related debugging memories;
+- LAN discovery queries returning local discovery memories;
+- graph visualization queries returning collective visualization memories;
+- semantic-embedding queries returning embedding/review/architecture clusters;
+- repository-recovery queries returning multiple recovery-related memories;
+- exact-marker queries retaining strong lexical matches.
+
+The exact-marker test is particularly important for Phase 8 because it validates
+the need for the combined keyword + semantic retrieval architecture rather than
+semantic retrieval alone.
 
 ### Governance
 
@@ -154,48 +292,58 @@ The existing legacy Athena method remains available for compatibility. Its histo
 - provenance;
 - retrieval authorization.
 
-Semantic retrieval does not treat the presence of an embedding as authorization.
+Semantic retrieval and embedding generation do not treat the presence of an
+embedding as authorization.
 
 Governance invariant:
 
 > **Embedded ≠ authorized to retrieve.**
 
-### Validation
+The embedding migration did not duplicate private source-memory content into
+`collective.db`; source content continues to be retrieved through
+`MemoryGateway`.
 
-Focused semantic retrieval and legacy compatibility tests:
+### Validation summary
 
-- **19 passed**
+Phase 8B validation established:
 
-Full project regression:
+- production local MiniLM encoder: **PASS**
+- controlled atomic rebuild: **PASS**
+- Gate 1 collective integrity: **PASS**
+- Gate 2 graph integrity: **PASS**
+- semantic retrieval quality review: **PASS**
+- source database write protection: **PASS**
+- lifecycle filtering preservation: **PASS**
+- provenance preservation: **PASS**
 
-- **219 passed**
-- **4 skipped**
-- **4 warnings**
-- **0 failures**
+### Live migration status
 
-Production validation:
+The controlled migration copy has been fully validated.
 
-- eligible embedded collective entries: **567**
-- returned semantic results: **10**
-- query embedding dimensions: **384**
-- query entry self-match: **1.000000**
-- top result: **entry 2841**
-- status: **PASS**
+**The live `data/collective.db` has NOT yet been modified by the new semantic
+embedding migration.**
 
-The production semantic ranking matched the established Phase 8B baseline, confirming that the richer retrieval contract did not alter the underlying cosine-ranking behavior.
+The live migration remains a separate, explicitly controlled operation after
+the Phase 8B code and documentation checkpoint. A backup and post-migration
+validation will be performed before proceeding to Phase 8F.
 
 ### Architectural boundary
 
 Phase 8B intentionally does not:
 
-- replace the embedding generator;
 - introduce graph retrieval;
 - introduce temporal retrieval;
 - introduce rank fusion;
-- introduce reranking;
+- introduce CrossEncoder reranking;
+- introduce retrieval explainability;
 - duplicate private profile memory into `collective.db`.
 
-Those concerns remain isolated to subsequent Phase 8 stages.
+The completed Phase 8 retrieval architecture is:
+
+**Keyword + Semantic + Graph + Temporal → RRF rank fusion → optional reranking**
+
+Cross-channel fusion is implemented in Phase 8E. CrossEncoder reranking remains
+a subsequent Phase 8 stage.
 
 ## 8C — Graph-aware retrieval
 
