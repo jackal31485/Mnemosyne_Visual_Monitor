@@ -1,0 +1,182 @@
+{
+  "version": 1,
+  "frozen": true,
+  "source": "current Mnemosyne corpus only",
+  "phase_8_memories_included": false,
+  "queries": [
+    {
+      "id": "q01",
+      "query": "How did we fix the Phase 7 timeline API?",
+      "relevant": [
+        2843,
+        2922,
+        3076,
+        2965,
+        3114
+      ]
+    },
+    {
+      "id": "q02",
+      "query": "What was wrong with the Timeline implementation before it was repaired?",
+      "relevant": [
+        2843,
+        2950,
+        2922
+      ]
+    },
+    {
+      "id": "q03",
+      "query": "What was the final Phase 7 scope before the Browser was considered complete?",
+      "relevant": [
+        3114
+      ]
+    },
+    {
+      "id": "q04",
+      "query": "What is the architecture of the Mnemosyne collective knowledge base?",
+      "relevant": [
+        3167,
+        2846,
+        2904,
+        2892
+      ]
+    },
+    {
+      "id": "q05",
+      "query": "How does Mnemosyne preserve isolation between private profile memories and collective knowledge?",
+      "relevant": [
+        3167,
+        2904,
+        2885,
+        2959
+      ]
+    },
+    {
+      "id": "q06",
+      "query": "Why does the collective database use references instead of copying private memory content?",
+      "relevant": [
+        3167,
+        2904,
+        2888,
+        2959
+      ]
+    },
+    {
+      "id": "q07",
+      "query": "What is the Mediation Plane or Air-Lock responsible for?",
+      "relevant": [
+        2885,
+        2860,
+        3022
+      ]
+    },
+    {
+      "id": "q08",
+      "query": "What is the Mnemosyne proposal state machine?",
+      "relevant": [
+        2860,
+        2885
+      ]
+    },
+    {
+      "id": "q09",
+      "query": "How does Mnemosyne preserve provenance and support revocation?",
+      "relevant": [
+        2888,
+        2892,
+        2857
+      ]
+    },
+    {
+      "id": "q10",
+      "query": "Why are collective graph edges derived rather than stored in a persistent collective_edges table?",
+      "relevant": [
+        2857
+      ]
+    },
+    {
+      "id": "q11",
+      "query": "How does the Phase 6 constellation graph get generated?",
+      "relevant": [
+        2857,
+        2919
+      ]
+    },
+    {
+      "id": "q12",
+      "query": "How was LAN multicast discovery implemented?",
+      "relevant": [
+        2895,
+        3199,
+        3241
+      ]
+    },
+    {
+      "id": "q13",
+      "query": "What information is included in the LAN discovery payload?",
+      "relevant": [
+        2895,
+        3015,
+        3199
+      ]
+    },
+    {
+      "id": "q14",
+      "query": "Does discovering a remote Hermes agent automatically make it part of the local constellation?",
+      "relevant": [
+        3015,
+        3199,
+        3241
+      ]
+    },
+    {
+      "id": "q15",
+      "query": "What is the difference between discovery, trust, and adoption for remote agents?",
+      "relevant": [
+        3015,
+        3241
+      ]
+    },
+    {
+      "id": "q16",
+      "query": "How was the Phase 5 semantic embedding problem diagnosed?",
+      "relevant": [
+        2852,
+        2873,
+        3094
+      ]
+    },
+    {
+      "id": "q17",
+      "query": "Which embedding model and dimensionality were validated for Mnemosyne?",
+      "relevant": [
+        3085,
+        3094,
+        2852
+      ]
+    },
+    {
+      "id": "q18",
+      "query": "Why must embedding backfill retrieve source text through the MemoryGateway?",
+      "relevant": [
+        2959
+      ]
+    },
+    {
+      "id": "q19",
+      "query": "What was intentionally excluded from the Phase 5A semantic embedding schema migration?",
+      "relevant": [
+        3005
+      ]
+    },
+    {
+      "id": "q20",
+      "query": "What architectural principles must not regress as Mnemosyne evolves?",
+      "relevant": [
+        3167,
+        2904,
+        2885
+      ]
+    }
+  ]
+}

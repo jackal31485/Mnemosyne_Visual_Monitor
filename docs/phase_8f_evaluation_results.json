@@ -1,0 +1,2721 @@
+{
+  "evaluation_version": 1,
+  "queries": 20,
+  "phase_8_memories_included": false,
+  "candidate_limit": 20,
+  "top_k": 10,
+  "baseline": {
+    "recall_at_5": 0.43166666666666664,
+    "recall_at_10": 0.5833333333333333,
+    "mrr_at_5": 0.4616666666666666,
+    "mrr_at_10": 0.48061507936507936
+  },
+  "reranked": {
+    "recall_at_5": 0.5191666666666667,
+    "recall_at_10": 0.6208333333333333,
+    "mrr_at_5": 0.5266666666666666,
+    "mrr_at_10": 0.54
+  },
+  "delta": {
+    "recall_at_5": 0.08750000000000002,
+    "recall_at_10": 0.03750000000000009,
+    "mrr_at_5": 0.065,
+    "mrr_at_10": 0.05938492063492068
+  },
+  "details": [
+    {
+      "id": "q01",
+      "query": "How did we fix the Phase 7 timeline API?",
+      "relevant": [
+        2843,
+        2922,
+        3076,
+        2965,
+        3114
+      ],
+      "baseline": [
+        {
+          "entry_id": 3076,
+          "rank": 1,
+          "fused_score": 0.04722835723395652
+        },
+        {
+          "entry_id": 2922,
+          "rank": 2,
+          "fused_score": 0.046671404880360104
+        },
+        {
+          "entry_id": 2965,
+          "rank": 3,
+          "fused_score": 0.04526926877470356
+        },
+        {
+          "entry_id": 2843,
+          "rank": 4,
+          "fused_score": 0.03131881575727918
+        },
+        {
+          "entry_id": 3212,
+          "rank": 5,
+          "fused_score": 0.029877369007803793
+        },
+        {
+          "entry_id": 2950,
+          "rank": 6,
+          "fused_score": 0.028949545078577336
+        },
+        {
+          "entry_id": 3114,
+          "rank": 7,
+          "fused_score": 0.028594771241830064
+        },
+        {
+          "entry_id": 3108,
+          "rank": 8,
+          "fused_score": 0.01639344262295082
+        },
+        {
+          "entry_id": 3179,
+          "rank": 9,
+          "fused_score": 0.016129032258064516
+        },
+        {
+          "entry_id": 2960,
+          "rank": 10,
+          "fused_score": 0.015873015873015872
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 2843,
+          "rank": 1,
+          "reranker_score": 6.25618314743042,
+          "fused_score": 0.03131881575727918
+        },
+        {
+          "entry_id": 2922,
+          "rank": 2,
+          "reranker_score": 5.823840141296387,
+          "fused_score": 0.046671404880360104
+        },
+        {
+          "entry_id": 3076,
+          "rank": 3,
+          "reranker_score": 4.8296918869018555,
+          "fused_score": 0.04722835723395652
+        },
+        {
+          "entry_id": 2936,
+          "rank": 4,
+          "reranker_score": 3.24190616607666,
+          "fused_score": 0.015625
+        },
+        {
+          "entry_id": 2965,
+          "rank": 5,
+          "reranker_score": 2.1501963138580322,
+          "fused_score": 0.04526926877470356
+        },
+        {
+          "entry_id": 3114,
+          "rank": 6,
+          "reranker_score": 0.36023473739624023,
+          "fused_score": 0.028594771241830064
+        },
+        {
+          "entry_id": 2960,
+          "rank": 7,
+          "reranker_score": -1.9435076713562012,
+          "fused_score": 0.015873015873015872
+        },
+        {
+          "entry_id": 3108,
+          "rank": 8,
+          "reranker_score": -2.6214964389801025,
+          "fused_score": 0.01639344262295082
+        },
+        {
+          "entry_id": 2950,
+          "rank": 9,
+          "reranker_score": -3.0006933212280273,
+          "fused_score": 0.028949545078577336
+        },
+        {
+          "entry_id": 3021,
+          "rank": 10,
+          "reranker_score": -5.374040126800537,
+          "fused_score": 0.014285714285714285
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 0.8,
+        "recall_at_10": 1.0,
+        "mrr_at_5": 1.0,
+        "mrr_at_10": 1.0
+      },
+      "reranked_metrics": {
+        "recall_at_5": 0.8,
+        "recall_at_10": 1.0,
+        "mrr_at_5": 1.0,
+        "mrr_at_10": 1.0
+      }
+    },
+    {
+      "id": "q02",
+      "query": "What was wrong with the Timeline implementation before it was repaired?",
+      "relevant": [
+        2843,
+        2950,
+        2922
+      ],
+      "baseline": [
+        {
+          "entry_id": 2922,
+          "rank": 1,
+          "fused_score": 0.04329700150595673
+        },
+        {
+          "entry_id": 3212,
+          "rank": 2,
+          "fused_score": 0.031746031746031744
+        },
+        {
+          "entry_id": 3076,
+          "rank": 3,
+          "fused_score": 0.0304147465437788
+        },
+        {
+          "entry_id": 2965,
+          "rank": 4,
+          "fused_score": 0.030117753623188408
+        },
+        {
+          "entry_id": 3341,
+          "rank": 5,
+          "fused_score": 0.029857397504456328
+        },
+        {
+          "entry_id": 3246,
+          "rank": 6,
+          "fused_score": 0.028693528693528692
+        },
+        {
+          "entry_id": 2916,
+          "rank": 7,
+          "fused_score": 0.02803921568627451
+        },
+        {
+          "entry_id": 2856,
+          "rank": 8,
+          "fused_score": 0.01639344262295082
+        },
+        {
+          "entry_id": 2950,
+          "rank": 9,
+          "fused_score": 0.01639344262295082
+        },
+        {
+          "entry_id": 3353,
+          "rank": 10,
+          "fused_score": 0.01639344262295082
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 2843,
+          "rank": 1,
+          "reranker_score": 0.03997625410556793,
+          "fused_score": 0.015151515151515152
+        },
+        {
+          "entry_id": 3076,
+          "rank": 2,
+          "reranker_score": -3.2085072994232178,
+          "fused_score": 0.0304147465437788
+        },
+        {
+          "entry_id": 2922,
+          "rank": 3,
+          "reranker_score": -3.240297794342041,
+          "fused_score": 0.04329700150595673
+        },
+        {
+          "entry_id": 2916,
+          "rank": 4,
+          "reranker_score": -4.672177791595459,
+          "fused_score": 0.02803921568627451
+        },
+        {
+          "entry_id": 2965,
+          "rank": 5,
+          "reranker_score": -5.181698799133301,
+          "fused_score": 0.030117753623188408
+        },
+        {
+          "entry_id": 2950,
+          "rank": 6,
+          "reranker_score": -5.222348690032959,
+          "fused_score": 0.01639344262295082
+        },
+        {
+          "entry_id": 2944,
+          "rank": 7,
+          "reranker_score": -6.61530876159668,
+          "fused_score": 0.015384615384615385
+        },
+        {
+          "entry_id": 3212,
+          "rank": 8,
+          "reranker_score": -7.2049784660339355,
+          "fused_score": 0.031746031746031744
+        },
+        {
+          "entry_id": 2856,
+          "rank": 9,
+          "reranker_score": -7.651114463806152,
+          "fused_score": 0.01639344262295082
+        },
+        {
+          "entry_id": 3249,
+          "rank": 10,
+          "reranker_score": -8.646897315979004,
+          "fused_score": 0.014925373134328358
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 0.3333333333333333,
+        "recall_at_10": 0.6666666666666666,
+        "mrr_at_5": 1.0,
+        "mrr_at_10": 1.0
+      },
+      "reranked_metrics": {
+        "recall_at_5": 0.6666666666666666,
+        "recall_at_10": 1.0,
+        "mrr_at_5": 1.0,
+        "mrr_at_10": 1.0
+      }
+    },
+    {
+      "id": "q03",
+      "query": "What was the final Phase 7 scope before the Browser was considered complete?",
+      "relevant": [
+        3114
+      ],
+      "baseline": [
+        {
+          "entry_id": 3114,
+          "rank": 1,
+          "fused_score": 0.04443926202321725
+        },
+        {
+          "entry_id": 3082,
+          "rank": 2,
+          "fused_score": 0.04213125548726954
+        },
+        {
+          "entry_id": 2929,
+          "rank": 3,
+          "fused_score": 0.03252247488101534
+        },
+        {
+          "entry_id": 3108,
+          "rank": 4,
+          "fused_score": 0.030679156908665108
+        },
+        {
+          "entry_id": 3141,
+          "rank": 5,
+          "fused_score": 0.030679156908665108
+        },
+        {
+          "entry_id": 2949,
+          "rank": 6,
+          "fused_score": 0.029877369007803793
+        },
+        {
+          "entry_id": 2936,
+          "rank": 7,
+          "fused_score": 0.029571646010002173
+        },
+        {
+          "entry_id": 2883,
+          "rank": 8,
+          "fused_score": 0.0288981288981289
+        },
+        {
+          "entry_id": 2869,
+          "rank": 9,
+          "fused_score": 0.028814262023217248
+        },
+        {
+          "entry_id": 2877,
+          "rank": 10,
+          "fused_score": 0.016129032258064516
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 2929,
+          "rank": 1,
+          "reranker_score": 4.7686333656311035,
+          "fused_score": 0.03252247488101534
+        },
+        {
+          "entry_id": 3141,
+          "rank": 2,
+          "reranker_score": 3.908172607421875,
+          "fused_score": 0.030679156908665108
+        },
+        {
+          "entry_id": 3114,
+          "rank": 3,
+          "reranker_score": 3.7665436267852783,
+          "fused_score": 0.04443926202321725
+        },
+        {
+          "entry_id": 3082,
+          "rank": 4,
+          "reranker_score": 2.6355066299438477,
+          "fused_score": 0.04213125548726954
+        },
+        {
+          "entry_id": 2960,
+          "rank": 5,
+          "reranker_score": 2.4001142978668213,
+          "fused_score": 0.015384615384615385
+        },
+        {
+          "entry_id": 2936,
+          "rank": 6,
+          "reranker_score": 0.4113001823425293,
+          "fused_score": 0.029571646010002173
+        },
+        {
+          "entry_id": 3182,
+          "rank": 7,
+          "reranker_score": -0.502387285232544,
+          "fused_score": 0.015625
+        },
+        {
+          "entry_id": 2949,
+          "rank": 8,
+          "reranker_score": -1.0261831283569336,
+          "fused_score": 0.029877369007803793
+        },
+        {
+          "entry_id": 3108,
+          "rank": 9,
+          "reranker_score": -1.3302085399627686,
+          "fused_score": 0.030679156908665108
+        },
+        {
+          "entry_id": 2877,
+          "rank": 10,
+          "reranker_score": -2.2549889087677,
+          "fused_score": 0.016129032258064516
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 1.0,
+        "recall_at_10": 1.0,
+        "mrr_at_5": 1.0,
+        "mrr_at_10": 1.0
+      },
+      "reranked_metrics": {
+        "recall_at_5": 1.0,
+        "recall_at_10": 1.0,
+        "mrr_at_5": 0.3333333333333333,
+        "mrr_at_10": 0.3333333333333333
+      }
+    },
+    {
+      "id": "q04",
+      "query": "What is the architecture of the Mnemosyne collective knowledge base?",
+      "relevant": [
+        3167,
+        2846,
+        2904,
+        2892
+      ],
+      "baseline": [
+        {
+          "entry_id": 2961,
+          "rank": 1,
+          "fused_score": 0.04616113053613054
+        },
+        {
+          "entry_id": 2846,
+          "rank": 2,
+          "fused_score": 0.045598154684933424
+        },
+        {
+          "entry_id": 3167,
+          "rank": 3,
+          "fused_score": 0.031544957774465976
+        },
+        {
+          "entry_id": 3088,
+          "rank": 4,
+          "fused_score": 0.030330882352941176
+        },
+        {
+          "entry_id": 3390,
+          "rank": 5,
+          "fused_score": 0.029850746268656716
+        },
+        {
+          "entry_id": 3157,
+          "rank": 6,
+          "fused_score": 0.029386529386529386
+        },
+        {
+          "entry_id": 3164,
+          "rank": 7,
+          "fused_score": 0.028782894736842105
+        },
+        {
+          "entry_id": 3012,
+          "rank": 8,
+          "fused_score": 0.02877846790890269
+        },
+        {
+          "entry_id": 3202,
+          "rank": 9,
+          "fused_score": 0.027984344422700584
+        },
+        {
+          "entry_id": 3292,
+          "rank": 10,
+          "fused_score": 0.025978407557354925
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 3167,
+          "rank": 1,
+          "reranker_score": 4.804993629455566,
+          "fused_score": 0.031544957774465976
+        },
+        {
+          "entry_id": 2846,
+          "rank": 2,
+          "reranker_score": 4.700822353363037,
+          "fused_score": 0.045598154684933424
+        },
+        {
+          "entry_id": 3066,
+          "rank": 3,
+          "reranker_score": 3.7092628479003906,
+          "fused_score": 0.015151515151515152
+        },
+        {
+          "entry_id": 3157,
+          "rank": 4,
+          "reranker_score": 3.0033786296844482,
+          "fused_score": 0.029386529386529386
+        },
+        {
+          "entry_id": 2961,
+          "rank": 5,
+          "reranker_score": 2.8791871070861816,
+          "fused_score": 0.04616113053613054
+        },
+        {
+          "entry_id": 3202,
+          "rank": 6,
+          "reranker_score": 1.3828790187835693,
+          "fused_score": 0.027984344422700584
+        },
+        {
+          "entry_id": 3088,
+          "rank": 7,
+          "reranker_score": 1.252143383026123,
+          "fused_score": 0.030330882352941176
+        },
+        {
+          "entry_id": 3012,
+          "rank": 8,
+          "reranker_score": -0.7918394804000854,
+          "fused_score": 0.02877846790890269
+        },
+        {
+          "entry_id": 3256,
+          "rank": 9,
+          "reranker_score": -0.8128620386123657,
+          "fused_score": 0.014925373134328358
+        },
+        {
+          "entry_id": 3164,
+          "rank": 10,
+          "reranker_score": -1.2885913848876953,
+          "fused_score": 0.028782894736842105
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 0.5,
+        "recall_at_10": 0.5,
+        "mrr_at_5": 0.5,
+        "mrr_at_10": 0.5
+      },
+      "reranked_metrics": {
+        "recall_at_5": 0.5,
+        "recall_at_10": 0.5,
+        "mrr_at_5": 1.0,
+        "mrr_at_10": 1.0
+      }
+    },
+    {
+      "id": "q05",
+      "query": "How does Mnemosyne preserve isolation between private profile memories and collective knowledge?",
+      "relevant": [
+        3167,
+        2904,
+        2885,
+        2959
+      ],
+      "baseline": [
+        {
+          "entry_id": 2937,
+          "rank": 1,
+          "fused_score": 0.04494329428128176
+        },
+        {
+          "entry_id": 3088,
+          "rank": 2,
+          "fused_score": 0.04461659663865546
+        },
+        {
+          "entry_id": 3292,
+          "rank": 3,
+          "fused_score": 0.04327651515151515
+        },
+        {
+          "entry_id": 3357,
+          "rank": 4,
+          "fused_score": 0.04324996749677923
+        },
+        {
+          "entry_id": 3371,
+          "rank": 5,
+          "fused_score": 0.042934652330754976
+        },
+        {
+          "entry_id": 3390,
+          "rank": 6,
+          "fused_score": 0.032018442622950824
+        },
+        {
+          "entry_id": 3157,
+          "rank": 7,
+          "fused_score": 0.031024531024531024
+        },
+        {
+          "entry_id": 3117,
+          "rank": 8,
+          "fused_score": 0.029418126757516764
+        },
+        {
+          "entry_id": 3167,
+          "rank": 9,
+          "fused_score": 0.02928692699490662
+        },
+        {
+          "entry_id": 3147,
+          "rank": 10,
+          "fused_score": 0.01639344262295082
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 3088,
+          "rank": 1,
+          "reranker_score": 4.1688432693481445,
+          "fused_score": 0.04461659663865546
+        },
+        {
+          "entry_id": 3167,
+          "rank": 2,
+          "reranker_score": 2.458156108856201,
+          "fused_score": 0.02928692699490662
+        },
+        {
+          "entry_id": 3157,
+          "rank": 3,
+          "reranker_score": 2.2444024085998535,
+          "fused_score": 0.031024531024531024
+        },
+        {
+          "entry_id": 2937,
+          "rank": 4,
+          "reranker_score": 1.6933751106262207,
+          "fused_score": 0.04494329428128176
+        },
+        {
+          "entry_id": 3156,
+          "rank": 5,
+          "reranker_score": 1.161064863204956,
+          "fused_score": 0.014705882352941176
+        },
+        {
+          "entry_id": 3111,
+          "rank": 6,
+          "reranker_score": 0.7713096141815186,
+          "fused_score": 0.015873015873015872
+        },
+        {
+          "entry_id": 3390,
+          "rank": 7,
+          "reranker_score": 0.5308996438980103,
+          "fused_score": 0.032018442622950824
+        },
+        {
+          "entry_id": 2844,
+          "rank": 8,
+          "reranker_score": 0.4709089398384094,
+          "fused_score": 0.015384615384615385
+        },
+        {
+          "entry_id": 3371,
+          "rank": 9,
+          "reranker_score": -0.19841887056827545,
+          "fused_score": 0.042934652330754976
+        },
+        {
+          "entry_id": 3292,
+          "rank": 10,
+          "reranker_score": -1.4825325012207031,
+          "fused_score": 0.04327651515151515
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 0.0,
+        "recall_at_10": 0.25,
+        "mrr_at_5": 0.0,
+        "mrr_at_10": 0.1111111111111111
+      },
+      "reranked_metrics": {
+        "recall_at_5": 0.25,
+        "recall_at_10": 0.25,
+        "mrr_at_5": 0.5,
+        "mrr_at_10": 0.5
+      }
+    },
+    {
+      "id": "q06",
+      "query": "Why does the collective database use references instead of copying private memory content?",
+      "relevant": [
+        3167,
+        2904,
+        2888,
+        2959
+      ],
+      "baseline": [
+        {
+          "entry_id": 3390,
+          "rank": 1,
+          "fused_score": 0.03125763125763126
+        },
+        {
+          "entry_id": 3156,
+          "rank": 2,
+          "fused_score": 0.030886196246139225
+        },
+        {
+          "entry_id": 3059,
+          "rank": 3,
+          "fused_score": 0.030158730158730156
+        },
+        {
+          "entry_id": 3117,
+          "rank": 4,
+          "fused_score": 0.02904040404040404
+        },
+        {
+          "entry_id": 2937,
+          "rank": 5,
+          "fused_score": 0.028594771241830064
+        },
+        {
+          "entry_id": 3371,
+          "rank": 6,
+          "fused_score": 0.028205128205128206
+        },
+        {
+          "entry_id": 2959,
+          "rank": 7,
+          "fused_score": 0.028125
+        },
+        {
+          "entry_id": 2956,
+          "rank": 8,
+          "fused_score": 0.028006267136701922
+        },
+        {
+          "entry_id": 3088,
+          "rank": 9,
+          "fused_score": 0.027984344422700584
+        },
+        {
+          "entry_id": 2844,
+          "rank": 10,
+          "fused_score": 0.027912386121341344
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 3156,
+          "rank": 1,
+          "reranker_score": 1.5769028663635254,
+          "fused_score": 0.030886196246139225
+        },
+        {
+          "entry_id": 3390,
+          "rank": 2,
+          "reranker_score": -2.216742515563965,
+          "fused_score": 0.03125763125763126
+        },
+        {
+          "entry_id": 2888,
+          "rank": 3,
+          "reranker_score": -2.9965715408325195,
+          "fused_score": 0.015625
+        },
+        {
+          "entry_id": 2959,
+          "rank": 4,
+          "reranker_score": -3.4571993350982666,
+          "fused_score": 0.028125
+        },
+        {
+          "entry_id": 3111,
+          "rank": 5,
+          "reranker_score": -3.632296085357666,
+          "fused_score": 0.027783137179239824
+        },
+        {
+          "entry_id": 3088,
+          "rank": 6,
+          "reranker_score": -3.66337251663208,
+          "fused_score": 0.027984344422700584
+        },
+        {
+          "entry_id": 2918,
+          "rank": 7,
+          "reranker_score": -3.8805723190307617,
+          "fused_score": 0.016129032258064516
+        },
+        {
+          "entry_id": 2844,
+          "rank": 8,
+          "reranker_score": -4.229958534240723,
+          "fused_score": 0.027912386121341344
+        },
+        {
+          "entry_id": 3119,
+          "rank": 9,
+          "reranker_score": -6.605173587799072,
+          "fused_score": 0.016129032258064516
+        },
+        {
+          "entry_id": 3371,
+          "rank": 10,
+          "reranker_score": -6.870628356933594,
+          "fused_score": 0.028205128205128206
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 0.0,
+        "recall_at_10": 0.25,
+        "mrr_at_5": 0.0,
+        "mrr_at_10": 0.14285714285714285
+      },
+      "reranked_metrics": {
+        "recall_at_5": 0.5,
+        "recall_at_10": 0.5,
+        "mrr_at_5": 0.3333333333333333,
+        "mrr_at_10": 0.3333333333333333
+      }
+    },
+    {
+      "id": "q07",
+      "query": "What is the Mediation Plane or Air-Lock responsible for?",
+      "relevant": [
+        2885,
+        2860,
+        3022
+      ],
+      "baseline": [
+        {
+          "entry_id": 2971,
+          "rank": 1,
+          "fused_score": 0.047907090265630725
+        },
+        {
+          "entry_id": 3059,
+          "rank": 2,
+          "fused_score": 0.04715356328259554
+        },
+        {
+          "entry_id": 3153,
+          "rank": 3,
+          "fused_score": 0.046943815757279184
+        },
+        {
+          "entry_id": 3167,
+          "rank": 4,
+          "fused_score": 0.04416308329351808
+        },
+        {
+          "entry_id": 2860,
+          "rank": 5,
+          "fused_score": 0.042802163511545664
+        },
+        {
+          "entry_id": 2885,
+          "rank": 6,
+          "fused_score": 0.030536130536130537
+        },
+        {
+          "entry_id": 3086,
+          "rank": 7,
+          "fused_score": 0.027526395173453996
+        },
+        {
+          "entry_id": 2949,
+          "rank": 8,
+          "fused_score": 0.026875901875901876
+        },
+        {
+          "entry_id": 2909,
+          "rank": 9,
+          "fused_score": 0.01639344262295082
+        },
+        {
+          "entry_id": 3189,
+          "rank": 10,
+          "fused_score": 0.016129032258064516
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 3153,
+          "rank": 1,
+          "reranker_score": 2.0895285606384277,
+          "fused_score": 0.046943815757279184
+        },
+        {
+          "entry_id": 2971,
+          "rank": 2,
+          "reranker_score": 1.4874510765075684,
+          "fused_score": 0.047907090265630725
+        },
+        {
+          "entry_id": 3167,
+          "rank": 3,
+          "reranker_score": -0.6172482967376709,
+          "fused_score": 0.04416308329351808
+        },
+        {
+          "entry_id": 2961,
+          "rank": 4,
+          "reranker_score": -1.0028820037841797,
+          "fused_score": 0.014492753623188406
+        },
+        {
+          "entry_id": 2846,
+          "rank": 5,
+          "reranker_score": -1.5579338073730469,
+          "fused_score": 0.014925373134328358
+        },
+        {
+          "entry_id": 3022,
+          "rank": 6,
+          "reranker_score": -1.6704542636871338,
+          "fused_score": 0.014705882352941176
+        },
+        {
+          "entry_id": 2885,
+          "rank": 7,
+          "reranker_score": -3.636697292327881,
+          "fused_score": 0.030536130536130537
+        },
+        {
+          "entry_id": 3059,
+          "rank": 8,
+          "reranker_score": -4.80079984664917,
+          "fused_score": 0.04715356328259554
+        },
+        {
+          "entry_id": 3157,
+          "rank": 9,
+          "reranker_score": -8.649675369262695,
+          "fused_score": 0.015873015873015872
+        },
+        {
+          "entry_id": 2862,
+          "rank": 10,
+          "reranker_score": -10.01739501953125,
+          "fused_score": 0.014285714285714285
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 0.3333333333333333,
+        "recall_at_10": 0.6666666666666666,
+        "mrr_at_5": 0.2,
+        "mrr_at_10": 0.2
+      },
+      "reranked_metrics": {
+        "recall_at_5": 0.0,
+        "recall_at_10": 0.6666666666666666,
+        "mrr_at_5": 0.0,
+        "mrr_at_10": 0.16666666666666666
+      }
+    },
+    {
+      "id": "q08",
+      "query": "What is the Mnemosyne proposal state machine?",
+      "relevant": [
+        2860,
+        2885
+      ],
+      "baseline": [
+        {
+          "entry_id": 3022,
+          "rank": 1,
+          "fused_score": 0.0315136476426799
+        },
+        {
+          "entry_id": 2974,
+          "rank": 2,
+          "fused_score": 0.03131881575727918
+        },
+        {
+          "entry_id": 3012,
+          "rank": 3,
+          "fused_score": 0.03131881575727918
+        },
+        {
+          "entry_id": 3157,
+          "rank": 4,
+          "fused_score": 0.03076923076923077
+        },
+        {
+          "entry_id": 3088,
+          "rank": 5,
+          "fused_score": 0.030158730158730156
+        },
+        {
+          "entry_id": 2956,
+          "rank": 6,
+          "fused_score": 0.029857397504456328
+        },
+        {
+          "entry_id": 3047,
+          "rank": 7,
+          "fused_score": 0.029827662395050816
+        },
+        {
+          "entry_id": 3189,
+          "rank": 8,
+          "fused_score": 0.029437229437229435
+        },
+        {
+          "entry_id": 3058,
+          "rank": 9,
+          "fused_score": 0.02928692699490662
+        },
+        {
+          "entry_id": 3001,
+          "rank": 10,
+          "fused_score": 0.028438886647841874
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 3022,
+          "rank": 1,
+          "reranker_score": 3.5962538719177246,
+          "fused_score": 0.0315136476426799
+        },
+        {
+          "entry_id": 3012,
+          "rank": 2,
+          "reranker_score": -1.369866132736206,
+          "fused_score": 0.03131881575727918
+        },
+        {
+          "entry_id": 3118,
+          "rank": 3,
+          "reranker_score": -1.3981833457946777,
+          "fused_score": 0.027777777777777776
+        },
+        {
+          "entry_id": 2971,
+          "rank": 4,
+          "reranker_score": -1.9066150188446045,
+          "fused_score": 0.015625
+        },
+        {
+          "entry_id": 3189,
+          "rank": 5,
+          "reranker_score": -2.1078450679779053,
+          "fused_score": 0.029437229437229435
+        },
+        {
+          "entry_id": 3046,
+          "rank": 6,
+          "reranker_score": -2.30393385887146,
+          "fused_score": 0.015873015873015872
+        },
+        {
+          "entry_id": 3047,
+          "rank": 7,
+          "reranker_score": -2.518906831741333,
+          "fused_score": 0.029827662395050816
+        },
+        {
+          "entry_id": 2975,
+          "rank": 8,
+          "reranker_score": -2.9078972339630127,
+          "fused_score": 0.02690501986276634
+        },
+        {
+          "entry_id": 3088,
+          "rank": 9,
+          "reranker_score": -3.566577672958374,
+          "fused_score": 0.030158730158730156
+        },
+        {
+          "entry_id": 2860,
+          "rank": 10,
+          "reranker_score": -3.632009267807007,
+          "fused_score": 0.01639344262295082
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 0.0,
+        "recall_at_10": 0.0,
+        "mrr_at_5": 0.0,
+        "mrr_at_10": 0.0
+      },
+      "reranked_metrics": {
+        "recall_at_5": 0.0,
+        "recall_at_10": 0.5,
+        "mrr_at_5": 0.0,
+        "mrr_at_10": 0.1
+      }
+    },
+    {
+      "id": "q09",
+      "query": "How does Mnemosyne preserve provenance and support revocation?",
+      "relevant": [
+        2888,
+        2892,
+        2857
+      ],
+      "baseline": [
+        {
+          "entry_id": 3342,
+          "rank": 1,
+          "fused_score": 0.031054405392392875
+        },
+        {
+          "entry_id": 2850,
+          "rank": 2,
+          "fused_score": 0.030776515151515152
+        },
+        {
+          "entry_id": 3390,
+          "rank": 3,
+          "fused_score": 0.028373015873015873
+        },
+        {
+          "entry_id": 3088,
+          "rank": 4,
+          "fused_score": 0.028283227848101264
+        },
+        {
+          "entry_id": 3119,
+          "rank": 5,
+          "fused_score": 0.026875901875901876
+        },
+        {
+          "entry_id": 2937,
+          "rank": 6,
+          "fused_score": 0.02632034632034632
+        },
+        {
+          "entry_id": 2861,
+          "rank": 7,
+          "fused_score": 0.01639344262295082
+        },
+        {
+          "entry_id": 2888,
+          "rank": 8,
+          "fused_score": 0.01639344262295082
+        },
+        {
+          "entry_id": 3371,
+          "rank": 9,
+          "fused_score": 0.01639344262295082
+        },
+        {
+          "entry_id": 2859,
+          "rank": 10,
+          "fused_score": 0.016129032258064516
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 2904,
+          "rank": 1,
+          "reranker_score": 0.04924293980002403,
+          "fused_score": 0.015873015873015872
+        },
+        {
+          "entry_id": 2929,
+          "rank": 2,
+          "reranker_score": -0.4148785173892975,
+          "fused_score": 0.015151515151515152
+        },
+        {
+          "entry_id": 2888,
+          "rank": 3,
+          "reranker_score": -3.0777523517608643,
+          "fused_score": 0.01639344262295082
+        },
+        {
+          "entry_id": 3292,
+          "rank": 4,
+          "reranker_score": -3.533583164215088,
+          "fused_score": 0.015384615384615385
+        },
+        {
+          "entry_id": 3088,
+          "rank": 5,
+          "reranker_score": -3.7346861362457275,
+          "fused_score": 0.028283227848101264
+        },
+        {
+          "entry_id": 2937,
+          "rank": 6,
+          "reranker_score": -4.400306701660156,
+          "fused_score": 0.02632034632034632
+        },
+        {
+          "entry_id": 3346,
+          "rank": 7,
+          "reranker_score": -4.511026859283447,
+          "fused_score": 0.015151515151515152
+        },
+        {
+          "entry_id": 3047,
+          "rank": 8,
+          "reranker_score": -4.799178123474121,
+          "fused_score": 0.015384615384615385
+        },
+        {
+          "entry_id": 3357,
+          "rank": 9,
+          "reranker_score": -5.459297180175781,
+          "fused_score": 0.015873015873015872
+        },
+        {
+          "entry_id": 3342,
+          "rank": 10,
+          "reranker_score": -5.568426609039307,
+          "fused_score": 0.031054405392392875
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 0.0,
+        "recall_at_10": 0.3333333333333333,
+        "mrr_at_5": 0.0,
+        "mrr_at_10": 0.125
+      },
+      "reranked_metrics": {
+        "recall_at_5": 0.3333333333333333,
+        "recall_at_10": 0.3333333333333333,
+        "mrr_at_5": 0.3333333333333333,
+        "mrr_at_10": 0.3333333333333333
+      }
+    },
+    {
+      "id": "q10",
+      "query": "Why are collective graph edges derived rather than stored in a persistent collective_edges table?",
+      "relevant": [
+        2857
+      ],
+      "baseline": [
+        {
+          "entry_id": 2857,
+          "rank": 1,
+          "fused_score": 0.04839549075403121
+        },
+        {
+          "entry_id": 3144,
+          "rank": 2,
+          "fused_score": 0.0428717671484193
+        },
+        {
+          "entry_id": 3101,
+          "rank": 3,
+          "fused_score": 0.03125
+        },
+        {
+          "entry_id": 3087,
+          "rank": 4,
+          "fused_score": 0.02919863597612958
+        },
+        {
+          "entry_id": 3079,
+          "rank": 5,
+          "fused_score": 0.02904040404040404
+        },
+        {
+          "entry_id": 2961,
+          "rank": 6,
+          "fused_score": 0.02889344262295082
+        },
+        {
+          "entry_id": 2966,
+          "rank": 7,
+          "fused_score": 0.028381642512077296
+        },
+        {
+          "entry_id": 3135,
+          "rank": 8,
+          "fused_score": 0.027912386121341344
+        },
+        {
+          "entry_id": 2884,
+          "rank": 9,
+          "fused_score": 0.027799227799227798
+        },
+        {
+          "entry_id": 2969,
+          "rank": 10,
+          "fused_score": 0.02649122807017544
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 2857,
+          "rank": 1,
+          "reranker_score": 5.042637348175049,
+          "fused_score": 0.04839549075403121
+        },
+        {
+          "entry_id": 3087,
+          "rank": 2,
+          "reranker_score": -2.0429110527038574,
+          "fused_score": 0.02919863597612958
+        },
+        {
+          "entry_id": 3066,
+          "rank": 3,
+          "reranker_score": -3.0052788257598877,
+          "fused_score": 0.01639344262295082
+        },
+        {
+          "entry_id": 2966,
+          "rank": 4,
+          "reranker_score": -4.11897611618042,
+          "fused_score": 0.028381642512077296
+        },
+        {
+          "entry_id": 2904,
+          "rank": 5,
+          "reranker_score": -5.512755870819092,
+          "fused_score": 0.015384615384615385
+        },
+        {
+          "entry_id": 3101,
+          "rank": 6,
+          "reranker_score": -6.551083087921143,
+          "fused_score": 0.03125
+        },
+        {
+          "entry_id": 2884,
+          "rank": 7,
+          "reranker_score": -7.057833671569824,
+          "fused_score": 0.027799227799227798
+        },
+        {
+          "entry_id": 3025,
+          "rank": 8,
+          "reranker_score": -7.09477424621582,
+          "fused_score": 0.015873015873015872
+        },
+        {
+          "entry_id": 3164,
+          "rank": 9,
+          "reranker_score": -7.162896156311035,
+          "fused_score": 0.015873015873015872
+        },
+        {
+          "entry_id": 2892,
+          "rank": 10,
+          "reranker_score": -7.642509460449219,
+          "fused_score": 0.014925373134328358
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 1.0,
+        "recall_at_10": 1.0,
+        "mrr_at_5": 1.0,
+        "mrr_at_10": 1.0
+      },
+      "reranked_metrics": {
+        "recall_at_5": 1.0,
+        "recall_at_10": 1.0,
+        "mrr_at_5": 1.0,
+        "mrr_at_10": 1.0
+      }
+    },
+    {
+      "id": "q11",
+      "query": "How does the Phase 6 constellation graph get generated?",
+      "relevant": [
+        2857,
+        2919
+      ],
+      "baseline": [
+        {
+          "entry_id": 3145,
+          "rank": 1,
+          "fused_score": 0.04741797364748185
+        },
+        {
+          "entry_id": 2919,
+          "rank": 2,
+          "fused_score": 0.0471386476426799
+        },
+        {
+          "entry_id": 3256,
+          "rank": 3,
+          "fused_score": 0.04640914640914641
+        },
+        {
+          "entry_id": 3224,
+          "rank": 4,
+          "fused_score": 0.04574275362318841
+        },
+        {
+          "entry_id": 2889,
+          "rank": 5,
+          "fused_score": 0.04419887740783263
+        },
+        {
+          "entry_id": 3144,
+          "rank": 6,
+          "fused_score": 0.04392998306041784
+        },
+        {
+          "entry_id": 3029,
+          "rank": 7,
+          "fused_score": 0.03252247488101534
+        },
+        {
+          "entry_id": 3135,
+          "rank": 8,
+          "fused_score": 0.03252247488101534
+        },
+        {
+          "entry_id": 3066,
+          "rank": 9,
+          "fused_score": 0.02786377708978328
+        },
+        {
+          "entry_id": 3195,
+          "rank": 10,
+          "fused_score": 0.0273972602739726
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 3135,
+          "rank": 1,
+          "reranker_score": 6.809895038604736,
+          "fused_score": 0.03252247488101534
+        },
+        {
+          "entry_id": 3029,
+          "rank": 2,
+          "reranker_score": 6.096843242645264,
+          "fused_score": 0.03252247488101534
+        },
+        {
+          "entry_id": 3066,
+          "rank": 3,
+          "reranker_score": 3.780900478363037,
+          "fused_score": 0.02786377708978328
+        },
+        {
+          "entry_id": 3145,
+          "rank": 4,
+          "reranker_score": 3.530816078186035,
+          "fused_score": 0.04741797364748185
+        },
+        {
+          "entry_id": 2919,
+          "rank": 5,
+          "reranker_score": 3.4886324405670166,
+          "fused_score": 0.0471386476426799
+        },
+        {
+          "entry_id": 3224,
+          "rank": 6,
+          "reranker_score": 3.321357488632202,
+          "fused_score": 0.04574275362318841
+        },
+        {
+          "entry_id": 2889,
+          "rank": 7,
+          "reranker_score": 2.730252981185913,
+          "fused_score": 0.04419887740783263
+        },
+        {
+          "entry_id": 3079,
+          "rank": 8,
+          "reranker_score": 1.9855668544769287,
+          "fused_score": 0.013513513513513514
+        },
+        {
+          "entry_id": 3087,
+          "rank": 9,
+          "reranker_score": 1.7968376874923706,
+          "fused_score": 0.027364110201042444
+        },
+        {
+          "entry_id": 3182,
+          "rank": 10,
+          "reranker_score": 1.7470269203186035,
+          "fused_score": 0.02694394213381555
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 0.5,
+        "recall_at_10": 0.5,
+        "mrr_at_5": 0.5,
+        "mrr_at_10": 0.5
+      },
+      "reranked_metrics": {
+        "recall_at_5": 0.5,
+        "recall_at_10": 0.5,
+        "mrr_at_5": 0.2,
+        "mrr_at_10": 0.2
+      }
+    },
+    {
+      "id": "q12",
+      "query": "How was LAN multicast discovery implemented?",
+      "relevant": [
+        2895,
+        3199,
+        3241
+      ],
+      "baseline": [
+        {
+          "entry_id": 2881,
+          "rank": 1,
+          "fused_score": 0.046649531024531024
+        },
+        {
+          "entry_id": 3279,
+          "rank": 2,
+          "fused_score": 0.046244188891607536
+        },
+        {
+          "entry_id": 2895,
+          "rank": 3,
+          "fused_score": 0.04616113053613054
+        },
+        {
+          "entry_id": 3217,
+          "rank": 4,
+          "fused_score": 0.04490750016696721
+        },
+        {
+          "entry_id": 3254,
+          "rank": 5,
+          "fused_score": 0.03278688524590164
+        },
+        {
+          "entry_id": 3241,
+          "rank": 6,
+          "fused_score": 0.03225806451612903
+        },
+        {
+          "entry_id": 3199,
+          "rank": 7,
+          "fused_score": 0.031746031746031744
+        },
+        {
+          "entry_id": 2967,
+          "rank": 8,
+          "fused_score": 0.031009615384615385
+        },
+        {
+          "entry_id": 3015,
+          "rank": 9,
+          "fused_score": 0.029411764705882353
+        },
+        {
+          "entry_id": 2906,
+          "rank": 10,
+          "fused_score": 0.015384615384615385
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 3254,
+          "rank": 1,
+          "reranker_score": 6.476728916168213,
+          "fused_score": 0.03278688524590164
+        },
+        {
+          "entry_id": 3241,
+          "rank": 2,
+          "reranker_score": 4.2067766189575195,
+          "fused_score": 0.03225806451612903
+        },
+        {
+          "entry_id": 2895,
+          "rank": 3,
+          "reranker_score": 3.9280624389648438,
+          "fused_score": 0.04616113053613054
+        },
+        {
+          "entry_id": 3279,
+          "rank": 4,
+          "reranker_score": 3.5389647483825684,
+          "fused_score": 0.046244188891607536
+        },
+        {
+          "entry_id": 3199,
+          "rank": 5,
+          "reranker_score": 2.810631513595581,
+          "fused_score": 0.031746031746031744
+        },
+        {
+          "entry_id": 2881,
+          "rank": 6,
+          "reranker_score": 2.0987353324890137,
+          "fused_score": 0.046649531024531024
+        },
+        {
+          "entry_id": 3015,
+          "rank": 7,
+          "reranker_score": 1.7372543811798096,
+          "fused_score": 0.029411764705882353
+        },
+        {
+          "entry_id": 2967,
+          "rank": 8,
+          "reranker_score": 0.9546410441398621,
+          "fused_score": 0.031009615384615385
+        },
+        {
+          "entry_id": 3217,
+          "rank": 9,
+          "reranker_score": -0.10512092709541321,
+          "fused_score": 0.04490750016696721
+        },
+        {
+          "entry_id": 3205,
+          "rank": 10,
+          "reranker_score": -2.471029758453369,
+          "fused_score": 0.014084507042253521
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 0.3333333333333333,
+        "recall_at_10": 1.0,
+        "mrr_at_5": 0.3333333333333333,
+        "mrr_at_10": 0.3333333333333333
+      },
+      "reranked_metrics": {
+        "recall_at_5": 1.0,
+        "recall_at_10": 1.0,
+        "mrr_at_5": 0.5,
+        "mrr_at_10": 0.5
+      }
+    },
+    {
+      "id": "q13",
+      "query": "What information is included in the LAN discovery payload?",
+      "relevant": [
+        2895,
+        3015,
+        3199
+      ],
+      "baseline": [
+        {
+          "entry_id": 2895,
+          "rank": 1,
+          "fused_score": 0.047891458495966696
+        },
+        {
+          "entry_id": 2881,
+          "rank": 2,
+          "fused_score": 0.04718343765045739
+        },
+        {
+          "entry_id": 3279,
+          "rank": 3,
+          "fused_score": 0.045291571521079724
+        },
+        {
+          "entry_id": 3217,
+          "rank": 4,
+          "fused_score": 0.04419642857142857
+        },
+        {
+          "entry_id": 3199,
+          "rank": 5,
+          "fused_score": 0.03200204813108039
+        },
+        {
+          "entry_id": 2967,
+          "rank": 6,
+          "fused_score": 0.03149801587301587
+        },
+        {
+          "entry_id": 3254,
+          "rank": 7,
+          "fused_score": 0.03047794966520434
+        },
+        {
+          "entry_id": 3241,
+          "rank": 8,
+          "fused_score": 0.030090497737556562
+        },
+        {
+          "entry_id": 3015,
+          "rank": 9,
+          "fused_score": 0.029418126757516764
+        },
+        {
+          "entry_id": 2876,
+          "rank": 10,
+          "fused_score": 0.027972027972027972
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 2895,
+          "rank": 1,
+          "reranker_score": 0.4959547519683838,
+          "fused_score": 0.047891458495966696
+        },
+        {
+          "entry_id": 3279,
+          "rank": 2,
+          "reranker_score": -1.0389515161514282,
+          "fused_score": 0.045291571521079724
+        },
+        {
+          "entry_id": 3241,
+          "rank": 3,
+          "reranker_score": -1.3195829391479492,
+          "fused_score": 0.030090497737556562
+        },
+        {
+          "entry_id": 3254,
+          "rank": 4,
+          "reranker_score": -1.4538204669952393,
+          "fused_score": 0.03047794966520434
+        },
+        {
+          "entry_id": 3199,
+          "rank": 5,
+          "reranker_score": -1.9300727844238281,
+          "fused_score": 0.03200204813108039
+        },
+        {
+          "entry_id": 3015,
+          "rank": 6,
+          "reranker_score": -2.6593832969665527,
+          "fused_score": 0.029418126757516764
+        },
+        {
+          "entry_id": 3217,
+          "rank": 7,
+          "reranker_score": -2.8969202041625977,
+          "fused_score": 0.04419642857142857
+        },
+        {
+          "entry_id": 2967,
+          "rank": 8,
+          "reranker_score": -3.031662702560425,
+          "fused_score": 0.03149801587301587
+        },
+        {
+          "entry_id": 2881,
+          "rank": 9,
+          "reranker_score": -3.2241339683532715,
+          "fused_score": 0.04718343765045739
+        },
+        {
+          "entry_id": 2899,
+          "rank": 10,
+          "reranker_score": -7.449606418609619,
+          "fused_score": 0.013888888888888888
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 0.6666666666666666,
+        "recall_at_10": 1.0,
+        "mrr_at_5": 1.0,
+        "mrr_at_10": 1.0
+      },
+      "reranked_metrics": {
+        "recall_at_5": 0.6666666666666666,
+        "recall_at_10": 1.0,
+        "mrr_at_5": 1.0,
+        "mrr_at_10": 1.0
+      }
+    },
+    {
+      "id": "q14",
+      "query": "Does discovering a remote Hermes agent automatically make it part of the local constellation?",
+      "relevant": [
+        3015,
+        3199,
+        3241
+      ],
+      "baseline": [
+        {
+          "entry_id": 2967,
+          "rank": 1,
+          "fused_score": 0.03278688524590164
+        },
+        {
+          "entry_id": 2878,
+          "rank": 2,
+          "fused_score": 0.030621785881252923
+        },
+        {
+          "entry_id": 3182,
+          "rank": 3,
+          "fused_score": 0.030158730158730156
+        },
+        {
+          "entry_id": 3243,
+          "rank": 4,
+          "fused_score": 0.030158730158730156
+        },
+        {
+          "entry_id": 3080,
+          "rank": 5,
+          "fused_score": 0.02919863597612958
+        },
+        {
+          "entry_id": 3146,
+          "rank": 6,
+          "fused_score": 0.01639344262295082
+        },
+        {
+          "entry_id": 2876,
+          "rank": 7,
+          "fused_score": 0.016129032258064516
+        },
+        {
+          "entry_id": 2877,
+          "rank": 8,
+          "fused_score": 0.016129032258064516
+        },
+        {
+          "entry_id": 3103,
+          "rank": 9,
+          "fused_score": 0.015873015873015872
+        },
+        {
+          "entry_id": 3051,
+          "rank": 10,
+          "fused_score": 0.015625
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 2967,
+          "rank": 1,
+          "reranker_score": 4.757321834564209,
+          "fused_score": 0.03278688524590164
+        },
+        {
+          "entry_id": 3080,
+          "rank": 2,
+          "reranker_score": -0.801293134689331,
+          "fused_score": 0.02919863597612958
+        },
+        {
+          "entry_id": 2878,
+          "rank": 3,
+          "reranker_score": -7.33588171005249,
+          "fused_score": 0.030621785881252923
+        },
+        {
+          "entry_id": 3182,
+          "rank": 4,
+          "reranker_score": -7.565150260925293,
+          "fused_score": 0.030158730158730156
+        },
+        {
+          "entry_id": 2905,
+          "rank": 5,
+          "reranker_score": -7.587823390960693,
+          "fused_score": 0.015151515151515152
+        },
+        {
+          "entry_id": 3038,
+          "rank": 6,
+          "reranker_score": -8.156566619873047,
+          "fused_score": 0.015384615384615385
+        },
+        {
+          "entry_id": 2861,
+          "rank": 7,
+          "reranker_score": -8.786283493041992,
+          "fused_score": 0.015151515151515152
+        },
+        {
+          "entry_id": 3218,
+          "rank": 8,
+          "reranker_score": -8.910906791687012,
+          "fused_score": 0.015625
+        },
+        {
+          "entry_id": 3036,
+          "rank": 9,
+          "reranker_score": -9.24144458770752,
+          "fused_score": 0.014925373134328358
+        },
+        {
+          "entry_id": 3014,
+          "rank": 10,
+          "reranker_score": -9.777902603149414,
+          "fused_score": 0.014925373134328358
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 0.0,
+        "recall_at_10": 0.0,
+        "mrr_at_5": 0.0,
+        "mrr_at_10": 0.0
+      },
+      "reranked_metrics": {
+        "recall_at_5": 0.0,
+        "recall_at_10": 0.0,
+        "mrr_at_5": 0.0,
+        "mrr_at_10": 0.0
+      }
+    },
+    {
+      "id": "q15",
+      "query": "What is the difference between discovery, trust, and adoption for remote agents?",
+      "relevant": [
+        3015,
+        3241
+      ],
+      "baseline": [
+        {
+          "entry_id": 2967,
+          "rank": 1,
+          "fused_score": 0.03278688524590164
+        },
+        {
+          "entry_id": 2876,
+          "rank": 2,
+          "fused_score": 0.03225806451612903
+        },
+        {
+          "entry_id": 3254,
+          "rank": 3,
+          "fused_score": 0.031009615384615385
+        },
+        {
+          "entry_id": 3131,
+          "rank": 4,
+          "fused_score": 0.028790389395194696
+        },
+        {
+          "entry_id": 3015,
+          "rank": 5,
+          "fused_score": 0.028438886647841874
+        },
+        {
+          "entry_id": 3199,
+          "rank": 6,
+          "fused_score": 0.015873015873015872
+        },
+        {
+          "entry_id": 3329,
+          "rank": 7,
+          "fused_score": 0.015873015873015872
+        },
+        {
+          "entry_id": 3323,
+          "rank": 8,
+          "fused_score": 0.015625
+        },
+        {
+          "entry_id": 3188,
+          "rank": 9,
+          "fused_score": 0.015384615384615385
+        },
+        {
+          "entry_id": 3167,
+          "rank": 10,
+          "fused_score": 0.015151515151515152
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 2967,
+          "rank": 1,
+          "reranker_score": 2.2315399646759033,
+          "fused_score": 0.03278688524590164
+        },
+        {
+          "entry_id": 2876,
+          "rank": 2,
+          "reranker_score": -3.110788106918335,
+          "fused_score": 0.03225806451612903
+        },
+        {
+          "entry_id": 3015,
+          "rank": 3,
+          "reranker_score": -3.752236843109131,
+          "fused_score": 0.028438886647841874
+        },
+        {
+          "entry_id": 3199,
+          "rank": 4,
+          "reranker_score": -6.268786907196045,
+          "fused_score": 0.015873015873015872
+        },
+        {
+          "entry_id": 3188,
+          "rank": 5,
+          "reranker_score": -6.963292121887207,
+          "fused_score": 0.015384615384615385
+        },
+        {
+          "entry_id": 3254,
+          "rank": 6,
+          "reranker_score": -9.007804870605469,
+          "fused_score": 0.031009615384615385
+        },
+        {
+          "entry_id": 2875,
+          "rank": 7,
+          "reranker_score": -9.332197189331055,
+          "fused_score": 0.014492753623188406
+        },
+        {
+          "entry_id": 3205,
+          "rank": 8,
+          "reranker_score": -9.890239715576172,
+          "fused_score": 0.015151515151515152
+        },
+        {
+          "entry_id": 3329,
+          "rank": 9,
+          "reranker_score": -11.143400192260742,
+          "fused_score": 0.015873015873015872
+        },
+        {
+          "entry_id": 3323,
+          "rank": 10,
+          "reranker_score": -11.220327377319336,
+          "fused_score": 0.015625
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 0.5,
+        "recall_at_10": 0.5,
+        "mrr_at_5": 0.2,
+        "mrr_at_10": 0.2
+      },
+      "reranked_metrics": {
+        "recall_at_5": 0.5,
+        "recall_at_10": 0.5,
+        "mrr_at_5": 0.3333333333333333,
+        "mrr_at_10": 0.3333333333333333
+      }
+    },
+    {
+      "id": "q16",
+      "query": "How was the Phase 5 semantic embedding problem diagnosed?",
+      "relevant": [
+        2852,
+        2873,
+        3094
+      ],
+      "baseline": [
+        {
+          "entry_id": 2987,
+          "rank": 1,
+          "fused_score": 0.03278688524590164
+        },
+        {
+          "entry_id": 2852,
+          "rank": 2,
+          "fused_score": 0.031746031746031744
+        },
+        {
+          "entry_id": 2871,
+          "rank": 3,
+          "fused_score": 0.03128054740957967
+        },
+        {
+          "entry_id": 2898,
+          "rank": 4,
+          "fused_score": 0.03125
+        },
+        {
+          "entry_id": 3094,
+          "rank": 5,
+          "fused_score": 0.030886196246139225
+        },
+        {
+          "entry_id": 2873,
+          "rank": 6,
+          "fused_score": 0.0304147465437788
+        },
+        {
+          "entry_id": 3223,
+          "rank": 7,
+          "fused_score": 0.029211087420042643
+        },
+        {
+          "entry_id": 3072,
+          "rank": 8,
+          "fused_score": 0.028850145288501453
+        },
+        {
+          "entry_id": 3260,
+          "rank": 9,
+          "fused_score": 0.02871794871794872
+        },
+        {
+          "entry_id": 2961,
+          "rank": 10,
+          "fused_score": 0.027583600982429624
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 2873,
+          "rank": 1,
+          "reranker_score": 5.386133193969727,
+          "fused_score": 0.0304147465437788
+        },
+        {
+          "entry_id": 2852,
+          "rank": 2,
+          "reranker_score": 4.271416664123535,
+          "fused_score": 0.031746031746031744
+        },
+        {
+          "entry_id": 2898,
+          "rank": 3,
+          "reranker_score": 2.938710927963257,
+          "fused_score": 0.03125
+        },
+        {
+          "entry_id": 2871,
+          "rank": 4,
+          "reranker_score": 2.6053085327148438,
+          "fused_score": 0.03128054740957967
+        },
+        {
+          "entry_id": 3260,
+          "rank": 5,
+          "reranker_score": 2.4266881942749023,
+          "fused_score": 0.02871794871794872
+        },
+        {
+          "entry_id": 3025,
+          "rank": 6,
+          "reranker_score": 2.2096850872039795,
+          "fused_score": 0.026875901875901876
+        },
+        {
+          "entry_id": 3005,
+          "rank": 7,
+          "reranker_score": 2.0874898433685303,
+          "fused_score": 0.027526395173453996
+        },
+        {
+          "entry_id": 2987,
+          "rank": 8,
+          "reranker_score": 1.9247304201126099,
+          "fused_score": 0.03278688524590164
+        },
+        {
+          "entry_id": 3193,
+          "rank": 9,
+          "reranker_score": 0.7012415528297424,
+          "fused_score": 0.027242401779095628
+        },
+        {
+          "entry_id": 2968,
+          "rank": 10,
+          "reranker_score": 0.37084317207336426,
+          "fused_score": 0.0136986301369863
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 0.6666666666666666,
+        "recall_at_10": 1.0,
+        "mrr_at_5": 0.5,
+        "mrr_at_10": 0.5
+      },
+      "reranked_metrics": {
+        "recall_at_5": 0.6666666666666666,
+        "recall_at_10": 0.6666666666666666,
+        "mrr_at_5": 1.0,
+        "mrr_at_10": 1.0
+      }
+    },
+    {
+      "id": "q17",
+      "query": "Which embedding model and dimensionality were validated for Mnemosyne?",
+      "relevant": [
+        3085,
+        3094,
+        2852
+      ],
+      "baseline": [
+        {
+          "entry_id": 3087,
+          "rank": 1,
+          "fused_score": 0.029957522915269395
+        },
+        {
+          "entry_id": 3371,
+          "rank": 2,
+          "fused_score": 0.0293236301369863
+        },
+        {
+          "entry_id": 2850,
+          "rank": 3,
+          "fused_score": 0.028577260665441927
+        },
+        {
+          "entry_id": 3005,
+          "rank": 4,
+          "fused_score": 0.02797339593114241
+        },
+        {
+          "entry_id": 2997,
+          "rank": 5,
+          "fused_score": 0.027443609022556388
+        },
+        {
+          "entry_id": 3358,
+          "rank": 6,
+          "fused_score": 0.025657894736842105
+        },
+        {
+          "entry_id": 3062,
+          "rank": 7,
+          "fused_score": 0.01639344262295082
+        },
+        {
+          "entry_id": 3203,
+          "rank": 8,
+          "fused_score": 0.01639344262295082
+        },
+        {
+          "entry_id": 3346,
+          "rank": 9,
+          "fused_score": 0.01639344262295082
+        },
+        {
+          "entry_id": 3095,
+          "rank": 10,
+          "fused_score": 0.016129032258064516
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 3087,
+          "rank": 1,
+          "reranker_score": -0.3717185854911804,
+          "fused_score": 0.029957522915269395
+        },
+        {
+          "entry_id": 3193,
+          "rank": 2,
+          "reranker_score": -1.0814684629440308,
+          "fused_score": 0.015384615384615385
+        },
+        {
+          "entry_id": 3005,
+          "rank": 3,
+          "reranker_score": -1.5830280780792236,
+          "fused_score": 0.02797339593114241
+        },
+        {
+          "entry_id": 3292,
+          "rank": 4,
+          "reranker_score": -2.082674980163574,
+          "fused_score": 0.015625
+        },
+        {
+          "entry_id": 3203,
+          "rank": 5,
+          "reranker_score": -3.118701934814453,
+          "fused_score": 0.01639344262295082
+        },
+        {
+          "entry_id": 3371,
+          "rank": 6,
+          "reranker_score": -5.290945053100586,
+          "fused_score": 0.0293236301369863
+        },
+        {
+          "entry_id": 3260,
+          "rank": 7,
+          "reranker_score": -5.376904487609863,
+          "fused_score": 0.016129032258064516
+        },
+        {
+          "entry_id": 3358,
+          "rank": 8,
+          "reranker_score": -6.573858261108398,
+          "fused_score": 0.025657894736842105
+        },
+        {
+          "entry_id": 3342,
+          "rank": 9,
+          "reranker_score": -6.869263648986816,
+          "fused_score": 0.016129032258064516
+        },
+        {
+          "entry_id": 3023,
+          "rank": 10,
+          "reranker_score": -7.300412178039551,
+          "fused_score": 0.015384615384615385
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 0.0,
+        "recall_at_10": 0.0,
+        "mrr_at_5": 0.0,
+        "mrr_at_10": 0.0
+      },
+      "reranked_metrics": {
+        "recall_at_5": 0.0,
+        "recall_at_10": 0.0,
+        "mrr_at_5": 0.0,
+        "mrr_at_10": 0.0
+      }
+    },
+    {
+      "id": "q18",
+      "query": "Why must embedding backfill retrieve source text through the MemoryGateway?",
+      "relevant": [
+        2959
+      ],
+      "baseline": [
+        {
+          "entry_id": 2959,
+          "rank": 1,
+          "fused_score": 0.03278688524590164
+        },
+        {
+          "entry_id": 2971,
+          "rank": 2,
+          "fused_score": 0.031054405392392875
+        },
+        {
+          "entry_id": 3223,
+          "rank": 3,
+          "fused_score": 0.031024531024531024
+        },
+        {
+          "entry_id": 2871,
+          "rank": 4,
+          "fused_score": 0.030834914611005692
+        },
+        {
+          "entry_id": 3094,
+          "rank": 5,
+          "fused_score": 0.027745885954841176
+        },
+        {
+          "entry_id": 3072,
+          "rank": 6,
+          "fused_score": 0.025657894736842105
+        },
+        {
+          "entry_id": 2842,
+          "rank": 7,
+          "fused_score": 0.01639344262295082
+        },
+        {
+          "entry_id": 3059,
+          "rank": 8,
+          "fused_score": 0.016129032258064516
+        },
+        {
+          "entry_id": 3015,
+          "rank": 9,
+          "fused_score": 0.015873015873015872
+        },
+        {
+          "entry_id": 3231,
+          "rank": 10,
+          "fused_score": 0.015873015873015872
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 2959,
+          "rank": 1,
+          "reranker_score": 8.126049041748047,
+          "fused_score": 0.03278688524590164
+        },
+        {
+          "entry_id": 2871,
+          "rank": 2,
+          "reranker_score": -3.986920118331909,
+          "fused_score": 0.030834914611005692
+        },
+        {
+          "entry_id": 3094,
+          "rank": 3,
+          "reranker_score": -4.8416056632995605,
+          "fused_score": 0.027745885954841176
+        },
+        {
+          "entry_id": 3015,
+          "rank": 4,
+          "reranker_score": -5.914639472961426,
+          "fused_score": 0.015873015873015872
+        },
+        {
+          "entry_id": 2873,
+          "rank": 5,
+          "reranker_score": -7.12435245513916,
+          "fused_score": 0.015625
+        },
+        {
+          "entry_id": 3223,
+          "rank": 6,
+          "reranker_score": -7.558753967285156,
+          "fused_score": 0.031024531024531024
+        },
+        {
+          "entry_id": 2971,
+          "rank": 7,
+          "reranker_score": -7.991657257080078,
+          "fused_score": 0.031054405392392875
+        },
+        {
+          "entry_id": 3072,
+          "rank": 8,
+          "reranker_score": -9.364468574523926,
+          "fused_score": 0.025657894736842105
+        },
+        {
+          "entry_id": 3117,
+          "rank": 9,
+          "reranker_score": -9.615777969360352,
+          "fused_score": 0.015625
+        },
+        {
+          "entry_id": 3193,
+          "rank": 10,
+          "reranker_score": -9.652644157409668,
+          "fused_score": 0.015384615384615385
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 1.0,
+        "recall_at_10": 1.0,
+        "mrr_at_5": 1.0,
+        "mrr_at_10": 1.0
+      },
+      "reranked_metrics": {
+        "recall_at_5": 1.0,
+        "recall_at_10": 1.0,
+        "mrr_at_5": 1.0,
+        "mrr_at_10": 1.0
+      }
+    },
+    {
+      "id": "q19",
+      "query": "What was intentionally excluded from the Phase 5A semantic embedding schema migration?",
+      "relevant": [
+        3005
+      ],
+      "baseline": [
+        {
+          "entry_id": 3005,
+          "rank": 1,
+          "fused_score": 0.04918032786885246
+        },
+        {
+          "entry_id": 3193,
+          "rank": 2,
+          "fused_score": 0.04621952999562108
+        },
+        {
+          "entry_id": 2884,
+          "rank": 3,
+          "fused_score": 0.031754032258064516
+        },
+        {
+          "entry_id": 2987,
+          "rank": 4,
+          "fused_score": 0.031754032258064516
+        },
+        {
+          "entry_id": 3025,
+          "rank": 5,
+          "fused_score": 0.031024531024531024
+        },
+        {
+          "entry_id": 2898,
+          "rank": 6,
+          "fused_score": 0.030536130536130537
+        },
+        {
+          "entry_id": 2871,
+          "rank": 7,
+          "fused_score": 0.029571646010002173
+        },
+        {
+          "entry_id": 2852,
+          "rank": 8,
+          "fused_score": 0.029211087420042643
+        },
+        {
+          "entry_id": 2968,
+          "rank": 9,
+          "fused_score": 0.028083267871170464
+        },
+        {
+          "entry_id": 3203,
+          "rank": 10,
+          "fused_score": 0.027692895339954164
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 3005,
+          "rank": 1,
+          "reranker_score": 3.480405330657959,
+          "fused_score": 0.04918032786885246
+        },
+        {
+          "entry_id": 2968,
+          "rank": 2,
+          "reranker_score": 3.277344226837158,
+          "fused_score": 0.028083267871170464
+        },
+        {
+          "entry_id": 2884,
+          "rank": 3,
+          "reranker_score": 1.6067644357681274,
+          "fused_score": 0.031754032258064516
+        },
+        {
+          "entry_id": 2873,
+          "rank": 4,
+          "reranker_score": 1.3694525957107544,
+          "fused_score": 0.014492753623188406
+        },
+        {
+          "entry_id": 3193,
+          "rank": 5,
+          "reranker_score": 1.2365773916244507,
+          "fused_score": 0.04621952999562108
+        },
+        {
+          "entry_id": 3025,
+          "rank": 6,
+          "reranker_score": 1.065709114074707,
+          "fused_score": 0.031024531024531024
+        },
+        {
+          "entry_id": 2987,
+          "rank": 7,
+          "reranker_score": 0.4654862880706787,
+          "fused_score": 0.031754032258064516
+        },
+        {
+          "entry_id": 2852,
+          "rank": 8,
+          "reranker_score": -0.04015776142477989,
+          "fused_score": 0.029211087420042643
+        },
+        {
+          "entry_id": 2904,
+          "rank": 9,
+          "reranker_score": -0.12493261694908142,
+          "fused_score": 0.013888888888888888
+        },
+        {
+          "entry_id": 2871,
+          "rank": 10,
+          "reranker_score": -0.4304482936859131,
+          "fused_score": 0.029571646010002173
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 1.0,
+        "recall_at_10": 1.0,
+        "mrr_at_5": 1.0,
+        "mrr_at_10": 1.0
+      },
+      "reranked_metrics": {
+        "recall_at_5": 1.0,
+        "recall_at_10": 1.0,
+        "mrr_at_5": 1.0,
+        "mrr_at_10": 1.0
+      }
+    },
+    {
+      "id": "q20",
+      "query": "What architectural principles must not regress as Mnemosyne evolves?",
+      "relevant": [
+        3167,
+        2904,
+        2885
+      ],
+      "baseline": [
+        {
+          "entry_id": 2974,
+          "rank": 1,
+          "fused_score": 0.046244188891607536
+        },
+        {
+          "entry_id": 3157,
+          "rank": 2,
+          "fused_score": 0.04503676470588235
+        },
+        {
+          "entry_id": 3088,
+          "rank": 3,
+          "fused_score": 0.04420226066544193
+        },
+        {
+          "entry_id": 3342,
+          "rank": 4,
+          "fused_score": 0.04168054168054168
+        },
+        {
+          "entry_id": 3012,
+          "rank": 5,
+          "fused_score": 0.02946236559139785
+        },
+        {
+          "entry_id": 2850,
+          "rank": 6,
+          "fused_score": 0.02938045560996381
+        },
+        {
+          "entry_id": 3371,
+          "rank": 7,
+          "fused_score": 0.02904040404040404
+        },
+        {
+          "entry_id": 3118,
+          "rank": 8,
+          "fused_score": 0.02878726010616578
+        },
+        {
+          "entry_id": 3147,
+          "rank": 9,
+          "fused_score": 0.027730294396961064
+        },
+        {
+          "entry_id": 2857,
+          "rank": 10,
+          "fused_score": 0.027346637102734665
+        }
+      ],
+      "reranked": [
+        {
+          "entry_id": 2974,
+          "rank": 1,
+          "reranker_score": -0.005328286439180374,
+          "fused_score": 0.046244188891607536
+        },
+        {
+          "entry_id": 3088,
+          "rank": 2,
+          "reranker_score": -0.5267282128334045,
+          "fused_score": 0.04420226066544193
+        },
+        {
+          "entry_id": 3157,
+          "rank": 3,
+          "reranker_score": -0.7883036136627197,
+          "fused_score": 0.04503676470588235
+        },
+        {
+          "entry_id": 3371,
+          "rank": 4,
+          "reranker_score": -3.354316234588623,
+          "fused_score": 0.02904040404040404
+        },
+        {
+          "entry_id": 3189,
+          "rank": 5,
+          "reranker_score": -3.404369592666626,
+          "fused_score": 0.026992753623188405
+        },
+        {
+          "entry_id": 3118,
+          "rank": 6,
+          "reranker_score": -3.5325469970703125,
+          "fused_score": 0.02878726010616578
+        },
+        {
+          "entry_id": 3147,
+          "rank": 7,
+          "reranker_score": -3.740468740463257,
+          "fused_score": 0.027730294396961064
+        },
+        {
+          "entry_id": 3047,
+          "rank": 8,
+          "reranker_score": -4.342716217041016,
+          "fused_score": 0.015625
+        },
+        {
+          "entry_id": 3012,
+          "rank": 9,
+          "reranker_score": -4.7337541580200195,
+          "fused_score": 0.02946236559139785
+        },
+        {
+          "entry_id": 2850,
+          "rank": 10,
+          "reranker_score": -5.3896379470825195,
+          "fused_score": 0.02938045560996381
+        }
+      ],
+      "baseline_metrics": {
+        "recall_at_5": 0.0,
+        "recall_at_10": 0.0,
+        "mrr_at_5": 0.0,
+        "mrr_at_10": 0.0
+      },
+      "reranked_metrics": {
+        "recall_at_5": 0.0,
+        "recall_at_10": 0.0,
+        "mrr_at_5": 0.0,
+        "mrr_at_10": 0.0
+      }
+    }
+  ]
+}

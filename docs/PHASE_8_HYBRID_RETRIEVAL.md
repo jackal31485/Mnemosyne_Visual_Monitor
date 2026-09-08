@@ -1,8 +1,8 @@
 # Phase 8 — Hybrid Retrieval
 
-**Status:** IN PROGRESS — 8A + 8B + 8C COMPLETE
+**Status:** IN PROGRESS — 8A + 8B + 8C + 8D + 8E + 8F COMPLETE
 **Started:** 2026-09-07
-**Current:** Phase 8D — Temporal Retrieval
+**Current:** Phase 8G — Explainability
 **Target:** Build a deterministic, explainable hybrid retrieval layer.
 
 ## Objective
@@ -379,18 +379,99 @@ The completed Phase 8 retrieval architecture is:
 Cross-channel fusion is implemented in Phase 8E. CrossEncoder reranking remains
 a subsequent Phase 8 stage.
 
-## 8C — Graph-aware retrieval
+## Phase 8C — Graph-Aware Retrieval
 
-Allow graph relationships to influence candidate selection.
+**Status:** COMPLETE
+**Completed:** 2026-09-07
 
-Graph expansion must have:
+### Implementation
 
-- bounded depth;
-- bounded candidate count;
-- deterministic ordering;
-- provenance;
-- safeguards against traversal explosions.
+Phase 8C adds bounded graph-aware candidate expansion on top of the
+authoritative collective graph.
 
+Implemented:
+
+- Entry-ID-oriented graph neighbor bridge in `GraphAggregator`
+- `GraphSearcher` retrieval layer
+- One-hop graph expansion from semantic/keyword seed candidates
+- Collective entry-ID preservation
+- Duplicate collective-entry preservation
+- Lifecycle authorization against authoritative `collective.db`
+- Revoked-entry exclusion
+- Unpromoted-entry exclusion
+- Optional source-profile filtering
+- Cross-seed candidate deduplication
+- Deterministic score ordering
+- Per-seed expansion limits
+- Provenance preservation
+
+Graph score remains the existing cosine-similarity score and existing graph
+threshold semantics are unchanged. Score fusion is intentionally deferred to
+Phase 8E.
+
+### Governance boundary
+
+The graph remains a candidate-discovery mechanism, not an authorization
+mechanism.
+
+A graph-connected entry is not automatically authorized for retrieval.
+`GraphSearcher` re-checks the authoritative collective lifecycle state before
+returning a candidate.
+
+The implementation deliberately operates on `collective_entries.id` rather
+than converting through presentation-oriented `graph_id` values. This
+preserves identity when duplicate `(source_profile, origin_memory_id)`
+references exist.
+
+### Validation
+
+Focused Phase 8C tests:
+
+- 9 passed
+
+Graph generation + collective-reference + graph-search integration:
+
+- 20 passed
+
+Full project regression:
+
+- 228 passed
+- 4 skipped
+- 4 existing FastAPI deprecation warnings
+
+Production validation:
+
+- Promoted entries: 567
+- Graph nodes: 567
+- Graph embeddings: 567
+- Production seed: entry 2841
+- Graph neighbors returned: 0
+- Lifecycle authorization: PASS
+- Entry-ID preservation: PASS
+- Provenance preservation: PASS
+- Deterministic ordering: PASS
+- Graph expansion: PASS
+
+The zero-neighbor production result is valid: the selected seed had no other
+production embedding meeting the existing graph similarity threshold.
+
+### Phase 8C completion criteria
+
+- [x] Graph-aware candidate expansion implemented
+- [x] Entry identity preserved
+- [x] Lifecycle governance preserved
+- [x] Revoked entries excluded
+- [x] Unpromoted entries excluded
+- [x] Profile filtering supported
+- [x] Deterministic ordering
+- [x] Provenance preserved
+- [x] Focused tests pass
+- [x] Full regression passes
+- [x] Production validation passes
+
+### Next
+
+Phase 8D — Temporal Retrieval.
 ## 8D — Temporal retrieval
 
 Add time relevance without requiring every memory to have a complete timestamp.
@@ -510,15 +591,136 @@ fused_score: <deterministic value>
 
 ## 8F — Optional reranking
 
-Only after 8A–8E are stable.
+**Status: COMPLETE — 2026-09-07**
 
-Requirements:
+Phase 8F adds an optional local CrossEncoder reranking stage after deterministic
+8E rank fusion.
 
-- local/offline-capable;
-- optional;
-- deterministic when configured deterministically;
-- no mandatory cloud dependency;
-- measurable improvement using a test/evaluation set.
+### Implementation
+
+Implemented:
+
+- `src/retrieval/cross_encoder.py` — local CrossEncoder adapter;
+- `src/retrieval/reranker.py` — bounded query-time reranking service;
+- `tests/test_cross_encoder.py`;
+- `tests/test_reranker.py`.
+
+The production reranker:
+
+- consumes `FusedResult` candidates from Phase 8E;
+- retrieves source content through the `MemoryGateway`;
+- never re-queries or modifies stored embeddings;
+- never writes to `collective.db`;
+- applies a configurable candidate limit, defaulting to 20;
+- returns a configurable final `top_k`;
+- preserves collective identity, source profile, origin memory ID, channel ranks,
+  fused score, channel contributions, and provenance;
+- validates score count and finite values;
+- uses deterministic `entry_id` ordering for score ties;
+- fails in a controlled manner when source memory cannot be retrieved.
+
+The CrossEncoder is optional and has no mandatory cloud dependency.
+
+### Production model
+
+The validated local model is:
+
+- `cross-encoder/ms-marco-MiniLM-L6-v2`;
+- local model path: `models/cross-encoder-ms-marco-MiniLM-L6-v2`;
+- runtime: Sentence Transformers / PyTorch;
+- validated on CPU and CUDA;
+- model loading is local-only after installation;
+- no network access is required at query time.
+
+The model is an English/MS-MARCO passage-ranking model. It must not be represented
+as multilingual retrieval capability.
+
+### Focused validation
+
+Phase 8F focused tests:
+
+- CrossEncoder adapter: **9 passed**
+- Reranker: **12 passed**
+- Combined 8F + keyword focused tests: **38 passed**
+
+### Frozen evaluation
+
+A frozen evaluation set was created from the existing Mnemosyne corpus before the
+Phase 8F benchmark.
+
+Evaluation safeguards:
+
+- **20 queries**
+- frozen relevance judgments;
+- current Mnemosyne corpus only;
+- Phase 8 memories intentionally excluded;
+- identical candidate generation for 8E and 8F;
+- no collective database mutation during evaluation;
+- metrics: Recall@5, Recall@10, MRR@5, MRR@10.
+
+Evaluation artifacts:
+
+- `docs/phase_8f_evaluation_set.json`
+- `docs/phase_8f_evaluation_results.json`
+- `scripts/evaluate_phase_8f.py`
+
+### Evaluation results
+
+| Metric | 8E RRF | 8F RRF + CrossEncoder | Delta |
+|---|---:|---:|---:|
+| Recall@5 | 0.4317 | **0.5192** | **+0.0875** |
+| Recall@10 | 0.5833 | **0.6208** | **+0.0375** |
+| MRR@5 | 0.4617 | **0.5267** | **+0.0650** |
+| MRR@10 | 0.4806 | **0.5400** | **+0.0594** |
+
+The CrossEncoder improved all four aggregate evaluation metrics.
+
+These results provide measurable evidence that the reranking stage adds value to
+the fused retrieval candidate set. The evaluation contains only 20 queries, so
+the results are treated as engineering evidence rather than a claim of
+statistical significance.
+
+Some individual queries regressed after reranking. These are retained in the
+evaluation artifact rather than tuned away individually. Queries with no relevant
+candidates also demonstrate that reranking cannot repair candidate-generation
+failures; those limitations belong to the broader retrieval architecture rather
+than being treated as 8F defects.
+
+### Governance boundary
+
+Reranking is a ranking operation, not an authorization operation.
+
+The reranker receives candidates already constrained by the retrieval architecture
+and does not expand the candidate pool or bypass collective lifecycle filtering.
+
+Governance remains authoritative in `collective.db`.
+
+### Phase 8F completion criteria
+
+- [x] Local/offline-capable CrossEncoder implemented
+- [x] Optional query-time reranking implemented
+- [x] Bounded candidate processing
+- [x] Fused-result metadata preserved
+- [x] Provenance preserved
+- [x] Lifecycle filtering not bypassed
+- [x] No collective DB writes
+- [x] Deterministic tie handling
+- [x] CPU validation
+- [x] CUDA validation
+- [x] Focused tests pass
+- [x] Frozen evaluation set created
+- [x] Baseline and reranked metrics measured
+- [x] Aggregate improvement demonstrated
+
+### Phase 8F conclusion
+
+**Phase 8F is complete.**
+
+The CrossEncoder is validated as an optional local reranking layer. Further
+improvements to candidate generation, multilingual retrieval, or retrieval
+coverage should be addressed as separate retrieval/knowledge work rather than
+by destabilizing the completed 8F implementation.
+
 
 ## 8G — Explainability
 
@@ -586,105 +788,16 @@ The entire phase is complete only when:
 
 are integrated, tested, documented, and compatible with Mnemosyne's governance invariants.
 
-## Next implementation task
+## Current implementation status
 
-**Begin with 8C: Graph-aware retrieval.**
+Phase 8A through Phase 8F are complete.
 
-Use the existing graph infrastructure to add bounded graph expansion as a complementary retrieval signal.
+The remaining Phase 8 implementation target is **8G — Explainability**.
 
-Do not implement temporal scoring, rank fusion, reranking, or explainability integration in the same change. Build and validate graph-aware candidate retrieval first.
+The intended retrieval architecture is:
 
+Keyword/BM25 → Semantic → Graph → Temporal → RRF (8E) → Top-N → Optional CrossEncoder (8F) → Final Results → Explainability (8G)
 
-## Phase 8C — Graph-Aware Retrieval
+The individual retrieval components and the evaluation pipeline are operational. However, there is not yet a single production hybrid-retrieval orchestrator that exposes the complete pipeline as one unified service/API contract. The Phase 8F evaluation harness composes the retrieval components to measure the architecture without changing production retrieval behavior.
 
-**Status:** COMPLETE
-**Completed:** 2026-09-07
-
-### Implementation
-
-Phase 8C adds bounded graph-aware candidate expansion on top of the
-authoritative collective graph.
-
-Implemented:
-
-- Entry-ID-oriented graph neighbor bridge in `GraphAggregator`
-- `GraphSearcher` retrieval layer
-- One-hop graph expansion from semantic/keyword seed candidates
-- Collective entry-ID preservation
-- Duplicate collective-entry preservation
-- Lifecycle authorization against authoritative `collective.db`
-- Revoked-entry exclusion
-- Unpromoted-entry exclusion
-- Optional source-profile filtering
-- Cross-seed candidate deduplication
-- Deterministic score ordering
-- Per-seed expansion limits
-- Provenance preservation
-
-Graph score remains the existing cosine-similarity score and existing graph
-threshold semantics are unchanged. Score fusion is intentionally deferred to
-Phase 8E.
-
-### Governance boundary
-
-The graph remains a candidate-discovery mechanism, not an authorization
-mechanism.
-
-A graph-connected entry is not automatically authorized for retrieval.
-`GraphSearcher` re-checks the authoritative collective lifecycle state before
-returning a candidate.
-
-The implementation deliberately operates on `collective_entries.id` rather
-than converting through presentation-oriented `graph_id` values. This
-preserves identity when duplicate `(source_profile, origin_memory_id)`
-references exist.
-
-### Validation
-
-Focused Phase 8C tests:
-
-- 9 passed
-
-Graph generation + collective-reference + graph-search integration:
-
-- 20 passed
-
-Full project regression:
-
-- 228 passed
-- 4 skipped
-- 4 existing FastAPI deprecation warnings
-
-Production validation:
-
-- Promoted entries: 567
-- Graph nodes: 567
-- Graph embeddings: 567
-- Production seed: entry 2841
-- Graph neighbors returned: 0
-- Lifecycle authorization: PASS
-- Entry-ID preservation: PASS
-- Provenance preservation: PASS
-- Deterministic ordering: PASS
-- Graph expansion: PASS
-
-The zero-neighbor production result is valid: the selected seed had no other
-production embedding meeting the existing graph similarity threshold.
-
-### Phase 8C completion criteria
-
-- [x] Graph-aware candidate expansion implemented
-- [x] Entry identity preserved
-- [x] Lifecycle governance preserved
-- [x] Revoked entries excluded
-- [x] Unpromoted entries excluded
-- [x] Profile filtering supported
-- [x] Deterministic ordering
-- [x] Provenance preserved
-- [x] Focused tests pass
-- [x] Full regression passes
-- [x] Production validation passes
-
-### Next
-
-Phase 8D — Temporal Retrieval.
+This distinction must remain explicit until unified production orchestration is implemented and validated.
