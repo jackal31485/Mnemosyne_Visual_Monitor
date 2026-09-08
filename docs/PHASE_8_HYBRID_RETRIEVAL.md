@@ -318,14 +318,48 @@ Phase 8B validation established:
 
 ### Live migration status
 
-The controlled migration copy has been fully validated.
+The live semantic embedding migration has been completed and validated.
 
-**The live `data/collective.db` has NOT yet been modified by the new semantic
-embedding migration.**
+The live `data/collective.db` contains **570 collective entries**, with all
+570 eligible promoted/non-revoked entries rebuilt using the production local
+`all-MiniLM-L6-v2` encoder.
 
-The live migration remains a separate, explicitly controlled operation after
-the Phase 8B code and documentation checkpoint. A backup and post-migration
-validation will be performed before proceeding to Phase 8F.
+Live migration results:
+
+- eligible entries: **570**
+- embeddings rebuilt: **570**
+- rebuild failures: **0**
+- valid 384-dimensional embeddings: **570**
+- invalid embeddings: **0**
+- non-embedding data mismatches against the pre-migration backup: **0**
+- embedding replacements: **570/570**
+- embedding size changes: **0**
+- SQLite integrity check: **PASS**
+- source Mnemosyne databases changed: **0**
+
+Post-migration graph validation:
+
+- graph nodes: **570**
+- unique graph identities: **570**
+- embedded graph entries: **570**
+- deterministic neighbor retrieval: **PASS**
+
+Post-migration semantic retrieval validation:
+
+- production local MiniLM query generation: **PASS**
+- query dimensionality: **384**
+- representative queries returning results: **3/3**
+- top-5 result retrieval: **PASS**
+- deterministic repeated retrieval: **PASS**
+- lifecycle filtering remains enforced
+- provenance remains preserved
+
+The pre-migration backup is retained temporarily as a rollback artifact:
+
+`data/collective.db.pre-8b-live-migration.bak`
+
+The live migration is therefore considered complete. Phase 8F can proceed.
+
 
 ### Architectural boundary
 
