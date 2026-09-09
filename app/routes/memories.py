@@ -100,6 +100,10 @@ def get_memory_content(
             profile,
             memory_id,
         )
+        metadata = gateway.get_memory_metadata(
+            profile,
+            memory_id,
+        )
     except KeyError as exc:
         raise HTTPException(
             status_code=404,
@@ -110,4 +114,10 @@ def get_memory_content(
         "profile": profile,
         "memory_id": memory_id,
         "content": content,
+        "event_date": metadata.get("event_date"),
+        "event_date_precision": metadata.get(
+            "event_date_precision"
+        ),
+        "timestamp": metadata.get("timestamp"),
+        "created_at": metadata.get("created_at"),
     }

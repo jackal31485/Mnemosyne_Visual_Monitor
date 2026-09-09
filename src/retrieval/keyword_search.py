@@ -61,7 +61,30 @@ class KeywordSearcher:
         if not isinstance(query, str):
             raise TypeError("query must be a string")
 
-        return query.strip()
+        terms = query.strip().split()
+        if not terms:
+            return ""
+
+        # Treat caller input as ordinary natural-language search text,
+        # not as raw FTS5 syntax. Strip punctuation from each token and
+        # explicitly OR the resulting terms so natural-language queries
+        # do not require every query word to be present.
+        safe_terms = []
+
+        for term in terms:
+            cleaned = "".join(
+                character
+                for character in term
+                if character.isalnum() or character == "_"
+            )
+            if not cleaned:
+                continue
+
+            safe_terms.append(
+                '"' + cleaned.replace('"', '""') + '"'
+            )
+
+        return " OR ".join(safe_terms)
 
     def search(
         self,

@@ -376,3 +376,38 @@ def test_stale_index_entry_is_rejected(
 
     searcher.close()
     indexer.close()
+
+
+def test_natural_language_query_with_punctuation(
+    dao: CollectiveDAO,
+    gateway: InMemoryMemoryGateway,
+    indexer: KeywordIndexer,
+    retrieval_db: Path,
+) -> None:
+    entry_id = promote(
+        dao,
+        "profileA",
+        "memX",
+    )
+
+    gateway.add_memory(
+        "profileA",
+        "memX",
+        "Phase 7 timeline API was fixed by correcting dependency injection.",
+    )
+
+    indexer.index_entry(entry_id)
+
+    searcher = KeywordSearcher(
+        dao,
+        db_path=retrieval_db,
+    )
+
+    results = searcher.search(
+        "How did we fix the Phase 7 timeline API?"
+    )
+
+    assert [result.entry_id for result in results] == [entry_id]
+
+    searcher.close()
+    indexer.close()
