@@ -1,6 +1,6 @@
 # Mnemosyne Visual Monitor — Authoritative Project Roadmap
 
-**Status:** Phase 9 in progress — Browser-facing hybrid retrieval integration
+**Status:** Phase 10 ready to begin — Entity & Relationship Intelligence
 **Last updated:** 2026-09-09
 
 ## Purpose
@@ -34,8 +34,8 @@ The following remain mandatory throughout all phases:
 | 6 | Collective Visualization & Distributed Discovery | COMPLETE |
 | 7 | Browser / Visual Monitor | COMPLETE |
 | 8 | Hybrid Retrieval | COMPLETE |
-| 9 | Browser-Facing Hybrid Retrieval Integration | IN PROGRESS — 9A/9B implemented |
-| 10 | Entity & Relationship Intelligence | PLANNED |
+| 9 | Browser-Facing Hybrid Retrieval Integration | COMPLETE |
+| 10 | Entity & Relationship Intelligence | READY TO BEGIN |
 | 11 | Temporal Intelligence | PLANNED |
 | 12 | Evidence Consolidation & Memory Synthesis | PLANNED |
 | 13 | Higher-Level Mental Models | PLANNED |
