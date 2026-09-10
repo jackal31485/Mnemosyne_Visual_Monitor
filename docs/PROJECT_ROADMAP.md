@@ -1,7 +1,7 @@
 # Mnemosyne Visual Monitor — Authoritative Project Roadmap
 
-**Status:** Phase 7 complete; Phase 8 in progress — 8A through 8E complete
-**Last updated:** 2026-09-07
+**Status:** Phase 9 in progress — Browser-facing hybrid retrieval integration
+**Last updated:** 2026-09-09
 
 ## Purpose
 
@@ -33,16 +33,17 @@ The following remain mandatory throughout all phases:
 | 5 | Semantic Embeddings & Vector Search | COMPLETE |
 | 6 | Collective Visualization & Distributed Discovery | COMPLETE |
 | 7 | Browser / Visual Monitor | COMPLETE |
-| 8 | Hybrid Retrieval | IN PROGRESS — 8A through 8E COMPLETE |
-| 9 | Entity & Relationship Intelligence | PLANNED |
-| 10 | Temporal Intelligence | PLANNED |
-| 11 | Evidence Consolidation & Memory Synthesis | PLANNED |
-| 12 | Higher-Level Mental Models | PLANNED |
-| 13 | Cross-Profile Learning & Controlled Transfer | PLANNED |
-| 14 | Advanced Reranking & Retrieval Optimization | PLANNED |
-| 15 | Distributed Collective / LAN Federation | PLANNED |
-| 16 | Governance, Audit & Security Hardening | PLANNED |
-| 17 | Productionization, Deployment & Final Validation | PLANNED |
+| 8 | Hybrid Retrieval | COMPLETE |
+| 9 | Browser-Facing Hybrid Retrieval Integration | IN PROGRESS — 9A/9B implemented |
+| 10 | Entity & Relationship Intelligence | PLANNED |
+| 11 | Temporal Intelligence | PLANNED |
+| 12 | Evidence Consolidation & Memory Synthesis | PLANNED |
+| 13 | Higher-Level Mental Models | PLANNED |
+| 14 | Cross-Profile Learning & Controlled Transfer | PLANNED |
+| 15 | Advanced Retrieval Optimization | PLANNED |
+| 16 | Distributed Collective / LAN Federation | PLANNED |
+| 17 | Governance, Audit & Security Hardening | PLANNED |
+| 18 | Productionization, Deployment & Final Validation | PLANNED |
 
 ## Phase 7 — Browser / Visual Monitor
 
@@ -69,7 +70,7 @@ Phase 7 completion is documented in:
 
 ## Phase 8 — Hybrid Retrieval
 
-Phase 8 combines multiple complementary retrieval signals rather than relying on embeddings alone.
+Phase 8 is complete. It combines multiple complementary retrieval signals rather than relying on embeddings alone.
 
 ### 8A — Keyword retrieval / BM25
 
@@ -263,7 +264,23 @@ Phase 8 is complete only when:
 7. integration and regression tests pass;
 8. documentation describes the retrieval contract.
 
-## Phase 9 — Entity & Relationship Intelligence
+## Phase 9 — Browser-Facing Hybrid Retrieval Integration
+
+Expose the completed Phase 8 retrieval pipeline through the operational Browser.
+
+Focus:
+
+- browser API boundary;
+- hybrid search controls;
+- explainability presentation;
+- profile/date filtering;
+- source-memory inspection;
+- retrieval error handling;
+- live-corpus validation.
+
+Implementation details are tracked in `docs/PHASE_9_BROWSER_HYBRID_RETRIEVAL.md`.
+
+## Phase 10 — Entity & Relationship Intelligence
 
 Build stronger entity resolution and relationship semantics.
 
@@ -277,7 +294,7 @@ Focus:
 - provenance;
 - conflict handling.
 
-## Phase 10 — Temporal Intelligence
+## Phase 11 — Temporal Intelligence
 
 Move beyond timestamp filtering into temporal relationships.
 
@@ -290,7 +307,7 @@ Focus:
 - changing facts;
 - temporal conflict detection.
 
-## Phase 11 — Evidence Consolidation & Memory Synthesis
+## Phase 12 — Evidence Consolidation & Memory Synthesis
 
 Combine related memories into evidence-backed knowledge units.
 
@@ -303,7 +320,7 @@ Focus:
 - source weighting;
 - traceable synthesis.
 
-## Phase 12 — Higher-Level Mental Models
+## Phase 13 — Higher-Level Mental Models
 
 Derive stable concepts and models from accumulated governed knowledge.
 
@@ -316,7 +333,7 @@ Focus:
 - inferred relationships;
 - explicit distinction between observed facts and derived models.
 
-## Phase 13 — Cross-Profile Learning & Controlled Transfer
+## Phase 14 — Cross-Profile Learning & Controlled Transfer
 
 Enable governed learning between Hermes profiles.
 
@@ -329,20 +346,21 @@ Focus:
 - provenance;
 - rollback/revocation.
 
-## Phase 14 — Advanced Reranking & Retrieval Optimization
+## Phase 15 — Advanced Retrieval Optimization
 
-Optimize retrieval quality after the hybrid foundation is proven.
+Optimize retrieval quality after the hybrid foundation is proven and browser-integrated.
 
 Focus:
 
-- cross-encoder/local reranking;
 - query classification;
 - retrieval routing;
 - latency/quality tradeoffs;
+- multilingual retrieval;
 - evaluation datasets;
-- measurable retrieval metrics.
+- measurable retrieval metrics;
+- future reranking improvements beyond the validated Phase 8F baseline.
 
-## Phase 15 — Distributed Collective / LAN Federation
+## Phase 16 — Distributed Collective / LAN Federation
 
 Expand controlled collective knowledge across trusted local Mnemosyne instances.
 
@@ -358,7 +376,7 @@ Focus:
 
 LAN discovery implemented during earlier phases is a foundation, not automatic federation.
 
-## Phase 16 — Governance, Audit & Security Hardening
+## Phase 17 — Governance, Audit & Security Hardening
 
 Harden the system before production deployment.
 
@@ -373,7 +391,7 @@ Focus:
 - security review;
 - adversarial testing.
 
-## Phase 17 — Productionization, Deployment & Final Validation
+## Phase 18 — Productionization, Deployment & Final Validation
 
 Prepare for deployment and operational use.
 

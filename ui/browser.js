@@ -30,6 +30,8 @@ const state = {
         profileScope: "all",
     },
     globalEvents: null,
+    hybridResults: [],
+    hybridSearchLoading: false,
 };
 
 function $(id) { return document.getElementById(id); }
@@ -115,6 +117,38 @@ async function fetchDiagnostics() {
 
 async function fetchAgents() {
     return fetchJSON("/api/discovery");
+}
+
+async function fetchHybridSearch() {
+    const query = String(state.globalFilter.search || "").trim();
+
+    if (!query) {
+        throw new Error("Enter a search query before running Hybrid Search.");
+    }
+
+    const params = new URLSearchParams();
+    params.set("q", query);
+    params.set("top_k", "10");
+    params.set("candidate_limit", "20");
+
+    const profile = String(state.globalFilter.profileScope || "all").trim();
+    if (profile && profile !== "all") {
+        params.set("profile", profile);
+    }
+
+    const dateFrom = state.globalFilter.dateFrom;
+    const dateTo = state.globalFilter.dateTo;
+    if (dateFrom || dateTo) {
+        if (!dateFrom || !dateTo) {
+            throw new Error("Hybrid Search requires both From and To dates.");
+        }
+        params.set("date_from", dateFrom);
+        params.set("date_to", dateTo);
+    }
+
+    params.set("rerank", "true");
+
+    return fetchJSON(`/api/search/hybrid?${params.toString()}`);
 }
 
 function countEdges(edges) {
@@ -1727,6 +1761,153 @@ async function loadTableMemoryPreview(node, target){
 }
 
 
+function renderHybridSearch(results = state.hybridResults, metadata = null) {
+    const container = $("hybrid-search-view");
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    const header = document.createElement("div");
+    header.className = "hybrid-search-header";
+    header.innerHTML = `
+        <div>
+            <h3>Hybrid Retrieval</h3>
+            <p>${escapeHTML(metadata?.query || state.globalFilter.search || "")}</p>
+        </div>
+        <span class="hybrid-search-count">${results.length.toLocaleString()} result${results.length === 1 ? "" : "s"}</span>
+    `;
+    container.appendChild(header);
+
+    if (metadata?.reranker_available === false) {
+        const notice = document.createElement("div");
+        notice.className = "hybrid-search-notice";
+        notice.textContent = "Local CrossEncoder unavailable; showing governed RRF results.";
+        container.appendChild(notice);
+    }
+
+    if (!results.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent = "No governed memories matched this query.";
+        container.appendChild(empty);
+        return;
+    }
+
+    const list = document.createElement("div");
+    list.className = "hybrid-result-list";
+
+    for (const result of results) {
+        const card = document.createElement("article");
+        card.className = "hybrid-result-card";
+
+        const title = document.createElement("div");
+        title.className = "hybrid-result-title";
+        title.innerHTML = `
+            <strong>#${escapeHTML(result.fused_rank)}</strong>
+            <span>${escapeHTML(profileLabel(result.source_profile))}</span>
+            <span class="hybrid-score">Fused ${formatScore(result.fused_score)}</span>
+        `;
+
+        const identity = document.createElement("div");
+        identity.className = "hybrid-result-identity";
+        identity.textContent = `Memory ${result.origin_memory_id}`;
+
+        const signals = document.createElement("div");
+        signals.className = "hybrid-signals";
+        const addSignal = (label, rank, contribution) => {
+            if (rank === null || rank === undefined) return;
+            const chip = document.createElement("span");
+            chip.className = "hybrid-signal";
+            chip.textContent = `${label} #${rank} · ${formatScore(contribution)}`;
+            signals.appendChild(chip);
+        };
+        addSignal("BM25", result.keyword_rank, result.keyword_contribution);
+        addSignal("Semantic", result.semantic_rank, result.semantic_contribution);
+        addSignal("Graph", result.graph_rank, result.graph_contribution);
+        addSignal("Temporal", result.temporal_rank, result.temporal_contribution);
+
+        if (result.reranker_rank !== null && result.reranker_rank !== undefined) {
+            const rerank = document.createElement("span");
+            rerank.className = "hybrid-signal hybrid-reranker";
+            const movement = result.rank_change > 0 ? `↑${result.rank_change}` : result.rank_change < 0 ? `↓${Math.abs(result.rank_change)}` : "=";
+            rerank.textContent = `CrossEncoder #${result.reranker_rank} · ${formatScore(result.reranker_score)} · ${movement}`;
+            signals.appendChild(rerank);
+        }
+
+        const provenance = document.createElement("div");
+        provenance.className = "hybrid-provenance";
+        const provenanceCount = Array.isArray(result.provenance) ? result.provenance.length : 0;
+        provenance.textContent = `${provenanceCount} provenance record${provenanceCount === 1 ? "" : "s"}`;
+
+        const inspect = document.createElement("button");
+        inspect.type = "button";
+        inspect.className = "hybrid-inspect-button";
+        inspect.textContent = "Inspect memory";
+        inspect.addEventListener("click", async () => {
+            await inspectHybridResult(result);
+        });
+
+        card.append(title, identity, signals, provenance, inspect);
+        list.appendChild(card);
+    }
+
+    container.appendChild(list);
+}
+
+async function inspectHybridResult(result) {
+    let node = state.graph.nodes.find(candidate =>
+        String(candidate.source_profile) === String(result.source_profile) &&
+        String(candidate.origin_memory_id) === String(result.origin_memory_id)
+    );
+
+    if (!node) {
+        try {
+            const graph = await fetchGraph(result.source_profile);
+            node = graph.nodes.find(candidate =>
+                String(candidate.source_profile) === String(result.source_profile) &&
+                String(candidate.origin_memory_id) === String(result.origin_memory_id)
+            );
+            if (node) state.graph = graph;
+        } catch (error) {
+            setStatus(`Unable to load result graph node: ${error.message}`, true);
+            return;
+        }
+    }
+
+    if (!node) {
+        setStatus("Hybrid result is no longer present in the collective graph.", true);
+        return;
+    }
+
+    selectNode(node, state.graph);
+    setStatus(`Inspecting hybrid result #${result.fused_rank}.`);
+}
+
+async function runHybridSearch() {
+    const container = $("hybrid-search-view");
+    if (container) {
+        container.classList.remove("hidden");
+        container.innerHTML = '<div class="loading-state">Running hybrid retrieval…</div>';
+    }
+
+    try {
+        state.hybridSearchLoading = true;
+        setStatus("Running governed hybrid retrieval…");
+        setViewMode("hybrid-search");
+        const response = await fetchHybridSearch();
+        state.hybridResults = Array.isArray(response.results) ? response.results : [];
+        renderHybridSearch(state.hybridResults, response);
+        setStatus(`Hybrid retrieval complete — ${state.hybridResults.length.toLocaleString()} results.`);
+    } catch (error) {
+        if (container) {
+            container.innerHTML = `<div class="error-state">Hybrid retrieval failed.<br>${escapeHTML(error.message)}</div>`;
+        }
+        setStatus(`Hybrid retrieval failed: ${error.message}`, true);
+    } finally {
+        state.hybridSearchLoading = false;
+    }
+}
+
 function setInformationView(view) {
     if (!INFORMATION_VIEW_TYPES.some(type => type.id === view)) {
         view = "profile-views";
@@ -2064,7 +2245,14 @@ function bindGlobalFilters() {
             if (to) to.value = "";
             if (profileScope) profileScope.value = "all";
 
-            applyGlobalFilters();
+            state.hybridResults = [];
+            state.hybridSearchLoading = false;
+
+            setViewMode(
+                state.viewMode === "hybrid-search"
+                    ? "2d"
+                    : state.viewMode
+            );
         });
     }
 }
@@ -2273,6 +2461,7 @@ function setViewMode(mode) {
         "activity",
         "status",
         "validation",
+        "hybrid-search",
         "tiles",
     ];
 
@@ -2316,8 +2505,28 @@ function setViewMode(mode) {
         mode !== "tiles",
     );
 
+    $("hybrid-search-view").classList.toggle(
+        "hidden",
+        mode !== "hybrid-search",
+    );
+
+    if (mode !== "hybrid-search") {
+        state.hybridResults = [];
+        state.hybridSearchLoading = false;
+
+        const hybridView = $("hybrid-search-view");
+        if (hybridView) {
+            hybridView.innerHTML = "";
+        }
+    }
+
     if (previousMode === "3d" && mode !== "3d") {
         window.Mnemosyne3D?.destroy?.();
+    }
+
+    if (mode === "hybrid-search") {
+        renderHybridSearch();
+        return;
     }
 
     if (mode === "tiles") {
@@ -2974,6 +3183,7 @@ function bindControls(){
     $("scan-memories-button").addEventListener("click",scanNewMemories);
     $("rebuild-button").addEventListener("click",rebuildCollective);
     $("nuke-button").addEventListener("click",nukeCollective);
+    $("hybrid-search-button").addEventListener("click",runHybridSearch);
 }
 
 async function init(){
@@ -2989,6 +3199,7 @@ async function init(){
         "activity",
         "status",
         "validation",
+        "hybrid-search",
         "tiles",
     ].includes(savedViewMode)) {
         state.viewMode = savedViewMode;

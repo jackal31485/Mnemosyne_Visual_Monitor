@@ -40,22 +40,18 @@ class KeywordSearcher:
             db_path or DEFAULT_RETRIEVAL_DB
         ).absolute()
 
-        self._conn: sqlite3.Connection | None = None
-
-    @property
-    def conn(self) -> sqlite3.Connection:
-        if self._conn is None:
-            self._conn = sqlite3.connect(
-                str(self.db_path),
-            )
-            self._conn.row_factory = sqlite3.Row
-
-        return self._conn
+    def _connect(self) -> sqlite3.Connection:
+        conn = sqlite3.connect(str(self.db_path))
+        conn.row_factory = sqlite3.Row
+        return conn
 
     def close(self) -> None:
-        if self._conn is not None:
-            self._conn.close()
-            self._conn = None
+        """Retained for lifecycle compatibility.
+
+        Search connections are now scoped to individual search calls, so
+        there is no persistent connection to close.
+        """
+        return None
 
     def _build_match_expr(self, query: str) -> str:
         if not isinstance(query, str):
@@ -109,23 +105,24 @@ class KeywordSearcher:
         if not match_expr:
             return []
 
-        rows = self.conn.execute(
-            """
-            SELECT
-                entry_id,
-                source_profile,
-                origin_memory_id,
-                bm25(memory_fts) AS score
-            FROM memory_fts
-            WHERE memory_fts MATCH ?
-            ORDER BY bm25(memory_fts) ASC, entry_id ASC
-            LIMIT ?
-            """,
-            (
-                match_expr,
-                limit * 4,
-            ),
-        ).fetchall()
+        with self._connect() as conn:
+            rows = conn.execute(
+                """
+                SELECT
+                    entry_id,
+                    source_profile,
+                    origin_memory_id,
+                    bm25(memory_fts) AS score
+                FROM memory_fts
+                WHERE memory_fts MATCH ?
+                ORDER BY bm25(memory_fts) ASC, entry_id ASC
+                LIMIT ?
+                """,
+                (
+                    match_expr,
+                    limit * 4,
+                ),
+            ).fetchall()
 
         results: List[KeywordResult] = []
 

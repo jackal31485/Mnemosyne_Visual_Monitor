@@ -93,6 +93,19 @@ class AthenaAPI:
                 "hybrid retrieval service is not configured"
             )
 
+        resolved_profile = profile
+
+        if profile is not None and ":" not in profile:
+            matches = self._iface.resolve_source_profile(profile)
+
+            if len(matches) == 1:
+                resolved_profile = matches[0]
+            elif len(matches) > 1:
+                raise ValueError(
+                    f"profile name {profile!r} matches multiple collective "
+                    "source identities; use a qualified profile identity"
+                )
+
         return self._hybrid_service.search(
             query,
             top_k=top_k,
@@ -101,7 +114,7 @@ class AthenaAPI:
             semantic_limit=semantic_limit,
             graph_seed_limit=graph_seed_limit,
             graph_limit_per_seed=graph_limit_per_seed,
-            profile=profile,
+            profile=resolved_profile,
             temporal_mode=temporal_mode,
             temporal_start=temporal_start,
             temporal_end=temporal_end,

@@ -411,3 +411,50 @@ def test_natural_language_query_with_punctuation(
 
     searcher.close()
     indexer.close()
+
+
+def test_searcher_is_safe_across_threads(
+    dao: CollectiveDAO,
+    gateway: InMemoryMemoryGateway,
+    indexer: KeywordIndexer,
+    retrieval_db: Path,
+) -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
+    entry_id = promote(
+        dao,
+        "profileA",
+        "thread-memory",
+    )
+
+    gateway.add_memory(
+        "profileA",
+        "thread-memory",
+        "thread safe hybrid retrieval",
+    )
+
+    assert indexer.index_entry(entry_id)
+
+    searcher = KeywordSearcher(
+        dao,
+        db_path=retrieval_db,
+    )
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        first = executor.submit(
+            searcher.search,
+            "thread safe",
+        )
+        second = executor.submit(
+            searcher.search,
+            "hybrid retrieval",
+        )
+
+        first_results = first.result()
+        second_results = second.result()
+
+    assert [r.entry_id for r in first_results] == [entry_id]
+    assert [r.entry_id for r in second_results] == [entry_id]
+
+    searcher.close()
+    indexer.close()

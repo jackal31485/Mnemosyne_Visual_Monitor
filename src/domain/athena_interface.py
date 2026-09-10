@@ -39,6 +39,45 @@ class AthenaCollectiveInterface:
         )
         return [row["id"] for row in cur.fetchall()]
 
+    def resolve_source_profile(self, profile: str) -> list[str]:
+        """Resolve a Browser/local profile name to governed collective identities.
+
+        Qualified identities such as ``agent-id:athena`` are returned unchanged.
+        Short local profile names such as ``athena`` resolve to all matching
+        promoted, non-revoked collective source identities.
+        """
+        value = str(profile or "").strip()
+        if not value:
+            return []
+
+        if ":" in value:
+            cur = self._dao.conn.execute(
+                """
+                SELECT source_profile
+                FROM collective_entries
+                WHERE source_profile = ?
+                  AND is_promoted = 1
+                  AND is_revoked = 0
+                GROUP BY source_profile
+                """,
+                (value,),
+            )
+        else:
+            cur = self._dao.conn.execute(
+                """
+                SELECT source_profile
+                FROM collective_entries
+                WHERE source_profile LIKE ?
+                  AND is_promoted = 1
+                  AND is_revoked = 0
+                GROUP BY source_profile
+                ORDER BY source_profile
+                """,
+                (f"%:{value}",),
+            )
+
+        return [str(row["source_profile"]) for row in cur.fetchall()]
+
     def get_by_id(self, entry_id: int):
         """Return the 9‑field tuple **only** when promoted and NOT revoked.
 
