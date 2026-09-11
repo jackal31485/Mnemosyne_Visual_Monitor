@@ -1,76 +1,291 @@
-# Mnemosyne Visual Monitor
+# Proposed README Section — Mnemosyne Learning Architecture
 
-Mnemosyne Visual Monitor is the Browser and monitoring layer for the Hermes
-distributed memory system.
+## 🧠 Mnemosyne: A Memory Architecture Inspired by Human Learning
 
-It provides a governed visual interface for inspecting collective memory,
-profiles, relationships, activity, provenance, and retrieval results while
-preserving the separation between local profile memory and the collective
-reference/provenance layer.
+Mnemosyne is designed around the idea that useful long-term learning is not a single memory mechanism.
 
-## Current architecture
+A human does not simply store everything in one database and search it by similarity. Experiences are processed, remembered, associated with other knowledge, interpreted in context, consolidated over time, and eventually used to build broader understanding.
 
-Each Hermes profile maintains its own local Mnemosyne database.
+Human learning is also shaped by development. Knowledge and behavior are influenced by childhood experience, education at school, guidance and learning from family, personal development and reflection, interactions with other people, and the surrounding environment and culture. These experiences become inputs to memory, skills, expectations, relationships, and mental models that continue to evolve throughout life.
 
-The collective database:
+Mnemosyne follows a similar progression — **as an architectural analogy, not as a claim that it reproduces human cognition.**
 
-`data/collective.db`
+The project progressively develops from protected individual memories into a governed collective knowledge system capable of understanding entities, relationships, time, evidence, and eventually higher-level models.
 
-acts as the central reference, provenance, promotion, revocation, and
-retrieval-authorization layer. It is not a replacement for the individual
-profile databases.
+## Human Learning ↔ Mnemosyne
 
-Athena provides the read-only API boundary used by the Browser.
+The human side shows both **where learning comes from** and **how information can develop into increasingly structured understanding**. The Mnemosyne side shows the corresponding software architecture and roadmap.
 
-The Browser does not directly create memories or bypass the governed memory
-lifecycle.
+```mermaid
+flowchart LR
 
-## Current capabilities
+    subgraph HUMAN["🧠 HUMAN LEARNING — Conceptual Analogy"]
+        direction TB
 
-- Multi-profile collective visualization
-- 2D and 3D constellation views
-- Profile tiles
-- Data and information views
-- Activity and timeline views
-- Collective status and validation views
-- LAN discovery and distributed profile adoption
-- Governed collective ingestion
-- Semantic retrieval
-- Keyword/BM25 retrieval
-- Graph expansion
-- Temporal filtering/signals
-- Reciprocal Rank Fusion
-- Optional local CrossEncoder reranking
-- Hybrid retrieval explainability
-- Controlled source-memory inspection
-- Provenance and lifecycle visibility
+        subgraph SOURCES["🌱 WHERE HUMANS LEARN"]
+            C["Childhood Experience<br/>Early experiences & patterns"]
+            F["Family<br/>Language • values • habits"]
+            S["School / Education<br/>Structured knowledge • skills"]
+            P["People & Peers<br/>Social learning • perspectives"]
+            E["Personal Experience<br/>Practice • success • failure"]
+            R["Reflection<br/>Self-understanding • metacognition"]
+            ENV["Environment & Culture<br/>Context • norms • shared knowledge"]
+        end
 
-## Phase status
+        W["Working Memory<br/>Current context"]
+        EP["Episodic Memory<br/>Specific experiences"]
+        SM["Semantic Memory<br/>Facts & learned knowledge"]
+        AS["Associative Memory<br/>Connections & relationships"]
+        T["Temporal Understanding<br/>Sequence & change"]
+        CON["Memory Consolidation<br/>Repeated/evaluated experience"]
+        MM["Mental Models<br/>Patterns • concepts • expectations"]
 
-Phases 1–7 established the core Mnemosyne Visual Monitor, collective
-ingestion, visualization, distributed discovery, and Browser infrastructure.
+        C --> W
+        F --> W
+        S --> W
+        P --> W
+        E --> W
+        R --> W
+        ENV --> W
 
-**Phase 8 — Hybrid Retrieval:** Complete
+        W --> EP
+        W --> SM
+        EP --> AS
+        SM --> AS
+        AS --> T
+        T --> CON
+        SM --> CON
+        CON --> MM
+        MM --> R
+    end
 
-**Phase 9 — Browser-Facing Hybrid Retrieval Integration:** Complete
 
-Phase 9 exposed the governed hybrid retrieval pipeline through the Browser,
-including profile/date filtering, explainability, reranking visibility, and
-controlled result inspection. Production validation also addressed SQLite
-thread safety and qualified collective profile identity resolution.
+    subgraph MNEMOSYNE["🧩 MNEMOSYNE — Memory & Learning Architecture"]
+        direction TB
 
-**Next: Phase 10 — Entity & Relationship Intelligence**
+        M1["PHASES 1–3<br/>FOUNDATION<br/><br/>Profile-local memory<br/>Mediation / Air-Lock<br/>Collective Knowledge Base"]
 
-The remaining roadmap covers increasingly capable entity resolution,
-relationship intelligence, temporal reasoning, evidence-backed synthesis,
-higher-level mental models, controlled cross-profile learning, retrieval
-optimization, distributed federation, governance hardening, and final
-productionization.
+        M2["PHASES 4–7<br/>OBSERVATION & EXPLORATION<br/><br/>Athena interface<br/>Semantic embeddings<br/>Collective visualization<br/>Browser"]
 
-## Development
+        M3["PHASE 8<br/>HYBRID RETRIEVAL<br/>✓ COMPLETE<br/><br/>Semantic + BM25<br/>Graph + temporal signals<br/>RRF + optional reranking<br/>Retrieval explainability"]
 
-Activate the project virtual environment before running development tools:
+        M4["PHASE 9<br/>BROWSER-FACING HYBRID RETRIEVAL<br/>✓ COMPLETE<br/><br/>Hybrid Search<br/>Filtering & controls<br/>Explainability<br/>Source inspection<br/>Browser integration"]
 
-```bash
-cd ~/Documents/Hermes/projects/Mnemosyne_Visual_Monitor
-source .venv/bin/activate
+        M5["🚩 PHASE 10 — CURRENT<br/>ENTITY & RELATIONSHIP INTELLIGENCE<br/><br/>Canonical entities<br/>Entity resolution & aliases<br/>Co-occurrence detection<br/>Typed relationships<br/>Graph enrichment<br/>Relationship provenance"]
+
+        M6["PHASE 11<br/>TEMPORAL INTELLIGENCE<br/><br/>Events<br/>Temporal relationships<br/>Changing facts<br/>Temporal conflicts"]
+
+        M7["PHASE 12<br/>EVIDENCE CONSOLIDATION<br/>& MEMORY SYNTHESIS<br/><br/>Multiple memories →<br/>evidence-backed knowledge"]
+
+        M8["PHASE 13<br/>HIGHER-LEVEL MENTAL MODELS<br/><br/>Stable concepts<br/>Inferred relationships<br/>Governed derived models"]
+
+        M9["PHASE 14<br/>CROSS-PROFILE LEARNING<br/>& CONTROLLED TRANSFER<br/><br/>Governed knowledge sharing<br/>between Hermes profiles"]
+
+        M10["PHASE 15<br/>ADVANCED RETRIEVAL OPTIMIZATION<br/><br/>Query classification<br/>Retrieval routing<br/>Multilingual retrieval<br/>Evaluation & optimization"]
+
+        M11["PHASE 16<br/>DISTRIBUTED COLLECTIVE<br/>/ LAN FEDERATION<br/><br/>Controlled collective knowledge<br/>across Mnemosyne instances"]
+
+        M12["PHASE 17<br/>GOVERNANCE, AUDIT<br/>& SECURITY HARDENING<br/><br/>Security review<br/>Adversarial testing<br/>Hardened governance"]
+
+        M13["PHASE 18<br/>PRODUCTIONIZATION<br/>& FINAL VALIDATION<br/><br/>Deployment<br/>Operational readiness<br/>Final validation"]
+
+        M14["🌐 FINAL VISION<br/>CONTINUOUS GOVERNED<br/>COLLECTIVE LEARNING<br/><br/>Observe → Remember → Validate<br/>→ Understand → Share → Learn"]
+
+        M1 --> M2
+        M2 --> M3
+        M3 --> M4
+        M4 --> M5
+        M5 --> M6
+        M6 --> M7
+        M7 --> M8
+        M8 --> M9
+        M9 --> M10
+        M10 --> M11
+        M11 --> M12
+        M12 --> M13
+        M13 --> M14
+        M14 -.-> M1
+    end
+
+
+    %% Conceptual mapping from human learning to Mnemosyne
+    W -. "active context" .-> M2
+    EP -. "experiences / memories" .-> M1
+    SM -. "knowledge retrieval" .-> M3
+    AS -. "entities & relationships" .-> M5
+    T -. "time & change" .-> M6
+    CON -. "evidence consolidation" .-> M7
+    MM -. "higher-level understanding" .-> M8
+    P -. "learning from others" .-> M9
+    ENV -. "shared knowledge" .-> M11
+    R -. "explainability / self-evaluation" .-> M4
+
+
+    G["🔐 GOVERNANCE — APPLIES THROUGHOUT<br/><br/>
+    Profile isolation • Local-first architecture • SQLite-first storage<br/>
+    Mediation / Air-Lock • Privacy filtering • Explicit promotion<br/>
+    Explicit adoption • Provenance • Revocation • Auditability<br/>
+    No silent destructive consolidation • No automatic trust → adoption<br/>
+    No raw private-memory leakage"]
+
+    G -.-> M1
+    G -.-> M14
+```
+
+## Where We Are Now
+
+### 🟢 Phases 1–9 — COMPLETE
+
+The foundation, profile-local memory architecture, mediation boundary, collective knowledge base, semantic representation, visualization, hybrid retrieval, and Browser-facing retrieval experience have been built and validated through Phase 9.
+
+### 🚩 Phase 10 — CURRENT
+
+Mnemosyne is now moving beyond the question:
+
+> **“Which memories are relevant?”**
+
+and toward:
+
+> **“What are the things represented in those memories, and how are those things related?”**
+
+Phase 10 — **Entity & Relationship Intelligence** — is the next major step in turning Mnemosyne from a sophisticated memory and retrieval system into a system capable of building structured understanding.
+
+The focus is on:
+
+- **Canonical entities** — identifying when different mentions refer to the same thing.
+- **Entity resolution** — connecting aliases and variations to canonical entities.
+- **Co-occurrence** — identifying entities that repeatedly appear together.
+- **Typed relationships** — distinguishing different kinds of relationships rather than treating every graph edge equally.
+- **Graph enrichment** — making the collective knowledge graph increasingly useful for retrieval and reasoning.
+- **Relationship provenance** — preserving where relationships came from and why they exist.
+
+This establishes the foundation for temporal reasoning, evidence consolidation, mental-model construction, and governed cross-profile learning.
+
+## The Mnemosyne Memory Progression
+
+The roadmap can also be understood as a progression through increasingly sophisticated forms of memory, development, and understanding:
+
+| Roadmap | Mnemosyne capability | Human-learning analogy |
+|---|---|---|
+| **Phases 1–3** | Protected profile and collective memory foundations | Forming and protecting memories from experience |
+| **Phases 4–7** | Observation, embeddings, visualization and Browser | Remembering and exploring experiences |
+| **Phase 8** | Hybrid retrieval | Recalling using multiple cues |
+| **Phase 9** | Browser-facing retrieval and explainability | Consciously accessing and examining memories |
+| **Phase 10 ← NOW** | Entities and relationships | Associative memory and social understanding |
+| **Phase 11** | Temporal intelligence | Understanding sequence and change |
+| **Phase 12** | Evidence consolidation and synthesis | Memory consolidation |
+| **Phase 13** | Higher-level mental models | Building concepts and patterns through experience, education, and development |
+| **Phase 14** | Controlled cross-profile learning | Social learning and learning from others |
+| **Phase 15** | Advanced retrieval optimization | Improving recall strategies |
+| **Phase 16** | Distributed collective / LAN federation | Distributed shared knowledge |
+| **Phase 17** | Governance, audit and security | Evaluating trust, sources, and learned guidance |
+| **Phase 18** | Productionization and final validation | Mature continuous learning |
+
+## From Learning Sources to Understanding
+
+A particularly important part of the analogy is that human knowledge does not originate from a single source.
+
+A person can learn from family, teachers, school, childhood experiences, peers, work, mistakes, deliberate practice, culture, and personal reflection. Different experiences may reinforce one another, conflict with one another, or provide context for one another.
+
+Mnemosyne is designed around a comparable principle: useful knowledge can emerge from many profile-specific experiences, but the system must preserve the distinction between **where information came from**, **what has been validated**, and **what another profile is actually permitted to learn**.
+
+```mermaid
+flowchart LR
+    A["Childhood<br/>Family<br/>School<br/>People<br/>Environment<br/>Personal experience"] --> B["Learning & Experience"]
+
+    B --> C["Memory"]
+    C --> D["Association"]
+    D --> E["Context & Time"]
+    E --> F["Evidence"]
+    F --> G["Consolidated Knowledge"]
+    G --> H["Mental Models"]
+    H --> I["Behavior / Future Decisions"]
+    I --> B
+
+    J["Profile-specific experience"] --> K["Private Memory"]
+    K --> L["Mediation / Air-Lock"]
+    L --> M["Validated Collective Knowledge"]
+
+    M --> N["Entities"]
+    N --> O["Relationships"]
+    O --> P["Temporal Context"]
+    P --> Q["Evidence-backed Understanding"]
+    Q --> R["Higher-Level Models"]
+    R --> S["Controlled Profile Learning"]
+    S --> J
+
+    V["🔐 Provenance<br/>Authorization<br/>Privacy<br/>Revocation<br/>Auditability"]
+    V -. governs .-> L
+    V -. governs .-> M
+    V -. governs .-> Q
+    V -. governs .-> S
+```
+
+## From Memory to Understanding
+
+The important architectural transition occurs across the middle of the roadmap.
+
+```mermaid
+flowchart LR
+    A["Experience"] --> B["Private Memory"]
+    B --> C["Governed Mediation"]
+    C --> D["Collective Knowledge"]
+
+    D --> E["Hybrid Retrieval"]
+    E --> F["Entities"]
+    F --> G["Relationships"]
+    G --> H["Temporal Context"]
+    H --> I["Evidence"]
+    I --> J["Consolidated Knowledge"]
+    J --> K["Mental Models"]
+
+    K --> L["Controlled Learning"]
+    L --> M["Improved Profiles"]
+    M --> A
+
+    N["🔐 Provenance<br/>Authorization<br/>Revocation<br/>Auditability"]
+    N -. governs .-> C
+    N -. governs .-> D
+    N -. governs .-> I
+    N -. governs .-> L
+```
+
+This distinction is fundamental to Mnemosyne:
+
+**Memory is not the same thing as knowledge.  
+Knowledge is not the same thing as understanding.  
+Understanding is not the same thing as permission to learn or act.**
+
+Mnemosyne's architecture deliberately separates these stages.
+
+## The Long-Term Learning Loop
+
+The ultimate goal is a **closed but governed learning loop**:
+
+**Observe → Remember → Retrieve → Relate → Understand → Validate → Share → Learn → Observe**
+
+A profile can accumulate private experience. Relevant information can pass through the mediation boundary. Validated knowledge can become part of the collective memory. Entities, relationships, temporal context, and evidence can then transform that collection of memories into increasingly useful knowledge.
+
+In the human-learning analogy, broader development can include lessons formed during childhood, education received at school, guidance and values learned from family, personal reflection and development, and understanding gained through interactions with other people. These influences are experiences and sources of learning, not automatically correct conclusions; they must be interpreted, evaluated, and placed in context.
+
+Eventually, governed knowledge can be selectively transferred back to profiles that can benefit from it.
+
+The important word is **governed**.
+
+Collective knowledge must not silently overwrite private profile memory. Learning between profiles must preserve provenance, evidence, authorization, conflict history, and revocation. A memory being present in the collective system does not automatically mean that every profile should adopt it.
+
+The final architecture therefore aims for **continuous learning without uncontrolled memory propagation**.
+
+> **Mnemosyne is not simply a place where Hermes agents store memories. It is the foundation for a governed collective learning system in which individual experience can become validated shared knowledge, and shared knowledge can eventually improve individual agents.**
+
+## Roadmap Status
+
+**Current phase: Phase 10 — Entity & Relationship Intelligence**
+
+**Completed through: Phase 9**
+
+The roadmap intentionally moves from:
+
+**Memory → Retrieval → Relationships → Time → Evidence → Understanding → Controlled Learning → Collective Intelligence**
+
+Phase 10 is where Mnemosyne begins making the transition from a system that primarily **retrieves memories** into one that can increasingly **understand the structure contained within those memories**.
