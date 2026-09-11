@@ -40,3 +40,33 @@ class ProfileDTO(BaseModel):
     id: str
     name: str
     memory_count: int
+
+
+class EntityGraphNodeDTO(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    node_id: str
+    node_type: str
+    lifecycle_state: str
+    source_profile: str | None = None
+    origin_memory_id: str | None = None
+    entity_id: str | None = None
+
+
+class EntityGraphEdgeDTO(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    source_id: str
+    target_id: str
+    edge_type: str
+    confidence: float | None = None
+    relationship_kind: str | None = None
+    collective_entry_id: int | None = None
+    relationship_id: str | None = None
+
+
+class EntityGraphResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    nodes: list[EntityGraphNodeDTO]
+    edges: list[EntityGraphEdgeDTO]

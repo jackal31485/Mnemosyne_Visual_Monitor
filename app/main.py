@@ -14,6 +14,7 @@ if str(SRC_ROOT) not in sys.path:
 
 # Import routers.
 from app.routes.admin import router as admin_router
+from app.routes.entity_graph import router as entity_graph_router
 from app.routes.graph import router as graph_router
 from app.routes.profiles import router as profiles_router
 from app.routes.discovery import router as discovery_router
@@ -59,6 +60,7 @@ def create_app() -> FastAPI:
 
     # Existing application routers.
     _register_router_directly(application, graph_router)
+    _register_router_directly(application, entity_graph_router)
     _register_router_directly(application, profiles_router)
     _register_router_directly(application, discovery_router)
     
