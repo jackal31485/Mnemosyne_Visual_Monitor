@@ -35,6 +35,8 @@ def fused(entry_id: int, origin: str | None = None) -> FusedResult:
         semantic_contribution=0.0,
         graph_contribution=0.0,
         temporal_contribution=0.0,
+        entity_rank=None,
+        entity_contribution=0.0,
         provenance=(("athena", origin, "created"),),
     )
 

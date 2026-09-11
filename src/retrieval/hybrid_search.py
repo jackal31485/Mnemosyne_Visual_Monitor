@@ -49,6 +49,9 @@ class HybridResult:
     temporal_rank: int | None
     temporal_contribution: float
 
+    entity_rank: int | None
+    entity_contribution: float
+
     provenance: object
 
 
@@ -63,6 +66,7 @@ class HybridRetrievalService:
         temporal_searcher: TemporalSearcher,
         fusion: RankFusion,
         encoder: SentenceTransformerEncoder,
+        entity_searcher=None,
         reranker: Reranker | None = None,
     ) -> None:
         self.keyword_searcher = keyword_searcher
@@ -71,6 +75,7 @@ class HybridRetrievalService:
         self.temporal_searcher = temporal_searcher
         self.fusion = fusion
         self.encoder = encoder
+        self.entity_searcher = entity_searcher
         self.reranker = reranker
 
     @staticmethod
@@ -137,6 +142,8 @@ class HybridRetrievalService:
                 graph_contribution=explanation.graph_contribution,
                 temporal_rank=explanation.temporal_rank,
                 temporal_contribution=explanation.temporal_contribution,
+                entity_rank=explanation.entity_rank,
+                entity_contribution=explanation.entity_contribution,
                 provenance=explanation.provenance,
             )
             for explanation in explanations
@@ -233,6 +240,15 @@ class HybridRetrievalService:
             profile=profile,
         ) if seed_ids else []
 
+        entity_results = []
+
+        if self.entity_searcher is not None:
+            entity_results = self.entity_searcher.search(
+                query,
+                limit=candidate_limit,
+                profile=profile,
+            )
+
         temporal_results = []
 
         if temporal_mode == "recency":
@@ -249,12 +265,17 @@ class HybridRetrievalService:
                 profile=profile,
             )
 
-        fused_results = self.fusion.fuse(
-            keyword_results=keyword_results,
-            semantic_results=semantic_results,
-            graph_results=graph_results,
-            temporal_results=temporal_results,
-        )
+        fusion_kwargs = {
+            "keyword_results": keyword_results,
+            "semantic_results": semantic_results,
+            "graph_results": graph_results,
+            "temporal_results": temporal_results,
+        }
+
+        if self.entity_searcher is not None:
+            fusion_kwargs["entity_results"] = entity_results
+
+        fused_results = self.fusion.fuse(**fusion_kwargs)
 
         if not fused_results:
             return []

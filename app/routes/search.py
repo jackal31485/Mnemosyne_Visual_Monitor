@@ -34,6 +34,8 @@ class HybridResultDTO(BaseModel):
     graph_contribution: float
     temporal_rank: int | None
     temporal_contribution: float
+    entity_rank: int | None
+    entity_contribution: float
     provenance: Any
 
 

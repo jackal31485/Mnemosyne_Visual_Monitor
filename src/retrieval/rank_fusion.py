@@ -17,11 +17,13 @@ class FusedResult:
     semantic_rank: int | None
     graph_rank: int | None
     temporal_rank: int | None
+    entity_rank: int | None
 
     keyword_contribution: float
     semantic_contribution: float
     graph_contribution: float
     temporal_contribution: float
+    entity_contribution: float
 
     provenance: Any
 
@@ -37,6 +39,9 @@ class RankFusion:
         weight / (k + rank)
 
     where rank is one-based.
+
+    Entity retrieval is an additive fifth channel. Omitting entity results
+    preserves the existing four-channel behavior.
     """
 
     def __init__(
@@ -47,6 +52,7 @@ class RankFusion:
         semantic_weight: float = 1.0,
         graph_weight: float = 1.0,
         temporal_weight: float = 1.0,
+        entity_weight: float = 1.0,
     ) -> None:
         if not isinstance(k, int) or isinstance(k, bool) or k <= 0:
             raise ValueError("k must be a positive integer")
@@ -56,6 +62,7 @@ class RankFusion:
             "semantic": semantic_weight,
             "graph": graph_weight,
             "temporal": temporal_weight,
+            "entity": entity_weight,
         }
 
         for name, weight in weights.items():
@@ -71,6 +78,7 @@ class RankFusion:
         self.semantic_weight = float(semantic_weight)
         self.graph_weight = float(graph_weight)
         self.temporal_weight = float(temporal_weight)
+        self.entity_weight = float(entity_weight)
 
     @staticmethod
     def _index_channel(
@@ -109,6 +117,7 @@ class RankFusion:
         semantic_results: Sequence[Any] | None = None,
         graph_results: Sequence[Any] | None = None,
         temporal_results: Sequence[Any] | None = None,
+        entity_results: Sequence[Any] | None = None,
         top_k: int | None = None,
     ) -> list[FusedResult]:
         """Fuse ranked retrieval results from all available channels."""
@@ -126,6 +135,7 @@ class RankFusion:
             "semantic": self._index_channel(semantic_results or ()),
             "graph": self._index_channel(graph_results or ()),
             "temporal": self._index_channel(temporal_results or ()),
+            "entity": self._index_channel(entity_results or ()),
         }
 
         all_entry_ids: set[int] = set()
@@ -140,6 +150,7 @@ class RankFusion:
             semantic_item = channels["semantic"].get(entry_id)
             graph_item = channels["graph"].get(entry_id)
             temporal_item = channels["temporal"].get(entry_id)
+            entity_item = channels["entity"].get(entry_id)
 
             keyword_rank = (
                 keyword_item[0] if keyword_item is not None else None
@@ -152,6 +163,9 @@ class RankFusion:
             )
             temporal_rank = (
                 temporal_item[0] if temporal_item is not None else None
+            )
+            entity_rank = (
+                entity_item[0] if entity_item is not None else None
             )
 
             keyword_contribution = self._contribution(
@@ -170,6 +184,10 @@ class RankFusion:
                 temporal_rank,
                 self.temporal_weight,
             )
+            entity_contribution = self._contribution(
+                entity_rank,
+                self.entity_weight,
+            )
 
             canonical_item = next(
                 item
@@ -178,6 +196,7 @@ class RankFusion:
                     semantic_item,
                     graph_item,
                     temporal_item,
+                    entity_item,
                 )
                 if item is not None
             )
@@ -194,15 +213,18 @@ class RankFusion:
                         + semantic_contribution
                         + graph_contribution
                         + temporal_contribution
+                        + entity_contribution
                     ),
                     keyword_rank=keyword_rank,
                     semantic_rank=semantic_rank,
                     graph_rank=graph_rank,
                     temporal_rank=temporal_rank,
+                    entity_rank=entity_rank,
                     keyword_contribution=keyword_contribution,
                     semantic_contribution=semantic_contribution,
                     graph_contribution=graph_contribution,
                     temporal_contribution=temporal_contribution,
+                    entity_contribution=entity_contribution,
                     provenance=result.provenance,
                 )
             )

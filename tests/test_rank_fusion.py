@@ -268,3 +268,134 @@ def test_fusion_does_not_depend_on_channel_specific_raw_scores() -> None:
     assert results[0].keyword_rank == 1
     assert results[1].entry_id == 2
     assert results[1].keyword_rank == 2
+
+
+def entity(entry_id: int, origin: str | None = None):
+    from src.retrieval.entity_search import EntityResult
+
+    return EntityResult(
+        entry_id=entry_id,
+        source_profile="athena",
+        origin_memory_id=origin or f"memory-{entry_id}",
+        entity_score=1.0,
+        provenance=[
+            {
+                "source_profile": "athena",
+                "origin_memory_id": origin or f"memory-{entry_id}",
+            }
+        ],
+    )
+
+
+def test_entity_channel_uses_rank_one_rrf_score() -> None:
+    from src.retrieval.rank_fusion import RankFusion
+
+    result = RankFusion(k=60).fuse(
+        entity_results=[entity(1)],
+    )[0]
+
+    assert result.entry_id == 1
+    assert result.entity_rank == 1
+    assert result.entity_contribution == pytest.approx(1.0 / 61.0)
+    assert result.fused_score == pytest.approx(1.0 / 61.0)
+
+    assert result.keyword_rank is None
+    assert result.semantic_rank is None
+    assert result.graph_rank is None
+    assert result.temporal_rank is None
+
+
+def test_entity_channel_accumulates_with_existing_channels() -> None:
+    from src.retrieval.rank_fusion import RankFusion
+
+    result = RankFusion(k=60).fuse(
+        keyword_results=[keyword(1)],
+        semantic_results=[semantic(1)],
+        graph_results=[graph(1)],
+        temporal_results=[temporal(1)],
+        entity_results=[entity(1)],
+    )[0]
+
+    expected = 5.0 / 61.0
+
+    assert result.keyword_rank == 1
+    assert result.semantic_rank == 1
+    assert result.graph_rank == 1
+    assert result.temporal_rank == 1
+    assert result.entity_rank == 1
+
+    assert result.entity_contribution == pytest.approx(1.0 / 61.0)
+    assert result.fused_score == pytest.approx(expected)
+
+
+def test_entity_channel_weight_changes_contribution() -> None:
+    from src.retrieval.rank_fusion import RankFusion
+
+    result = RankFusion(
+        k=60,
+        entity_weight=2.0,
+    ).fuse(
+        entity_results=[entity(1)],
+    )[0]
+
+    assert result.entity_contribution == pytest.approx(2.0 / 61.0)
+    assert result.fused_score == pytest.approx(2.0 / 61.0)
+
+
+def test_entity_channel_can_supply_canonical_identity() -> None:
+    from src.retrieval.rank_fusion import RankFusion
+
+    result = RankFusion().fuse(
+        entity_results=[entity(42, "entity-memory-42")],
+    )[0]
+
+    assert result.entry_id == 42
+    assert result.source_profile == "athena"
+    assert result.origin_memory_id == "entity-memory-42"
+    assert result.provenance == [
+        {
+            "source_profile": "athena",
+            "origin_memory_id": "entity-memory-42",
+        }
+    ]
+
+
+def test_omitting_entity_channel_preserves_four_channel_score() -> None:
+    from src.retrieval.rank_fusion import RankFusion
+
+    result = RankFusion().fuse(
+        keyword_results=[keyword(1)],
+        semantic_results=[semantic(1)],
+        graph_results=[graph(1)],
+        temporal_results=[temporal(1)],
+    )[0]
+
+    assert result.fused_score == pytest.approx(4.0 / 61.0)
+    assert result.entity_rank is None
+    assert result.entity_contribution == 0.0
+
+
+def test_entity_duplicate_entry_uses_first_rank() -> None:
+    from src.retrieval.rank_fusion import RankFusion
+
+    results = RankFusion().fuse(
+        entity_results=[
+            entity(1),
+            entity(1),
+            entity(2),
+        ],
+    )
+
+    by_id = {result.entry_id: result for result in results}
+
+    assert by_id[1].entity_rank == 1
+    assert by_id[1].entity_contribution == pytest.approx(1.0 / 61.0)
+    assert by_id[2].entity_rank == 2
+    assert by_id[2].entity_contribution == pytest.approx(1.0 / 62.0)
+
+
+def test_entity_weight_validation() -> None:
+    from src.retrieval.rank_fusion import RankFusion
+
+    with pytest.raises(ValueError):
+        RankFusion(entity_weight=-1.0)

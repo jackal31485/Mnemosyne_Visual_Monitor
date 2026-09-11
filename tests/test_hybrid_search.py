@@ -68,6 +68,8 @@ def make_fused(
             if temporal_rank is not None
             else 0.0
         ),
+        entity_rank=None,
+        entity_contribution=0.0,
         provenance=(("Athena", f"memory-{entry_id}", "2026-09-07"),),
     )
 
@@ -391,6 +393,8 @@ def test_reranking_is_optional():
             semantic_contribution=1.0 / 61,
             graph_contribution=0.0,
             temporal_contribution=0.0,
+            entity_rank=None,
+            entity_contribution=0.0,
             provenance=(("Athena", "memory-2", "2026-09-07"),),
         ),
     ]
@@ -501,3 +505,83 @@ def test_blank_query_returns_without_calling_retrievers():
 
     keyword.search.assert_not_called()
     semantic.search.assert_not_called()
+
+
+def test_entity_channel_flows_through_hybrid_pipeline():
+    from src.retrieval.entity_search import EntityResult
+
+    entity_searcher = Mock()
+    entity_result = EntityResult(
+        entry_id=7,
+        source_profile="Athena",
+        origin_memory_id="entity-memory-7",
+        entity_score=1.0,
+        provenance=(
+            ("Athena", "entity-memory-7", "2026-09-07"),
+        ),
+    )
+    entity_searcher.search.return_value = [entity_result]
+
+    fused_result = make_fused(
+        7,
+        1.0 / 61.0,
+    )
+    fused_result = FusedResult(
+        entry_id=fused_result.entry_id,
+        source_profile=fused_result.source_profile,
+        origin_memory_id="entity-memory-7",
+        fused_score=fused_result.fused_score,
+        keyword_rank=fused_result.keyword_rank,
+        semantic_rank=fused_result.semantic_rank,
+        graph_rank=fused_result.graph_rank,
+        temporal_rank=fused_result.temporal_rank,
+        entity_rank=1,
+        keyword_contribution=fused_result.keyword_contribution,
+        semantic_contribution=fused_result.semantic_contribution,
+        graph_contribution=fused_result.graph_contribution,
+        temporal_contribution=fused_result.temporal_contribution,
+        entity_contribution=1.0 / 61.0,
+        provenance=fused_result.provenance,
+    )
+
+    (
+        service,
+        keyword,
+        semantic,
+        graph,
+        temporal,
+        fusion,
+        encoder,
+        _reranker,
+    ) = make_service(
+        fused_results=[fused_result],
+    )
+
+    service.entity_searcher = entity_searcher
+
+    results = service.search(
+        "Mnemosyne",
+        profile="Athena",
+        rerank=False,
+    )
+
+    entity_searcher.search.assert_called_once_with(
+        "Mnemosyne",
+        limit=20,
+        profile="Athena",
+    )
+
+    fusion.fuse.assert_called_once_with(
+        keyword_results=[],
+        semantic_results=[],
+        graph_results=[],
+        temporal_results=[],
+        entity_results=[entity_result],
+    )
+
+    assert len(results) == 1
+    assert results[0].entry_id == 7
+    assert results[0].source_profile == "Athena"
+    assert results[0].origin_memory_id == "entity-memory-7"
+    assert results[0].entity_rank == 1
+    assert results[0].entity_contribution == pytest.approx(1.0 / 61.0)

@@ -40,11 +40,13 @@ class RerankedResult:
     semantic_rank: int | None
     graph_rank: int | None
     temporal_rank: int | None
+    entity_rank: int | None
 
     keyword_contribution: float
     semantic_contribution: float
     graph_contribution: float
     temporal_contribution: float
+    entity_contribution: float
 
     provenance: object
 
@@ -154,10 +156,12 @@ class Reranker:
                     semantic_rank=candidate.semantic_rank,
                     graph_rank=candidate.graph_rank,
                     temporal_rank=candidate.temporal_rank,
+                    entity_rank=candidate.entity_rank,
                     keyword_contribution=candidate.keyword_contribution,
                     semantic_contribution=candidate.semantic_contribution,
                     graph_contribution=candidate.graph_contribution,
                     temporal_contribution=candidate.temporal_contribution,
+                    entity_contribution=candidate.entity_contribution,
                     provenance=candidate.provenance,
                 )
             )

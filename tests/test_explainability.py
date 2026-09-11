@@ -33,6 +33,8 @@ def make_fused(
         semantic_contribution=0.20,
         graph_contribution=0.30,
         temporal_contribution=0.0,
+        entity_rank=None,
+        entity_contribution=0.0,
         provenance=provenance or [{"source": "collective"}],
     )
 
@@ -64,6 +66,8 @@ def make_reranked(
         semantic_contribution=0.20,
         graph_contribution=0.30,
         temporal_contribution=0.0,
+        entity_rank=None,
+        entity_contribution=0.0,
         provenance=provenance or [{"source": "collective"}],
     )
 

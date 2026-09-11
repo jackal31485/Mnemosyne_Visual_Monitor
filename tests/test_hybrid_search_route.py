@@ -33,6 +33,8 @@ class FakeService:
                 graph_contribution=0.0,
                 temporal_rank=None,
                 temporal_contribution=0.0,
+                entity_rank=None,
+                entity_contribution=0.0,
                 provenance=[{"source_profile": "athena", "origin_memory_id": "memory-7"}],
             )
         ]

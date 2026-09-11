@@ -29,6 +29,9 @@ class RetrievalExplanation:
     temporal_rank: int | None
     temporal_contribution: float
 
+    entity_rank: int | None
+    entity_contribution: float
+
     fused_score: float
     fused_rank: int
 
@@ -61,6 +64,8 @@ def explain_fused(
             graph_contribution=result.graph_contribution,
             temporal_rank=result.temporal_rank,
             temporal_contribution=result.temporal_contribution,
+            entity_rank=result.entity_rank,
+            entity_contribution=result.entity_contribution,
             fused_score=result.fused_score,
             fused_rank=rank,
             reranker_score=None,
@@ -116,6 +121,8 @@ def explain_reranked(
                 graph_contribution=result.graph_contribution,
                 temporal_rank=result.temporal_rank,
                 temporal_contribution=result.temporal_contribution,
+                entity_rank=result.entity_rank,
+                entity_contribution=result.entity_contribution,
                 fused_score=result.fused_score,
                 fused_rank=fused_rank,
                 reranker_score=result.reranker_score,
