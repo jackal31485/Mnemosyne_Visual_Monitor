@@ -60,3 +60,5 @@ Phase 11A evidence layer rather than bypassing it.
 
 See `docs/PHASE_11A_TEMPORAL_EVIDENCE_SPEC.md` for the Stage 11A contract.
 See `docs/PHASE_11B_TEMPORAL_EXTRACTION_SPEC.md` for the Stage 11B contract.
+
+See docs/PHASE_11B2_EXPLICIT_TEMPORAL_EXTRACTION_SPEC.md for the Phase 11B.2 implementation contract.
