@@ -45,6 +45,15 @@ class KeywordSearcher:
         conn.row_factory = sqlite3.Row
         return conn
 
+    def _connect_collective(self) -> sqlite3.Connection:
+        conn = sqlite3.connect(
+            str(self.dao._db_path),
+            detect_types=sqlite3.PARSE_DECLTYPES,
+        )
+        conn.row_factory = sqlite3.Row
+        return conn
+
+
     def close(self) -> None:
         """Retained for lifecycle compatibility.
 
@@ -129,39 +138,49 @@ class KeywordSearcher:
         for row in rows:
             entry_id = int(row["entry_id"])
 
-            authoritative = self.dao.conn.execute(
-                """
-                SELECT
-                    id,
-                    source_profile,
-                    origin_memory_id,
-                    is_promoted,
-                    is_revoked
-                FROM collective_entries
-                WHERE id = ?
-                LIMIT 1
-                """,
-                (entry_id,),
-            ).fetchone()
+            with self._connect_collective() as collective_conn:
+                authoritative = collective_conn.execute(
+                    """
+                    SELECT
+                        id,
+                        source_profile,
+                        origin_memory_id,
+                        is_promoted,
+                        is_revoked
+                    FROM collective_entries
+                    WHERE id = ?
+                    LIMIT 1
+                    """,
+                    (entry_id,),
+                ).fetchone()
 
-            if authoritative is None:
-                continue
+                if authoritative is None:
+                    continue
 
-            if not authoritative["is_promoted"]:
-                continue
+                if not authoritative["is_promoted"]:
+                    continue
 
-            if authoritative["is_revoked"]:
-                continue
+                if authoritative["is_revoked"]:
+                    continue
 
-            if (
-                profile is not None
-                and authoritative["source_profile"] != profile
-            ):
-                continue
+                if (
+                    profile is not None
+                    and authoritative["source_profile"] != profile
+                ):
+                    continue
 
-            provenance_rows = self.dao.get_provenance(
-                entry_id
-            )
+                provenance_rows = collective_conn.execute(
+                    """
+                    SELECT
+                        source_profile,
+                        origin_memory_id,
+                        created_at
+                    FROM collective_provenance
+                    WHERE collective_entry_id = ?
+                    ORDER BY source_profile, origin_memory_id
+                    """,
+                    (entry_id,),
+                ).fetchall()
 
             provenance = [
                 dict(r)
@@ -186,7 +205,6 @@ class KeywordSearcher:
                 break
 
         return results
-
 
 def get_searcher(
     dao: CollectiveDAO,
