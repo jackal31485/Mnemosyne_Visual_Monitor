@@ -39,12 +39,101 @@ def test_known_technology_is_extracted():
     assert ("FastAPI", "technology") in values
 
 
+def test_explicit_project_name_is_extracted():
+    extractor = DeterministicEntityExtractor()
+
+    results = extractor.extract(
+        "The Mnemosyne Visual Monitor project uses Python."
+    )
+
+    values = {
+        (item.mention_text, item.entity_type)
+        for item in results
+    }
+
+    assert ("Mnemosyne Visual Monitor", "project") in values
+    assert ("Python", "technology") in values
+
+
+def test_project_name_after_marker_is_extracted():
+    extractor = DeterministicEntityExtractor()
+
+    results = extractor.extract(
+        "The repository Mnemosyne Visual Monitor contains the browser UI."
+    )
+
+    values = {
+        (item.mention_text, item.entity_type)
+        for item in results
+    }
+
+    assert ("Mnemosyne Visual Monitor", "project") in values
+
+
+def test_arbitrary_capitalized_phrases_are_not_projects():
+    extractor = DeterministicEntityExtractor()
+
+    content = (
+        "Do NOT modify code yet. "
+        "Implement Phase carefully. "
+        "FULL ABSOLUTE PATHS are required. "
+        "You MUST validate the repository. "
+        "The Phase is still in progress."
+    )
+
+    results = extractor.extract(content)
+
+    project_names = {
+        item.mention_text
+        for item in results
+        if item.entity_type == "project"
+    }
+
+    assert project_names == set()
+
+
+def test_real_data_project_noise_is_not_extracted():
+    content = (
+        "The LOCAL Ubuntu project is documented here. "
+        "See the REPOSITORY LOCATION The project notes. "
+        "The Current Project The status is unchanged. "
+        "Mnemosyne_Visual_Monitor All configuration is tracked. "
+        "Review the CURRENT REPOSITORY STATE The section. "
+        "The Mnemosyne Visual Monitor project remains valid."
+    )
+
+    mentions = DeterministicEntityExtractor().extract(content)
+
+    projects = {
+        mention.mention_text
+        for mention in mentions
+        if mention.entity_type == "project"
+    }
+
+    assert projects == {"Mnemosyne Visual Monitor"}
+
+
+def test_instruction_fragments_are_not_projects():
+    extractor = DeterministicEntityExtractor()
+
+    content = (
+        "IMPORTANT SAFETY REQUIREMENT. "
+        "CURRENT REPOSITORY STATE. "
+        "Output ONLY the requested result. "
+        "Before Phase completion, check the system."
+    )
+
+    results = extractor.extract(content)
+
+    assert all(item.entity_type != "project" for item in results)
+
+
 def test_extraction_is_deterministic():
     extractor = DeterministicEntityExtractor()
 
     content = (
-        "Mnemosyne uses SQLite. "
-        "FastAPI supports the Mnemosyne project."
+        "The Mnemosyne Visual Monitor project uses SQLite. "
+        "The Mnemosyne Visual Monitor project uses Python."
     )
 
     first = extractor.extract(content)
@@ -57,8 +146,8 @@ def test_duplicate_mentions_are_collapsed():
     extractor = DeterministicEntityExtractor()
 
     results = extractor.extract(
-        "Mnemosyne uses SQLite. "
-        "Later, Mnemosyne uses SQLite again."
+        "The Mnemosyne Visual Monitor project uses SQLite. "
+        "Later, the Mnemosyne Visual Monitor project uses SQLite again."
     )
 
     keys = [
@@ -73,7 +162,7 @@ def test_mentions_have_valid_confidence_and_method():
     extractor = DeterministicEntityExtractor()
 
     results = extractor.extract(
-        "Mnemosyne uses SQLite and FastAPI."
+        "The Mnemosyne Visual Monitor project uses SQLite and FastAPI."
     )
 
     assert results
@@ -87,7 +176,7 @@ def test_results_are_stably_sorted():
     extractor = DeterministicEntityExtractor()
 
     results = extractor.extract(
-        "FastAPI and SQLite support Mnemosyne."
+        "The Mnemosyne Visual Monitor project uses FastAPI and SQLite."
     )
 
     keys = [

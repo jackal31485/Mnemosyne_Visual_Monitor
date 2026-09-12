@@ -146,6 +146,51 @@ button:active:not(:disabled) { transform:translateY(1px); }
 .graph-node:hover { stroke:white; stroke-width:2; }
 .graph-node.selected { stroke:white; stroke-width:3; }
 .graph-node.dimmed { opacity:.22; }
+
+/* Phase 10I.1 — Entity Graph */
+.entity-graph-svg { background:var(--panel); }
+.entity-graph-edge {
+    stroke:var(--edge);
+    stroke-width:1.5;
+    opacity:.55;
+    cursor:pointer;
+}
+.entity-graph-edge:hover {
+    stroke:white;
+    stroke-width:2.5;
+    opacity:.9;
+}
+.entity-graph-edge.selected {
+    stroke:var(--accent);
+    stroke-width:3;
+    opacity:1;
+}
+.entity-graph-node {
+    stroke:#0b0e13;
+    stroke-width:1.5;
+    cursor:pointer;
+}
+.entity-graph-node:hover {
+    stroke:white;
+    stroke-width:2.5;
+}
+.entity-graph-node.selected {
+    stroke:white;
+    stroke-width:3;
+}
+.entity-graph-label {
+    fill:var(--text);
+    font-size:11px;
+    pointer-events:none;
+    user-select:none;
+}
+.entity-graph-governance-note {
+    margin-top:10px;
+    padding:8px 10px;
+    border:1px solid var(--border);
+    border-radius:4px;
+    background:var(--panel-alt);
+}
 .table-view { flex:1; min-height:0; overflow:auto; padding:12px; }
 .table-view.hidden,.graph-view.hidden,.tile-view.hidden,.hybrid-search-view.hidden { display:none; }
 .data-table { width:100%; border-collapse:collapse; font-size:11px; }

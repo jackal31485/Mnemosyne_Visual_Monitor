@@ -51,6 +51,11 @@ class EntityGraphNodeDTO(BaseModel):
     source_profile: str | None = None
     origin_memory_id: str | None = None
     entity_id: str | None = None
+    canonical_name: str | None = None
+    entity_type: str | None = None
+    confidence: float | None = None
+    mention_count: int = 0
+    source_profiles: list[str] = []
 
 
 class EntityGraphEdgeDTO(BaseModel):
@@ -63,6 +68,9 @@ class EntityGraphEdgeDTO(BaseModel):
     relationship_kind: str | None = None
     collective_entry_id: int | None = None
     relationship_id: str | None = None
+    mention_text: str | None = None
+    source_profile: str | None = None
+    source_memory_id: str | None = None
 
 
 class EntityGraphResponse(BaseModel):

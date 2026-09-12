@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import sqlite3
+import uuid
 
 from src.domain.collective import CollectiveDAO
 from src.domain.entity_mentions import EntityMentionDAO
@@ -22,6 +23,34 @@ from src.domain.memory_gateway import MemoryGateway
 from src.services.entity_extraction import (
     DeterministicEntityExtractor,
 )
+
+
+MENTION_NAMESPACE = uuid.UUID(
+    "b4f6f5e1-8f43-4d73-a5d9-6f4b2c91e7a2"
+)
+
+
+def _stable_mention_id(
+    *,
+    collective_entry_id: int,
+    source_memory_id: str,
+    source_profile: str,
+    mention_text: str,
+    entity_type: str,
+    extraction_method: str,
+) -> str:
+    """Return a deterministic ID for one extracted mention."""
+    key = "|".join(
+        (
+            str(collective_entry_id),
+            source_memory_id,
+            source_profile,
+            mention_text,
+            entity_type,
+            extraction_method,
+        )
+    )
+    return str(uuid.uuid5(MENTION_NAMESPACE, key))
 
 
 @dataclass(frozen=True)
@@ -123,6 +152,14 @@ def extract_entities(
                     entity_type=mention.entity_type,
                     confidence=mention.confidence,
                     extraction_method=mention.extraction_method,
+                    mention_id=_stable_mention_id(
+                        collective_entry_id=entry_id,
+                        source_memory_id=origin_memory_id,
+                        source_profile=source_profile,
+                        mention_text=mention.mention_text,
+                        entity_type=mention.entity_type,
+                        extraction_method=mention.extraction_method,
+                    ),
                 )
             except sqlite3.IntegrityError:
                 mentions_existing += 1

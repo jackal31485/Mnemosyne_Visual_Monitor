@@ -33,6 +33,11 @@ class EntityGraphNode:
     source_profile: str | None = None
     origin_memory_id: str | None = None
     entity_id: str | None = None
+    canonical_name: str | None = None
+    entity_type: str | None = None
+    confidence: float | None = None
+    mention_count: int = 0
+    source_profiles: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -46,6 +51,9 @@ class EntityGraphEdge:
     relationship_kind: str | None = None
     collective_entry_id: int | None = None
     relationship_id: str | None = None
+    mention_text: str | None = None
+    source_profile: str | None = None
+    source_memory_id: str | None = None
 
 
 class EntityGraphProjector:
@@ -126,6 +134,9 @@ class EntityGraphProjector:
             for entity in self.entity_dao.list(status="active")
         }
 
+        entity_mentions: dict[str, int] = {}
+        entity_profiles: dict[str, set[str]] = {}
+
         for mention in self.mention_dao.list():
             entry_id = int(mention["collective_entry_id"])
 
@@ -157,11 +168,25 @@ class EntityGraphProjector:
             entity_node_id = f"entity:{entity_id}"
             memory_node_id = authorized_entries[entry_id]["node_id"]
 
+            entity_mentions[entity_id] = (
+                entity_mentions.get(entity_id, 0) + 1
+            )
+            entity_profiles.setdefault(entity_id, set()).add(
+                mention["source_profile"]
+            )
+
             nodes[entity_node_id] = EntityGraphNode(
                 node_id=entity_node_id,
                 node_type="entity",
                 lifecycle_state=entity["status"],
                 entity_id=entity_id,
+                canonical_name=entity["canonical_name"],
+                entity_type=entity["entity_type"],
+                confidence=entity["confidence"],
+                mention_count=entity_mentions[entity_id],
+                source_profiles=tuple(
+                    sorted(entity_profiles[entity_id])
+                ),
             )
 
             edge = EntityGraphEdge(
@@ -170,6 +195,9 @@ class EntityGraphProjector:
                 edge_type="mentions",
                 confidence=mention["confidence"],
                 collective_entry_id=entry_id,
+                mention_text=mention["mention_text"],
+                source_profile=mention["source_profile"],
+                source_memory_id=mention["source_memory_id"],
             )
 
             key = (
@@ -195,24 +223,36 @@ class EntityGraphProjector:
             subject_node_id = f"entity:{subject_id}"
             object_node_id = f"entity:{object_id}"
 
-            nodes.setdefault(
-                subject_node_id,
-                EntityGraphNode(
-                    node_id=subject_node_id,
-                    node_type="entity",
-                    lifecycle_state=active_entities[subject_id]["status"],
-                    entity_id=subject_id,
-                ),
-            )
-            nodes.setdefault(
-                object_node_id,
-                EntityGraphNode(
-                    node_id=object_node_id,
-                    node_type="entity",
-                    lifecycle_state=active_entities[object_id]["status"],
-                    entity_id=object_id,
-                ),
-            )
+            for entity_id, entity_node_id in (
+                (subject_id, subject_node_id),
+                (object_id, object_node_id),
+            ):
+                entity = active_entities[entity_id]
+
+                nodes.setdefault(
+                    entity_node_id,
+                    EntityGraphNode(
+                        node_id=entity_node_id,
+                        node_type="entity",
+                        lifecycle_state=entity["status"],
+                        entity_id=entity_id,
+                        canonical_name=entity["canonical_name"],
+                        entity_type=entity["entity_type"],
+                        confidence=entity["confidence"],
+                        mention_count=entity_mentions.get(
+                            entity_id,
+                            0,
+                        ),
+                        source_profiles=tuple(
+                            sorted(
+                                entity_profiles.get(
+                                    entity_id,
+                                    set(),
+                                )
+                            )
+                        ),
+                    ),
+                )
 
             edge = EntityGraphEdge(
                 source_id=subject_node_id,
@@ -266,6 +306,11 @@ class EntityGraphProjector:
                     "source_profile": node.source_profile,
                     "origin_memory_id": node.origin_memory_id,
                     "entity_id": node.entity_id,
+                    "canonical_name": node.canonical_name,
+                    "entity_type": node.entity_type,
+                    "confidence": node.confidence,
+                    "mention_count": node.mention_count,
+                    "source_profiles": list(node.source_profiles),
                 }
                 for node in nodes
             ],
@@ -278,6 +323,9 @@ class EntityGraphProjector:
                     "relationship_kind": edge.relationship_kind,
                     "collective_entry_id": edge.collective_entry_id,
                     "relationship_id": edge.relationship_id,
+                    "mention_text": edge.mention_text,
+                    "source_profile": edge.source_profile,
+                    "source_memory_id": edge.source_memory_id,
                 }
                 for edge in edges
             ],

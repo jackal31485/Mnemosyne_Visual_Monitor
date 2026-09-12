@@ -11,7 +11,13 @@ const state = {
     profiles: [],
     selectedProfile: null,
     graph: {nodes: [], edges: {}},
+    entityGraph: {nodes: [], edges: []},
     selectedNode: null,
+    selectedEntityNode: null,
+    selectedEntityEdge: null,
+    entityGraphLoaded: false,
+    entityGraphLoading: false,
+    entityGraphViewInitialized: false,
     viewMode: "tiles",
     informationView: "overview",
     edgeLimit: 5,
@@ -105,6 +111,10 @@ async function fetchGraph(profile = null) {
     if (state.edgeLimit !== null) params.set("edge_limit", String(state.edgeLimit));
     const query = params.toString();
     return fetchJSON(query ? `/api/graph?${query}` : "/api/graph");
+}
+
+async function fetchEntityGraph() {
+    return fetchJSON("/api/entity-graph");
 }
 
 async function fetchDiagnostics() {
@@ -436,7 +446,7 @@ function bindGraphInteraction(container) {
         applyTransform();
     };
     container.onmousedown = e => {
-        if(e.target.closest(".graph-node")) return;
+        if(e.target.closest(".graph-node, .entity-graph-node, .entity-graph-edge")) return;
         state.dragging=true; state.dragStartX=e.clientX; state.dragStartY=e.clientY;
         state.panStartX=state.panX; state.panStartY=state.panY;
         container.classList.add("dragging");
@@ -471,6 +481,12 @@ function renderGraph2D(graph) {
     const viewport = createSVGElement("g",{class:"graph-viewport"});
     svg.appendChild(viewport);
     const positions = calculateLayout(graph.nodes,width,height);
+
+    fit2DGraphToViewport(
+        positions,
+        width,
+        height,
+    );
     const edges = flattenEdges(graph.edges);
 
     const edgeGroup = createSVGElement("g",{class:"graph-edges"});
@@ -1572,6 +1588,490 @@ async function loadMemoryContent(node) {
     }
 }
 
+
+function entityGraphNodeLabel(node) {
+    if (!node) return "Unknown";
+
+    if (node.node_type === "entity") {
+        return (
+            node.canonical_name ||
+            node.entity_id ||
+            node.node_id ||
+            "Entity"
+        );
+    }
+
+    if (node.node_type === "memory") {
+        const profile = node.source_profile || "Unknown profile";
+        const memory = node.origin_memory_id || "Unknown memory";
+        return `${profile}:${memory}`;
+    }
+
+    return node.node_id || "Unknown";
+}
+
+function entityGraphEdgeKey(edge) {
+    if (!edge) return "";
+
+    return [
+        edge.source_id || "",
+        edge.target_id || "",
+        edge.edge_type || "",
+        edge.collective_entry_id ?? "",
+        edge.relationship_id || "",
+        edge.relationship_kind || "",
+    ].join("|");
+}
+
+function entityGraphNodeClass(node, selected) {
+    const type = node?.node_type || "unknown";
+
+    return [
+        "entity-graph-node",
+        `entity-graph-node-${type}`,
+        selected ? "selected" : "",
+    ].filter(Boolean).join(" ");
+}
+
+function entityGraphPositions(nodes, width, height) {
+    const positions = new Map();
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    const entities = nodes.filter(
+        node => node.node_type === "entity",
+    );
+
+    const memories = nodes.filter(
+        node => node.node_type === "memory",
+    );
+
+    const entityRadius = Math.max(
+        110,
+        Math.min(width, height) * 0.24,
+    );
+
+    entities.forEach((node, index) => {
+        const angle =
+            index / Math.max(entities.length, 1) * Math.PI * 2 -
+            Math.PI / 2;
+
+        positions.set(node.node_id, {
+            x: centerX + Math.cos(angle) * entityRadius,
+            y: centerY + Math.sin(angle) * entityRadius,
+        });
+    });
+
+    const memoryRadius = Math.max(
+        220,
+        Math.min(width, height) * 0.39,
+    );
+
+    memories.forEach((node, index) => {
+        const angle =
+            index / Math.max(memories.length, 1) * Math.PI * 2 -
+            Math.PI / 2;
+
+        positions.set(node.node_id, {
+            x: centerX + Math.cos(angle) * memoryRadius,
+            y: centerY + Math.sin(angle) * memoryRadius,
+        });
+    });
+
+    return positions;
+}
+
+function renderEntityGraph(
+    graph = state.entityGraph,
+    fitToViewport = false,
+) {
+    const container = $("graph-view");
+
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    if (!graph?.nodes?.length) {
+        container.innerHTML =
+            '<div class="loading-state">No entity graph data available.</div>';
+        renderStatistics();
+        return;
+    }
+
+    const rect = container.getBoundingClientRect();
+    const width = Math.max(rect.width, 800);
+    const height = Math.max(rect.height, 600);
+
+    const svg = createSVGElement("svg", {
+        class: "graph-svg entity-graph-svg",
+        viewBox: `0 0 ${width} ${height}`,
+        preserveAspectRatio: "xMidYMid meet",
+        "aria-label": "Mnemosyne entity graph",
+    });
+
+    const viewport = createSVGElement(
+        "g",
+        {class: "graph-viewport"},
+    );
+
+    svg.appendChild(viewport);
+
+    const positions = entityGraphPositions(
+        graph.nodes,
+        width,
+        height,
+    );
+
+    if (fitToViewport) {
+        fit2DGraphToViewport(
+            positions,
+            width,
+            height,
+        );
+        state.entityGraphViewInitialized = true;
+    }
+
+    const edges = Array.isArray(graph.edges)
+        ? graph.edges
+        : [];
+
+    const edgeGroup = createSVGElement(
+        "g",
+        {class: "entity-graph-edges"},
+    );
+
+    for (const edge of edges) {
+        const source = positions.get(edge.source_id);
+        const target = positions.get(edge.target_id);
+
+        if (!source || !target) continue;
+
+        const selected =
+            entityGraphEdgeKey(state.selectedEntityEdge) ===
+            entityGraphEdgeKey(edge);
+
+        const line = createSVGElement("line", {
+            class: [
+                "entity-graph-edge",
+                edge.edge_type === "relationship"
+                    ? "relationship-edge"
+                    : "mention-edge",
+                selected ? "selected" : "",
+            ].filter(Boolean).join(" "),
+            x1: source.x,
+            y1: source.y,
+            x2: target.x,
+            y2: target.y,
+        });
+
+        line.dataset.entityGraphEdgeKey =
+            entityGraphEdgeKey(edge);
+
+        if (edge.relationship_id) {
+            line.dataset.relationshipId = edge.relationship_id;
+        }
+
+        if (
+            edge.confidence !== null &&
+            edge.confidence !== undefined
+        ) {
+            line.setAttribute(
+                "stroke-width",
+                Math.max(1, Number(edge.confidence) * 3),
+            );
+        }
+
+        line.addEventListener("click", event => {
+            event.stopPropagation();
+            selectEntityEdge(edge);
+        });
+
+        edgeGroup.appendChild(line);
+    }
+
+    viewport.appendChild(edgeGroup);
+
+    const nodeGroup = createSVGElement(
+        "g",
+        {class: "entity-graph-nodes"},
+    );
+
+    for (const node of graph.nodes) {
+        const position = positions.get(node.node_id);
+
+        if (!position) continue;
+
+        const selected =
+            state.selectedEntityNode?.node_id === node.node_id;
+
+        const isEntity = node.node_type === "entity";
+
+        const circle = createSVGElement("circle", {
+            class: entityGraphNodeClass(node, selected),
+            cx: position.x,
+            cy: position.y,
+            r: selected
+                ? (isEntity ? 11 : 8)
+                : (isEntity ? 9 : 6),
+            tabindex: "0",
+            "aria-label": entityGraphNodeLabel(node),
+        });
+
+        circle.dataset.entityNodeId = node.node_id;
+
+        if (isEntity) {
+            circle.style.fill = "var(--accent)";
+        } else {
+            circle.style.fill = colorForProfile(
+                profileLabel(node.source_profile || "unknown"),
+            );
+        }
+
+        circle.addEventListener("click", event => {
+            event.stopPropagation();
+            selectEntityNode(node);
+        });
+
+        circle.addEventListener("keydown", event => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                selectEntityNode(node);
+            }
+        });
+
+        nodeGroup.appendChild(circle);
+    }
+
+    viewport.appendChild(nodeGroup);
+    container.appendChild(svg);
+
+    bindGraphInteraction(container);
+    applyTransform();
+}
+
+function selectEntityNode(node) {
+    state.selectedEntityNode = node;
+    state.selectedEntityEdge = null;
+
+    renderEntityInspector(node);
+
+    setSelectionStatus(
+        `Selected ${entityGraphNodeLabel(node)}`,
+    );
+
+    renderEntityGraph(state.entityGraph);
+}
+
+function selectEntityEdge(edge) {
+    state.selectedEntityEdge = edge;
+    state.selectedEntityNode = null;
+
+    const isRelationship =
+        edge?.edge_type === "relationship" ||
+        Boolean(edge?.relationship_id);
+
+    if (isRelationship) {
+        renderRelationshipInspector(edge);
+
+        const relationship =
+            edge.relationship_kind ||
+            edge.edge_type ||
+            "relationship";
+
+        setSelectionStatus(
+            `Selected ${relationship}`,
+        );
+    } else {
+        renderMentionInspector(edge);
+
+        setSelectionStatus(
+            `Selected mention: ${edge?.mention_text || "reference"}`,
+        );
+    }
+
+    renderEntityGraph(state.entityGraph);
+}
+
+function renderEntityInspector(node) {
+    const container = $("inspector-content");
+
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    const title = document.createElement("section");
+    title.className = "inspector-section";
+    title.innerHTML = "<h3>Entity Graph</h3>";
+    container.appendChild(title);
+
+    if (!node) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent =
+            "Select an entity or memory node to inspect it.";
+        container.appendChild(empty);
+        return;
+    }
+
+    const section = inspectorSection(
+        node.node_type === "entity"
+            ? "Entity"
+            : "Collective Memory Reference",
+    );
+
+    const rows = [
+        ["Node ID", node.node_id],
+        ["Node type", node.node_type],
+        ["Lifecycle", node.lifecycle_state],
+    ];
+
+    if (node.node_type === "entity") {
+        rows.push(
+            ["Canonical name", node.canonical_name],
+            ["Entity type", node.entity_type],
+            ["Confidence", formatScore(node.confidence)],
+            ["Mention count", node.mention_count],
+            [
+                "Source profiles",
+                Array.isArray(node.source_profiles)
+                    ? node.source_profiles.join(", ")
+                    : "Not recorded",
+            ],
+            ["Entity ID", node.entity_id],
+        );
+    } else {
+        rows.push(
+            ["Source profile", node.source_profile],
+            ["Origin memory", node.origin_memory_id],
+        );
+    }
+
+    section.innerHTML += `
+        <dl class="inspector-grid">
+            ${rows.map(([label, value]) => `
+                <dt>${escapeHTML(label)}</dt>
+                <dd>${escapeHTML(value ?? "Not recorded")}</dd>
+            `).join("")}
+        </dl>
+    `;
+
+    const note = document.createElement("div");
+    note.className =
+        "empty-state entity-graph-governance-note";
+
+    note.textContent =
+        node.node_type === "entity"
+            ? "Canonical entity metadata only. Source memory content is not exposed by the entity graph."
+            : "Collective memory reference only. Source memory content is not loaded from the entity graph.";
+
+    section.appendChild(note);
+    container.appendChild(section);
+}
+
+function renderMentionInspector(edge) {
+    const container = $("inspector-content");
+
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    const title = document.createElement("section");
+    title.className = "inspector-section";
+    title.innerHTML = "<h3>Entity Graph</h3>";
+    container.appendChild(title);
+
+    if (!edge) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent =
+            "Select a mention edge to inspect it.";
+        container.appendChild(empty);
+        return;
+    }
+
+    const section = inspectorSection("Entity Mention");
+
+    section.innerHTML += `
+        <dl class="inspector-grid">
+            <dt>Mention</dt>
+            <dd>${escapeHTML(edge.mention_text ?? "Not recorded")}</dd>
+            <dt>Confidence</dt>
+            <dd>${formatScore(edge.confidence)}</dd>
+            <dt>Source profile</dt>
+            <dd>${escapeHTML(edge.source_profile ?? "Not recorded")}</dd>
+            <dt>Source memory</dt>
+            <dd>${escapeHTML(edge.source_memory_id ?? "Not recorded")}</dd>
+            <dt>Collective entry</dt>
+            <dd>${escapeHTML(edge.collective_entry_id ?? "Not recorded")}</dd>
+            <dt>Source node</dt>
+            <dd>${escapeHTML(edge.source_id ?? "Not recorded")}</dd>
+            <dt>Target entity</dt>
+            <dd>${escapeHTML(edge.target_id ?? "Not recorded")}</dd>
+        </dl>
+    `;
+
+    const note = document.createElement("div");
+    note.className =
+        "empty-state entity-graph-governance-note";
+
+    note.textContent =
+        "Read-only entity mention evidence. Source memory content is not loaded or exposed by the entity graph.";
+
+    section.appendChild(note);
+    container.appendChild(section);
+}
+
+function renderRelationshipInspector(edge) {
+    const container = $("inspector-content");
+
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    const title = document.createElement("section");
+    title.className = "inspector-section";
+    title.innerHTML = "<h3>Relationship</h3>";
+    container.appendChild(title);
+
+    if (!edge) {
+        const empty = document.createElement("div");
+        empty.className = "empty-state";
+        empty.textContent =
+            "Select a relationship to inspect it.";
+        container.appendChild(empty);
+        return;
+    }
+
+    const section = inspectorSection("Relationship Evidence");
+
+    section.innerHTML += `
+        <dl class="inspector-grid">
+            <dt>Relationship ID</dt>
+            <dd>${escapeHTML(edge.relationship_id ?? "Not recorded")}</dd>
+            <dt>Relationship kind</dt>
+            <dd>${escapeHTML(edge.relationship_kind ?? "Not recorded")}</dd>
+            <dt>Confidence</dt>
+            <dd>${formatScore(edge.confidence)}</dd>
+            <dt>Source entity</dt>
+            <dd>${escapeHTML(edge.source_id)}</dd>
+            <dt>Target entity</dt>
+            <dd>${escapeHTML(edge.target_id)}</dd>
+            <dt>Collective entry</dt>
+            <dd>${escapeHTML(edge.collective_entry_id ?? "Not recorded")}</dd>
+        </dl>
+    `;
+
+    const note = document.createElement("div");
+    note.className =
+        "empty-state entity-graph-governance-note";
+
+    note.textContent =
+        "Read-only relationship projection. No relationship editing is available from the Browser.";
+
+    section.appendChild(note);
+    container.appendChild(section);
+}
+
 function selectNode(node, graph = state.graph) {
     state.selectedNode = node;
 
@@ -2461,6 +2961,7 @@ function setViewMode(mode) {
         "activity",
         "status",
         "validation",
+        "entity-graph",
         "hybrid-search",
         "tiles",
     ];
@@ -2480,7 +2981,7 @@ function setViewMode(mode) {
         selector.value = mode;
     }
 
-    const graphModes = ["2d", "3d"];
+    const graphModes = ["2d", "3d", "entity-graph"];
 
     const informationModes = [
         "profile-views",
@@ -2522,6 +3023,70 @@ function setViewMode(mode) {
 
     if (previousMode === "3d" && mode !== "3d") {
         window.Mnemosyne3D?.destroy?.();
+    }
+
+    if (mode === "entity-graph") {
+        if (state.entityGraphLoaded) {
+            renderEntityGraph(
+                state.entityGraph,
+                !state.entityGraphViewInitialized,
+            );
+            return;
+        }
+
+        if (state.entityGraphLoading) {
+            return;
+        }
+
+        state.entityGraphLoading = true;
+
+        const container = $("graph-view");
+
+        if (container) {
+            container.innerHTML =
+                '<div class="loading-state">Loading entity graph…</div>';
+        }
+
+        fetchEntityGraph()
+            .then(graph => {
+                state.entityGraph = {
+                    nodes: Array.isArray(graph?.nodes)
+                        ? graph.nodes
+                        : [],
+                    edges: Array.isArray(graph?.edges)
+                        ? graph.edges
+                        : [],
+                };
+
+                state.entityGraphLoaded = true;
+                state.entityGraphLoading = false;
+
+                if (state.viewMode === "entity-graph") {
+                    renderEntityGraph(
+                        state.entityGraph,
+                        true,
+                    );
+                }
+            })
+            .catch(error => {
+                state.entityGraphLoading = false;
+
+                if (state.viewMode === "entity-graph") {
+                    const container = $("graph-view");
+
+                    if (container) {
+                        container.innerHTML =
+                            '<div class="loading-state">Unable to load entity graph.</div>';
+                    }
+
+                    setStatus(
+                        `Entity graph error: ${error.message}`,
+                        true,
+                    );
+                }
+            });
+
+        return;
     }
 
     if (mode === "hybrid-search") {
@@ -2624,6 +3189,48 @@ function setViewMode(mode) {
 }
 
 
+function fit2DGraphToViewport(positions, width, height) {
+    if (!positions || positions.size === 0) {
+        state.zoom = 1;
+        state.panX = 0;
+        state.panY = 0;
+        return;
+    }
+
+    const padding = 50;
+    const points = Array.from(positions.values());
+
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+
+    for (const point of points) {
+        minX = Math.min(minX, point.x);
+        maxX = Math.max(maxX, point.x);
+        minY = Math.min(minY, point.y);
+        maxY = Math.max(maxY, point.y);
+    }
+
+    const graphWidth = Math.max(maxX - minX, 1);
+    const graphHeight = Math.max(maxY - minY, 1);
+
+    const availableWidth = Math.max(width - padding * 2, 1);
+    const availableHeight = Math.max(height - padding * 2, 1);
+
+    state.zoom = Math.min(
+        availableWidth / graphWidth,
+        availableHeight / graphHeight,
+        1,
+    );
+
+    const graphCenterX = (minX + maxX) / 2;
+    const graphCenterY = (minY + maxY) / 2;
+
+    state.panX = width / 2 - graphCenterX * state.zoom;
+    state.panY = height / 2 - graphCenterY * state.zoom;
+}
+
 function applyTransform() {
     const viewport = document.querySelector(".graph-viewport");
     if(viewport) viewport.setAttribute(
@@ -2641,6 +3248,12 @@ function resetGraphView() {
         renderGraph2D(state.graph);
     } else if (state.viewMode === "3d") {
         window.Mnemosyne3D?.reset?.();
+    } else if (state.viewMode === "entity-graph") {
+        state.entityGraphViewInitialized = false;
+        renderEntityGraph(
+            state.entityGraph,
+            true,
+        );
     }
 }
 

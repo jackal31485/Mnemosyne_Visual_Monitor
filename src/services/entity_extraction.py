@@ -21,15 +21,25 @@ _TECHNOLOGY_PATTERNS = (
     r"\b(?:GPT-\d+(?:\.\d+)?|Qwen\d*|Devstral|Horus|Athena|Mnemosyne|Hermes)\b",
 )
 
-# Capitalized multi-word phrases are useful as conservative candidate
-# extraction without requiring an NLP model.
-_PROPER_PHRASE_RE = re.compile(
-    r"\b[A-Z][A-Za-z0-9_-]*(?:\s+[A-Z][A-Za-z0-9_-]*)+\b"
-)
-
 _SINGLE_TECH_RE = re.compile(
     "|".join(_TECHNOLOGY_PATTERNS),
     re.IGNORECASE,
+)
+
+# Project names are extracted only when a project-like marker explicitly
+# identifies the phrase as a project.  We intentionally do not treat every
+# capitalized multi-word phrase as a project because collective memories
+# contain instructions, headings, status messages, and prose with many
+# capitalized fragments.
+_PROJECT_AFTER_MARKER_RE = re.compile(
+    r"\b(?:project|repository|application|codebase)"
+    r"\s+(?:named\s+|called\s+)?"
+    r"([A-Z][A-Za-z0-9_-]*(?:\s+[A-Z][A-Za-z0-9_-]*){1,5})"
+)
+
+_PROJECT_BEFORE_MARKER_RE = re.compile(
+    r"\b([A-Z][A-Za-z0-9_-]*(?:\s+[A-Z][A-Za-z0-9_-]*){1,5})"
+    r"\s+(?:project|repository|application|codebase)\b"
 )
 
 _ENTITY_TYPES = {
@@ -87,23 +97,66 @@ class DeterministicEntityExtractor:
             text = match.group(0).strip()
             add(text, "technology", 0.95)
 
-        for match in _PROPER_PHRASE_RE.finditer(content):
-            text = match.group(0).strip()
+        project_candidates: list[str] = []
 
-            # Avoid treating ordinary sentence openings as entities.
-            words = text.split()
-            if len(words) < 2:
+        for match in _PROJECT_AFTER_MARKER_RE.finditer(content):
+            project_candidates.append(match.group(1))
+
+        for match in _PROJECT_BEFORE_MARKER_RE.finditer(content):
+            project_candidates.append(match.group(1))
+
+        for text in project_candidates:
+            normalized = " ".join(text.split()).strip()
+
+            # Remove a leading grammatical article captured by the
+            # before-marker pattern, e.g. "The Mnemosyne Visual Monitor".
+            normalized = re.sub(
+                r"^(?:the|a|an)\s+",
+                "",
+                normalized,
+                flags=re.IGNORECASE,
+            )
+
+            # A single-word name is too ambiguous to classify as a project
+            # from a generic marker alone.  It may already be a technology
+            # or product/entity name, such as "Mnemosyne project".
+            if len(normalized.split()) < 2:
                 continue
 
-            if text.casefold() in {
-                "The Phase",
-                "This Project",
-                "The System",
-                "The User",
+            # Defensive filtering for fragments that can occur immediately
+            # around project-like markers but are not project names.
+            if normalized.casefold() in {
+                "the project",
+                "this project",
+                "the repository",
+                "this repository",
+                "the application",
+                "this application",
+                "the codebase",
+                "this codebase",
             }:
                 continue
 
-            add(text, "project", 0.65)
+            # Reject generic instruction/document scaffolding that can otherwise
+            # satisfy the capitalization-based project-name pattern.
+            project_noise_words = {
+                "all",
+                "current",
+                "local",
+                "location",
+                "repository",
+                "state",
+                "the",
+            }
+            normalized_words = {
+                word.casefold()
+                for word in normalized.split()
+            }
+
+            if normalized_words & project_noise_words:
+                continue
+
+            add(normalized, "project", 0.90)
 
         candidates.sort(
             key=lambda item: (

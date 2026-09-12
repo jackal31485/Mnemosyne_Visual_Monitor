@@ -67,7 +67,7 @@ def test_extracts_mentions_from_promoted_non_revoked_entries(tmp_path):
     )
 
     assert report.processed == 1
-    assert report.mentions_created == 4
+    assert report.mentions_created == 3
     assert report.mentions_existing == 0
     assert report.skipped == 0
     assert report.failures == ()
@@ -81,7 +81,6 @@ def test_extracts_mentions_from_promoted_non_revoked_entries(tmp_path):
         ("Mnemosyne", "technology"),
         ("Python", "technology"),
         ("SQLite", "technology"),
-        ("The Mnemosyne", "project"),
     }
 
     assert all(
@@ -268,14 +267,14 @@ def test_repeated_extraction_is_idempotent(tmp_path):
     )
 
     assert first.processed == 1
-    assert first.mentions_created == 4
+    assert first.mentions_created == 3
     assert first.mentions_existing == 0
 
     assert second.processed == 1
     assert second.mentions_created == 0
-    assert second.mentions_existing == 4
+    assert second.mentions_existing == 3
 
-    assert len(mention_dao.list()) == 4
+    assert len(mention_dao.list()) == 3
     assert all(
         item["collective_entry_id"] == entry_id
         for item in mention_dao.list()

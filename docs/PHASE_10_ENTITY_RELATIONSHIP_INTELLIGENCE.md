@@ -1,7 +1,7 @@
 # Phase 10 — Entity & Relationship Intelligence
 
-**Status:** PLANNED — READY TO BEGIN
-**Planned start:** 2026-09-09
+**Status:** COMPLETE — 2026-09-11
+**Completed:** 2026-09-11
 **Previous phase:** Phase 9 — Browser-Facing Hybrid Retrieval Integration
 **Next phase:** Phase 11 — Temporal Intelligence
 
@@ -533,6 +533,136 @@ Phase 10 is complete when:
  Phase 10 completion audit is written
  Phase 10 documentation is archived appropriately
  Phase 11 is explicitly defined as the next phase
+## Phase 10 Completion Record
+
+Phase 10 was implemented incrementally through stages 10A–10J and
+validated against both the repository test suite and the live collective
+corpus.
+
+### Implemented capabilities
+
+- Canonical entity data model and lifecycle handling
+- Deterministic entity extraction
+- Entity mentions with source-memory references
+- Entity evidence and provenance structures
+- Deterministic entity resolution
+- Explicit `same_entity` resolution records
+- Relationship model and relationship evidence
+- Conservative explicit relationship extraction
+- Entity-aware graph projection
+- Entity graph API
+- Browser entity inspection
+- Browser mention-edge inspection
+- Entity-aware hybrid retrieval
+- Deterministic rebuild and idempotency support
+- Read-only source-memory access through the memory gateway
+- Preservation of collective promotion/revocation state
+- Preservation of qualified profile identity
+
+### Final real-corpus validation
+
+The Phase 10 rebuild was executed against the current collective corpus.
+
+Final derived-data counts:
+
+- Collective entries: 570
+- Active canonical entities: 21
+- Entity mentions: 706
+- Entity resolutions: 706
+- Entity evidence records: 706
+- Relationships: 0
+- Relationship evidence records: 0
+
+The 0 relationship result is intentional. Relationship extraction remains
+conservative and explicit-only; the current corpus did not contain
+sufficiently strong qualifying relationship statements to create semantic
+relationship records. The extractor was not loosened merely to manufacture
+relationships.
+
+The entity set consisted of two projects and nineteen technology entities.
+The extraction-quality correction eliminated the earlier false-positive
+capitalized instruction/document fragments.
+
+### Rebuild and idempotency
+
+A second complete Phase 10 rebuild was executed against the same corpus.
+
+The second rebuild reproduced the same entity, mention, resolution,
+evidence, and relationship snapshots while leaving the authoritative
+collective entries and collective provenance unchanged.
+
+This confirms that the Phase 10 derived intelligence can be regenerated
+deterministically.
+
+### Source integrity
+
+The production-style rebuild was performed through the distributed memory
+gateway. Source profile memories were read but not modified.
+
+The validated corpus contained:
+
+- Athena: 443 eligible memories
+- Horus: 41
+- Odin: 55
+- Thoth: 29
+- Friday: 1
+- Vulcan: 1
+
+All 570 eligible collective entries remained promoted and non-revoked during
+the validation.
+
+### Automated validation
+
+The final repository validation passed:
+
+- Full pytest suite: 551 passed, 5 skipped, 4 warnings
+- Entity graph focused tests: 15 passed
+- Entity extraction focused tests: 20 passed
+- Phase 10 rebuild focused tests: 54 passed
+- Python compilation checks passed
+- JavaScript syntax checks passed
+- `git diff --check` passed
+
+### Browser validation
+
+The live Browser validation passed after the Phase 10 entity graph and
+inspection changes.
+
+The validated Entity Graph exposed:
+
+- 21 entity nodes
+- 570 memory-reference nodes
+- 706 mention edges
+- 0 semantic relationship edges
+
+Entity nodes displayed human-readable canonical names and entity metadata.
+Mention edges were selectable and exposed evidence metadata without exposing
+raw source-memory content.
+
+### Governance validation
+
+Phase 10 preserves the established governance boundary:
+
+- no silent entity merging
+- no modification of source-profile memories
+- no bypass of collective promotion
+- no bypass of revocation
+- no fabricated provenance
+- no private raw-memory exposure through the entity graph
+- no automatic promotion of inferred relationships to facts
+- qualified profile identities remain intact
+- Browser remains a read-only inspection surface
+- derived entity/relationship data remains rebuildable
+
+### Phase 10 completion assessment
+
+All implemented Phase 10 capabilities have been validated at the unit,
+integration, real-corpus, rebuild/idempotency, and browser levels.
+
+Phase 10 is therefore **COMPLETE**.
+
+The next architectural step is Phase 11 — Temporal Intelligence.
+
 ## Phase 10 Outcome
 
 When complete, Mnemosyne will have progressed from simply finding relevant

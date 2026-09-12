@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import sqlite3
+import uuid
 
 from src.domain.entity_mentions import EntityMentionDAO
 from src.domain.entity_resolutions import EntityResolutionDAO
@@ -24,6 +25,57 @@ from src.services.relationship_extraction import (
     extract_relationships,
 )
 from src.domain.memory_gateway import MemoryGateway
+
+
+RELATIONSHIP_NAMESPACE = uuid.UUID(
+    "7a1e5c93-42d8-4f6b-b9e7-1c3d8a5f2046"
+)
+
+RELATIONSHIP_EVIDENCE_NAMESPACE = uuid.UUID(
+    "9d4e7b21-6c53-4a8f-b2e1-5f9c3d7a1846"
+)
+
+
+def _stable_relationship_id(
+    *,
+    subject_entity_id: str,
+    predicate: str,
+    object_entity_id: str,
+    relationship_kind: str,
+) -> str:
+    """Return a deterministic identity for a relationship tuple."""
+    key = "|".join(
+        (
+            subject_entity_id,
+            predicate,
+            object_entity_id,
+            relationship_kind,
+        )
+    )
+    return str(uuid.uuid5(RELATIONSHIP_NAMESPACE, key))
+
+
+def _stable_relationship_evidence_id(
+    *,
+    relationship_id: str,
+    collective_entry_id: int,
+    source_memory_id: str,
+    source_profile: str,
+    evidence_reference: str,
+    extraction_method: str,
+) -> str:
+    """Return a deterministic identity for relationship evidence."""
+    key = "|".join(
+        (
+            relationship_id,
+            str(collective_entry_id),
+            source_memory_id,
+            source_profile,
+            evidence_reference,
+            extraction_method,
+        )
+    )
+    return str(uuid.uuid5(RELATIONSHIP_EVIDENCE_NAMESPACE, key))
 
 
 @dataclass(frozen=True)
@@ -231,6 +283,12 @@ def extract_and_record_relationships(
                         object_entity_id=object_entity_id,
                         confidence=classified.confidence,
                         relationship_kind=classified.relationship_kind,
+                        relationship_id=_stable_relationship_id(
+                            subject_entity_id=subject_entity_id,
+                            predicate=classified.predicate,
+                            object_entity_id=object_entity_id,
+                            relationship_kind=classified.relationship_kind,
+                        ),
                         metadata={
                             "extraction_method": classified.extraction_method,
                             "classification_method": (
@@ -275,6 +333,14 @@ def extract_and_record_relationships(
                         evidence_reference=evidence_reference,
                         extraction_method=classified.extraction_method,
                         confidence=classified.confidence,
+                        evidence_id=_stable_relationship_evidence_id(
+                            relationship_id=relationship_id,
+                            collective_entry_id=collective_entry_id,
+                            source_memory_id=source_memory_id,
+                            source_profile=source_profile,
+                            evidence_reference=evidence_reference,
+                            extraction_method=classified.extraction_method,
+                        ),
                     )
                     evidence_created += 1
 

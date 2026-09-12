@@ -418,8 +418,6 @@ function create3DInstance(
 
     const scene = new THREE.Scene();
 
-    const cameraDistance = options.compact ? 520 : 700;
-
     const camera = new THREE.PerspectiveCamera(
         55,
         Math.max(container.clientWidth, 1) /
@@ -427,8 +425,6 @@ function create3DInstance(
         0.1,
         5000,
     );
-
-    camera.position.set(0, 0, cameraDistance);
 
     const renderer = createRenderer(container);
     container.appendChild(renderer.domElement);
@@ -454,6 +450,53 @@ function create3DInstance(
         graph.nodes,
         graphEdges,
         Boolean(options.compact),
+    );
+
+    /*
+     * Calculate the camera distance required to fit the entire
+     * generated constellation in view.
+     *
+     * The layout radius varies with graph size, so a fixed camera
+     * distance causes larger constellations to be clipped initially.
+     * Use the actual final node positions instead.
+     */
+    const constellationBounds = new THREE.Box3();
+
+    for (const position of positions.values()) {
+        constellationBounds.expandByPoint(position);
+    }
+
+    const constellationSphere =
+        constellationBounds.getBoundingSphere(new THREE.Sphere());
+
+    const verticalFov =
+        THREE.MathUtils.degToRad(55);
+
+    const aspect =
+        Math.max(container.clientWidth, 1) /
+        Math.max(container.clientHeight, 1);
+
+    const horizontalFov =
+        2 * Math.atan(
+            Math.tan(verticalFov / 2) * aspect,
+        );
+
+    const fitFov =
+        Math.min(verticalFov, horizontalFov);
+
+    const fitMargin = 1.2;
+
+    const fitDistance = Math.max(
+        options.compact ? 80 : 120,
+        constellationSphere.radius /
+            Math.tan(fitFov / 2) *
+            fitMargin,
+    );
+
+    camera.position.set(
+        0,
+        0,
+        fitDistance,
     );
 
     const edgeGroup = createEdges(
@@ -647,7 +690,7 @@ function create3DInstance(
             camera.position.set(
                 0,
                 0,
-                cameraDistance,
+                fitDistance,
             );
 
             controls.target.set(

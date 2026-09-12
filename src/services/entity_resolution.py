@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import re
+import uuid
 import unicodedata
 
 from src.domain.entities import EntityDAO
@@ -26,6 +27,15 @@ _DECISION_SAME_ENTITY = "same_entity"
 _DECISION_NEW_ENTITY = "new_entity"
 _DECISION_AMBIGUOUS = "ambiguous"
 _DECISION_UNRESOLVED = "unresolved"
+
+RESOLUTION_NAMESPACE = uuid.UUID(
+    "3c8f2b91-5e47-4a6d-b8f1-2d9c7e4a6135"
+)
+
+
+def _stable_resolution_id(mention_id: str) -> str:
+    """Return a deterministic identity for one mention's resolution."""
+    return str(uuid.uuid5(RESOLUTION_NAMESPACE, mention_id))
 
 
 @dataclass(frozen=True)
@@ -182,6 +192,7 @@ def resolve_and_record(
         confidence=result.confidence,
         resolution_method=RESOLUTION_METHOD,
         evidence=evidence,
+        resolution_id=_stable_resolution_id(mention_id),
     )
 
     return result
