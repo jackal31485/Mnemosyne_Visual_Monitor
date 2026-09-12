@@ -1,6 +1,6 @@
 # Phase 11 — Temporal Intelligence
 
-**Status:** PLANNED
+**Status:** IN PROGRESS — 11A FOUNDATION
 **Previous phase:** Phase 10 — Entity & Relationship Intelligence
 **Next phase:** TBD
 
@@ -52,5 +52,8 @@ Temporal intelligence must be introduced incrementally and must remain
 compatible with the Phase 8 hybrid retrieval architecture and the Phase 10
 entity/relationship layer.
 
-Detailed implementation work begins only after a Phase 11 specification
-and audit plan are approved.
+Detailed implementation work proceeds through staged specifications and
+audits. Phase 11A establishes the temporal evidence foundation; subsequent
+stages must consume this governed layer rather than bypass it.
+
+See `docs/PHASE_11A_TEMPORAL_EVIDENCE_SPEC.md` for the Stage 11A contract.
