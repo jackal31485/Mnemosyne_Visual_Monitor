@@ -1,9 +1,10 @@
 # Phase 11 — Temporal Intelligence
 
-**Status:** IN PROGRESS — Temporal Intelligence / 11C
+**Status:** IMPLEMENTATION COMPLETE — FINAL VALIDATION PENDING
 **Previous phase:** Phase 10 — Entity & Relationship Intelligence
-**Current stage:** 11C.16 — Temporal Change-Point Analysis
-**Next phase:** TBD
+**Current stage:** 11F.5 — Temporal Visualization
+**Next phase:** Phase 12 — Evidence Consolidation & Memory Synthesis
+**Current repository HEAD:** `16a5ab7` — `Complete Phase 11F.5 temporal visualization`
 
 ## Purpose
 
@@ -215,118 +216,135 @@ truth.
 
 # 11C.16 — Temporal Change-Point Analysis
 
-C.16 analyzes where meaningful state changes occur within an observed
-trajectory.
+C.16 identifies meaningful observed state changes and stable runs without
+inventing dates, states, missing observations, or authoritative trajectories.
 
-The purpose is to distinguish:
+## 11C.17–11C.20 — Temporal Reasoning Completion Batch
 
-**observations**
+Completed:
 
-from:
+- **11C.17 — Change-Point Significance**
+  - descriptive persistence before and after observed change points.
+- **11C.18 — Transition Persistence**
+  - deterministic stable-run persistence metrics.
+- **11C.19 — Evidence-Backed Trajectory Analysis**
+  - exact state sequence and supporting evidence IDs bound to the trajectory.
+- **11C.20 — Temporal Historical Synthesis**
+  - compact descriptive synthesis across evidence-backed trajectory analyses.
 
-**actual state changes**
+Specification:
 
-For example:
+`docs/PHASE_11C17_C20_TEMPORAL_REASONING_BATCH_SPEC.md`
 
-```text
-active → active → inactive → inactive → active → active
-          │               │
-       change           change
-The layer identifies change points and stable runs without inventing dates,
-states, or missing observations.
-Planned scope
-C.16 will provide:
-- ordered change-point positions;
-- previous and next state for each change;
-- number of observed states;
-- number of actual state changes;
-- stable-run analysis;
-- longest stable run;
-- deterministic change-point representation.
-An unchanged observation does not constitute a state transition.
-For example:
-active → inactive → active → active
-contains four observations but only two state changes.
-Non-goals
-C.16 does not:
-- infer missing states;
-- infer dates;
-- select a truthful trajectory;
-- modify temporal evidence;
-- persist derived analysis;
-- resolve provenance conflicts;
-- perform entity resolution;
-- override governance;
-- convert descriptive change points into authoritative historical facts.
-Architecture
-The current temporal intelligence pipeline is:
-Temporal Evidence
-       ↓
-Temporal Assertion / Extraction / Promotion
-       ↓
-Temporal Interval Reasoning
-       ↓
-Temporal Consistency / Contradiction
-       ↓
-Temporal Evidence Aggregation
-       ↓
-Temporal State Timeline
-       ↓
-Temporal State Transition Analysis
-       ↓
-Temporal State History
-       ↓
-Temporal History Comparison
-       ↓
-Temporal History Divergence
-       ↓
-Temporal History Consensus
-       ↓
-Temporal History Synthesis
-       ↓
-Temporal Trajectory Classification
-       ↓
-Temporal Trajectory Comparison
-       ↓
-Temporal Trajectory Consensus
-       ↓
-Temporal Change-Point Analysis
-Design principles
-Evidence first
-Temporal reasoning operates on governed evidence and derived domain
-objects. Derived analysis must not silently become evidence.
-No fabricated time
-Unknown time remains unknown.
-The system must never manufacture a date, interval, ordering, or temporal
-boundary merely because a downstream algorithm would prefer one.
-Descriptive before inferential
-The current temporal reasoning layers describe what the evidence supports.
-They do not decide which conflicting source is true.
-Deterministic
-Equivalent input must produce equivalent temporal analysis.
-Grouped operations must use deterministic ordering.
-Provenance preserving
-Every future integration point must remain capable of tracing derived
-temporal conclusions back to their underlying evidence.
-Separation of concerns
-Temporal extraction, evidence promotion, temporal reasoning, retrieval,
-graph projection, and UI presentation remain separate layers.
-Validation
-Phase 11 development is validated incrementally with focused tests and the
-full Mnemosyne test suite after each completed stage.
-The current baseline following 11C.15 is:
-867 passed, 5 skipped, 4 warnings
-The four warnings are existing FastAPI on_event deprecation warnings in
-app/main.py. They are outside the scope of temporal-intelligence work and
-must not be modified as part of C.16.
-Future Phase 11 work
-After the 11C reasoning chain is complete, remaining Phase 11 candidates
-include integration of temporal intelligence with:
-- hybrid retrieval and temporal reranking;
-- temporal graph projection;
-- entity historical state;
-- relationship state across time;
-- evidence-backed temporal summaries;
-- temporal visualization.
-These integrations require separate specifications and must not be
-implicitly introduced into the C.16 domain layer.
+---
+
+# Phase 11E — Temporal Graph Integration
+
+Phase 11E integrates temporal intelligence with the retrieval and graph
+layers.
+
+Completed:
+
+- temporal relationship derivation;
+- governed temporal graph projection;
+- temporal query intent and temporal scoring;
+- temporal result context for explainability;
+- temporal conflict/state-change services;
+- hybrid retrieval integration with temporal signals;
+- browser-side temporal retrieval signal display.
+
+The temporal graph layer remains a projection of governed evidence. It does
+not become an independent authority.
+
+---
+
+# Phase 11F.4 — Temporal History Routes
+
+Phase 11F.4 exposes governed historical state through HTTP APIs and a
+human-readable temporal history view.
+
+Completed endpoints include:
+
+- `/api/temporal/history`;
+- `/api/temporal/history/entity/{entity_id}`;
+- `/api/temporal/history/relationship`;
+- `/api/temporal/history/view`.
+
+The route layer re-checks lifecycle authorization and source-profile/source-
+memory consistency before exposing temporal evidence.
+
+Missing evidence does not imply that an entity or relationship ended.
+
+---
+
+# Phase 11F.5 — Temporal Visualization
+
+Phase 11F.5 adds browser-accessible visual temporal history for entities and
+relationships.
+
+Completed endpoints include:
+
+- `/api/temporal/history/visualization/entity/{entity_id}`;
+- `/api/temporal/history/visualization/relationship`.
+
+The visualization displays:
+
+- observed state;
+- valid-from / valid-to values when actually present;
+- temporal precision;
+- confidence;
+- temporal evidence ID;
+- source profile;
+- source memory;
+- observed transitions where applicable.
+
+The UI explicitly states that missing temporal evidence does not imply a
+state or relationship ended.
+
+---
+
+# Phase 11 validation status
+
+Focused validation of the supplied repository snapshot:
+
+- **436 passed**
+- **9 skipped**
+- **4 warnings**
+
+The focused command covered the temporal test modules and their unit
+counterparts. The four warnings are the existing FastAPI `on_event`
+deprecation warnings.
+
+A full-suite run in the isolated snapshot is not an authoritative project
+baseline because the snapshot's runtime lacks `sentence_transformers` and
+there are unrelated non-temporal baseline failures. The actual repository
+`.venv` remains the required environment for final closure.
+
+---
+
+# Phase 11 completion checklist
+
+The implementation portion of Phase 11 is complete.
+
+Before declaring the phase fully closed:
+
+- [ ] Run the full regression suite in the project's `.venv`.
+- [ ] Confirm all expected tests pass.
+- [ ] Perform live desktop/browser validation of temporal history and
+      temporal visualization.
+- [ ] Verify governed evidence filtering and missing-time semantics live.
+- [ ] Confirm no Athena work is required.
+- [ ] Commit final documentation.
+- [ ] Create the Phase 11 completion tag.
+- [ ] Advance the authoritative roadmap to Phase 12.
+
+---
+
+# Phase 12 boundary
+
+Phase 12 begins only after Phase 11 validation and tagging are complete.
+
+Phase 12 should build on the temporal and entity/relationship foundation to
+perform evidence consolidation and memory synthesis. It must not weaken
+provenance, promotion/revocation governance, profile isolation, or the
+distinction between evidence and derived understanding.

@@ -134,32 +134,33 @@ flowchart LR
 
 ## Where We Are Now
 
-### 🟢 Phases 1–9 — COMPLETE
+### 🟢 Phases 1–10 — COMPLETE
 
-The foundation, profile-local memory architecture, mediation boundary, collective knowledge base, semantic representation, visualization, hybrid retrieval, and Browser-facing retrieval experience have been built and validated through Phase 9.
+The foundation, profile-local memory architecture, mediation boundary, collective knowledge base, semantic representation, visualization, hybrid retrieval, Browser-facing retrieval, entity intelligence, relationship intelligence, entity resolution, relationship evidence, and governed graph enrichment have been implemented and validated through Phase 10.
 
-### 🚩 Phase 10 — CURRENT
+### 🚩 Phase 11 — IMPLEMENTATION COMPLETE / FINAL VALIDATION PENDING
 
-Mnemosyne is now moving beyond the question:
+Mnemosyne has now moved beyond:
 
 > **“Which memories are relevant?”**
 
-and toward:
+and:
 
 > **“What are the things represented in those memories, and how are those things related?”**
 
-Phase 10 — **Entity & Relationship Intelligence** — is the next major step in turning Mnemosyne from a sophisticated memory and retrieval system into a system capable of building structured understanding.
+Phase 11 — **Temporal Intelligence** — adds the missing dimension of sequence, state, change, historical validity, and time-aware interpretation.
 
-The focus is on:
+The Phase 11 implementation now covers:
 
-- **Canonical entities** — identifying when different mentions refer to the same thing.
-- **Entity resolution** — connecting aliases and variations to canonical entities.
-- **Co-occurrence** — identifying entities that repeatedly appear together.
-- **Typed relationships** — distinguishing different kinds of relationships rather than treating every graph edge equally.
-- **Graph enrichment** — making the collective knowledge graph increasingly useful for retrieval and reasoning.
-- **Relationship provenance** — preserving where relationships came from and why they exist.
+- **Temporal evidence** — governed temporal observations with provenance, precision, confidence, and lifecycle enforcement.
+- **Explicit temporal extraction** — dates, temporal phrases, and explicit state-change language without fabricated time.
+- **Temporal reasoning** — interval reasoning, precision-aware comparison, consistency, contradiction detection, aggregation, histories, trajectories, change points, persistence, and evidence-backed historical synthesis.
+- **Temporal retrieval** — event-date constraints, recording-time recency, temporal scoring, and explainable temporal result context.
+- **Temporal graph integration** — governed temporal relationships and graph projection.
+- **Historical state** — entity and relationship history derived only from governed evidence.
+- **Temporal visualization** — browser-accessible history and evidence-backed temporal views.
 
-This establishes the foundation for temporal reasoning, evidence consolidation, mental-model construction, and governed cross-profile learning.
+The implementation is complete through **Phase 11F.5**. Final Phase 11 closure still requires the repository's normal full-regression validation, live GUI/browser validation, documentation checkpoint, and final phase tag.
 
 ## The Mnemosyne Memory Progression
 
@@ -171,8 +172,8 @@ The roadmap can also be understood as a progression through increasingly sophist
 | **Phases 4–7** | Observation, embeddings, visualization and Browser | Remembering and exploring experiences |
 | **Phase 8** | Hybrid retrieval | Recalling using multiple cues |
 | **Phase 9** | Browser-facing retrieval and explainability | Consciously accessing and examining memories |
-| **Phase 10 ← NOW** | Entities and relationships | Associative memory and social understanding |
-| **Phase 11** | Temporal intelligence | Understanding sequence and change |
+| **Phase 10** | Entities and relationships | Associative memory and social understanding |
+| **Phase 11 ← NOW** | Temporal intelligence | Understanding sequence and change |
 | **Phase 12** | Evidence consolidation and synthesis | Memory consolidation |
 | **Phase 13** | Higher-level mental models | Building concepts and patterns through experience, education, and development |
 | **Phase 14** | Controlled cross-profile learning | Social learning and learning from others |
@@ -280,12 +281,12 @@ The final architecture therefore aims for **continuous learning without uncontro
 
 ## Roadmap Status
 
-**Current phase: Phase 10 — Entity & Relationship Intelligence**
+**Current phase: Phase 11 — Temporal Intelligence (implementation complete; final validation pending)**
 
-**Completed through: Phase 9**
+**Completed through: Phase 10 implementation and Phase 11 implementation through 11F.5**
 
 The roadmap intentionally moves from:
 
-**Memory → Retrieval → Relationships → Time → Evidence → Understanding → Controlled Learning → Collective Intelligence**
+**Memory → Retrieval → Entities → Relationships → Time → Evidence → Understanding → Controlled Learning → Collective Intelligence**
 
-Phase 10 is where Mnemosyne begins making the transition from a system that primarily **retrieves memories** into one that can increasingly **understand the structure contained within those memories**.
+Phase 11 extends Mnemosyne from understanding the structure contained within memories to understanding **when states were observed, how they changed, how long they persisted, and what historical evidence supports those observations**.

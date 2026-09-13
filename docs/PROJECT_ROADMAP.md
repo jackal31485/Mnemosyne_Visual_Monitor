@@ -1,7 +1,7 @@
 # Mnemosyne Visual Monitor — Authoritative Project Roadmap
 
-**Status:** Phase 10 ready to begin — Entity & Relationship Intelligence
-**Last updated:** 2026-09-09
+**Status:** Phase 11 implementation complete through 11F.5 — final validation pending
+**Last updated:** 2026-09-13
 
 ## Purpose
 
@@ -35,8 +35,8 @@ The following remain mandatory throughout all phases:
 | 7 | Browser / Visual Monitor | COMPLETE |
 | 8 | Hybrid Retrieval | COMPLETE |
 | 9 | Browser-Facing Hybrid Retrieval Integration | COMPLETE |
-| 10 | Entity & Relationship Intelligence | READY TO BEGIN |
-| 11 | Temporal Intelligence | PLANNED |
+| 10 | Entity & Relationship Intelligence | COMPLETE |
+| 11 | Temporal Intelligence | IMPLEMENTATION COMPLETE — FINAL VALIDATION PENDING |
 | 12 | Evidence Consolidation & Memory Synthesis | PLANNED |
 | 13 | Higher-Level Mental Models | PLANNED |
 | 14 | Cross-Profile Learning & Controlled Transfer | PLANNED |
@@ -296,16 +296,91 @@ Focus:
 
 ## Phase 11 — Temporal Intelligence
 
-Move beyond timestamp filtering into temporal relationships.
+**Implementation status:** COMPLETE through 11F.5  
+**Final status:** FINAL VALIDATION PENDING  
+**Current repository HEAD:** `16a5ab7` — `Complete Phase 11F.5 temporal visualization`
 
-Focus:
+Phase 11 extends Mnemosyne's entity and relationship intelligence with
+governed temporal understanding.
 
-- before/after;
-- duration;
-- recurrence;
-- temporal validity;
-- changing facts;
-- temporal conflict detection.
+Completed implementation:
+
+- **11A — Temporal Evidence Foundation**
+  - governed temporal evidence schema and validation;
+  - provenance, precision, confidence, and lifecycle enforcement.
+- **11B.1–11B.5 — Temporal Extraction**
+  - temporal assertion contract;
+  - explicit date/phrase extraction;
+  - explicit state-change extraction;
+  - evidence promotion;
+  - deterministic extraction/promotion pipeline.
+- **11C.1–11C.20 — Temporal Reasoning**
+  - interval and precision-aware reasoning;
+  - consistency and semantic contradiction detection;
+  - aggregation and state timelines;
+  - state transitions and immutable histories;
+  - history comparison, divergence, consensus, and synthesis;
+  - trajectory classification, comparison, and consensus;
+  - change-point analysis;
+  - change-point significance;
+  - transition persistence;
+  - evidence-backed trajectory analysis;
+  - historical synthesis.
+- **11E — Temporal Graph Integration**
+  - temporal relationship derivation;
+  - governed temporal graph projection;
+  - temporal query intent/scoring/context;
+  - temporal conflict and state-change services;
+  - integration with hybrid retrieval.
+- **11F.4 — Temporal History Routes**
+  - governed entity history API;
+  - governed relationship history API;
+  - temporal history view;
+  - historical state and summary services.
+- **11F.5 — Temporal Visualization**
+  - entity temporal visualization endpoint;
+  - relationship temporal visualization endpoint;
+  - evidence, precision, confidence, source profile, and source-memory display;
+  - explicit UI treatment of missing temporal evidence as unknown rather than an inferred ending.
+
+### Phase 11 governance invariants
+
+The following remain mandatory:
+
+- source-memory immutability;
+- provenance preservation;
+- promoted and non-revoked evidence only;
+- profile/source-memory consistency;
+- no fabricated dates, bounds, or missing states;
+- descriptive reasoning before any future inferential layer;
+- deterministic rebuildability;
+- derived temporal analysis must not silently become authoritative evidence.
+
+### Phase 11 validation
+
+Focused temporal validation against the supplied repository snapshot:
+
+- `447 passed, 10 skipped, 4 warnings` across temporal test modules.
+- The 4 warnings are the existing FastAPI `on_event` deprecation warnings.
+- The full repository run in the isolated snapshot could not be treated as the authoritative baseline because the supplied environment lacks `sentence_transformers`, and the snapshot also exposes unrelated baseline failures in hybrid-route/profile-discovery tests. These are not evidence of a Phase 11 temporal defect.
+- Final closure must therefore be performed in the project's normal `.venv` on the actual working repository.
+
+### Phase 11 exit criteria
+
+Before Phase 12 begins:
+
+1. Run the complete test suite in the normal project `.venv`.
+2. Confirm all expected tests pass, with only known/accepted skips and warnings.
+3. Run the live desktop/browser validation for:
+   - temporal history;
+   - entity temporal visualization;
+   - relationship temporal visualization;
+   - governed evidence filtering;
+   - missing-time/unknown-state behavior.
+4. Confirm no Athena work is required for Phase 11 closure.
+5. Commit the final documentation updates.
+6. Create the final Phase 11 completion tag.
+7. Only then advance the roadmap to Phase 12.
 
 ## Phase 12 — Evidence Consolidation & Memory Synthesis
 
