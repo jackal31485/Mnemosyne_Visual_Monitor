@@ -75,6 +75,12 @@ class CollectiveDAO:
         self.conn.commit()
         _ensure_provenance_schema(self.conn)
 
+        # Temporal evidence is part of the collective database contract.
+        # Keep schema ownership in TemporalEvidenceDAO while ensuring the
+        # normal collective initialization path creates it automatically.
+        from src.domain.temporal_evidence import TemporalEvidenceDAO
+        TemporalEvidenceDAO(self._db_path).ensure_schema()
+
     def reset(self) -> None:
         """Reset the collective database to an empty state."""
         self.close()

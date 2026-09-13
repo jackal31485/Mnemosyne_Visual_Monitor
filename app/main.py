@@ -23,6 +23,7 @@ from app.routes.diagnostics import router as diagnostics_router
 from app.routes.memories import router as memories_router
 from app.routes.timeline import router as timeline_router
 from app.routes.search import router as search_router
+from app.routes.temporal_history import router as temporal_history_router
 
 # Helper for legacy admin route registration.
 def _register_router_directly(application: FastAPI, router) -> None:
@@ -69,6 +70,7 @@ def create_app() -> FastAPI:
     application.include_router(diagnostics_router)
     _register_router_directly(application, memories_router)
     _register_router_directly(application, timeline_router)
+    _register_router_directly(application, temporal_history_router)
     application.include_router(search_router)
 
     return application
