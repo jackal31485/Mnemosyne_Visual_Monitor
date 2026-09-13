@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict
 
 from src.domain.athena_api import AthenaAPI
 from src.retrieval.hybrid_search import HybridRetrievalService
+from src.retrieval.temporal_result_context import TemporalResultContext
 
 from app.services.hybrid_retrieval import get_hybrid_retrieval_service
 
@@ -17,6 +18,10 @@ router = APIRouter()
 
 class HybridResultDTO(BaseModel):
     model_config = ConfigDict(extra="forbid")
+
+    temporal_query_relevant: bool = False
+    temporal_query_score: float = 0.0
+    temporal_query_context: TemporalResultContext | None = None
 
     entry_id: int
     source_profile: str

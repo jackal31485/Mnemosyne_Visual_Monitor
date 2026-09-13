@@ -21,8 +21,12 @@ class TemporalInterval:
     end_time: datetime
 
     def __post_init__(self) -> None:
-        if not isinstance(self.evidence_id, int):
-            raise TypeError("evidence_id must be an integer")
+        if (
+            not isinstance(self.evidence_id, (int, str))
+            or isinstance(self.evidence_id, bool)
+            or (isinstance(self.evidence_id, str) and not self.evidence_id)
+        ):
+            raise TypeError("evidence_id must be a non-empty string or integer")
 
         if not isinstance(self.start_time, datetime):
             raise TypeError("start_time must be a datetime")
@@ -43,14 +47,48 @@ class TemporalRelationship:
     relation: str
 
     def __post_init__(self) -> None:
-        if not isinstance(self.subject_evidence_id, int):
-            raise TypeError("subject_evidence_id must be an integer")
+        if isinstance(self.subject_evidence_id, bool):
+            raise TypeError(
+                "subject_evidence_id must be an integer or canonical temporal-evidence ID"
+            )
 
-        if not isinstance(self.object_evidence_id, int):
-            raise TypeError("object_evidence_id must be an integer")
+        if isinstance(self.subject_evidence_id, str):
+            if not self.subject_evidence_id.startswith("te-"):
+                raise TypeError(
+                    "subject_evidence_id must be an integer or canonical temporal-evidence ID"
+                )
+            if self.subject_evidence_id == "te-":
+                raise TypeError(
+                    "subject_evidence_id must be an integer or canonical temporal-evidence ID"
+                )
+        elif not isinstance(self.subject_evidence_id, int):
+            raise TypeError(
+                "subject_evidence_id must be an integer or canonical temporal-evidence ID"
+            )
 
-        if self.subject_evidence_id == self.object_evidence_id:
-            raise ValueError("temporal relationship requires two evidence records")
+        if isinstance(self.object_evidence_id, bool):
+            raise TypeError(
+                "object_evidence_id must be an integer or canonical temporal-evidence ID"
+            )
+
+        if isinstance(self.object_evidence_id, str):
+            if not self.object_evidence_id.startswith("te-"):
+                raise TypeError(
+                    "object_evidence_id must be an integer or canonical temporal-evidence ID"
+                )
+            if self.object_evidence_id == "te-":
+                raise TypeError(
+                    "object_evidence_id must be an integer or canonical temporal-evidence ID"
+                )
+        elif not isinstance(self.object_evidence_id, int):
+            raise TypeError(
+                "object_evidence_id must be an integer or canonical temporal-evidence ID"
+            )
+
+        if str(self.subject_evidence_id) == str(self.object_evidence_id):
+            raise ValueError(
+                "temporal relationship requires two evidence records"
+            )
 
         if self.relation not in {
             "before",

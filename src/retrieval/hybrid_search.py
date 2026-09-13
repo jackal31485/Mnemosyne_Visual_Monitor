@@ -20,6 +20,12 @@ from src.retrieval.rank_fusion import RankFusion
 from src.retrieval.reranker import Reranker
 from src.retrieval.semantic_search import SemanticSearcher
 from src.retrieval.temporal_search import TemporalSearcher
+from src.retrieval.temporal_query import TemporalQueryIntent
+from src.retrieval.temporal_query_scoring import score_temporal_result
+from src.retrieval.temporal_result_context import (
+    TemporalResultContext,
+    build_temporal_result_context,
+)
 
 
 @dataclass(frozen=True)
@@ -53,6 +59,11 @@ class HybridResult:
     entity_contribution: float
 
     provenance: object
+
+    temporal_query_relevant: bool = False
+    temporal_query_score: float = 0.0
+    temporal_query_context: TemporalResultContext | None = None
+
 
 
 class HybridRetrievalService:
@@ -123,31 +134,52 @@ class HybridRetrievalService:
     @staticmethod
     def _to_hybrid_results(
         explanations: Sequence[RetrievalExplanation],
+        temporal_contexts: dict[int, TemporalResultContext] | None = None,
     ) -> list[HybridResult]:
-        return [
-            HybridResult(
-                entry_id=explanation.entry_id,
-                source_profile=explanation.source_profile,
-                origin_memory_id=explanation.origin_memory_id,
-                fused_score=explanation.fused_score,
-                fused_rank=explanation.fused_rank,
-                reranker_score=explanation.reranker_score,
-                reranker_rank=explanation.reranker_rank,
-                rank_change=explanation.rank_change,
-                keyword_rank=explanation.keyword_rank,
-                keyword_contribution=explanation.keyword_contribution,
-                semantic_rank=explanation.semantic_rank,
-                semantic_contribution=explanation.semantic_contribution,
-                graph_rank=explanation.graph_rank,
-                graph_contribution=explanation.graph_contribution,
-                temporal_rank=explanation.temporal_rank,
-                temporal_contribution=explanation.temporal_contribution,
-                entity_rank=explanation.entity_rank,
-                entity_contribution=explanation.entity_contribution,
-                provenance=explanation.provenance,
+        temporal_contexts = temporal_contexts or {}
+
+        results: list[HybridResult] = []
+
+        for explanation in explanations:
+            temporal_context = temporal_contexts.get(
+                explanation.entry_id
             )
-            for explanation in explanations
-        ]
+
+            results.append(
+                HybridResult(
+                    entry_id=explanation.entry_id,
+                    source_profile=explanation.source_profile,
+                    origin_memory_id=explanation.origin_memory_id,
+                    fused_score=explanation.fused_score,
+                    fused_rank=explanation.fused_rank,
+                    reranker_score=explanation.reranker_score,
+                    reranker_rank=explanation.reranker_rank,
+                    rank_change=explanation.rank_change,
+                    keyword_rank=explanation.keyword_rank,
+                    keyword_contribution=explanation.keyword_contribution,
+                    semantic_rank=explanation.semantic_rank,
+                    semantic_contribution=explanation.semantic_contribution,
+                    graph_rank=explanation.graph_rank,
+                    graph_contribution=explanation.graph_contribution,
+                    temporal_rank=explanation.temporal_rank,
+                    temporal_contribution=explanation.temporal_contribution,
+                    temporal_query_relevant=(
+                        temporal_context is not None
+                        and temporal_context.temporal_relevant
+                    ),
+                    temporal_query_score=(
+                        temporal_context.temporal_score
+                        if temporal_context is not None
+                        else 0.0
+                    ),
+                    temporal_query_context=temporal_context,
+                    entity_rank=explanation.entity_rank,
+                    entity_contribution=explanation.entity_contribution,
+                    provenance=explanation.provenance,
+                )
+            )
+
+        return results
 
     def search(
         self,
@@ -213,6 +245,20 @@ class HybridRetrievalService:
                 "reference_time requires temporal_mode='recency'"
             )
 
+        temporal_query_intent = TemporalQueryIntent(
+            start=(
+                temporal_start
+                if temporal_mode == "event_date"
+                else None
+            ),
+            end=(
+                temporal_end
+                if temporal_mode == "event_date"
+                else None
+            ),
+        )
+        temporal_query_intent.validate()
+
         keyword_results = self.keyword_searcher.search(
             query,
             limit=keyword_limit,
@@ -265,6 +311,42 @@ class HybridRetrievalService:
                 profile=profile,
             )
 
+        temporal_contexts: dict[int, TemporalResultContext] = {}
+
+        if (
+            temporal_query_intent.is_complete_window
+            and temporal_mode == "event_date"
+        ):
+            for temporal_result in temporal_results:
+                memory_date = getattr(
+                    temporal_result,
+                    "memory_date",
+                    None,
+                )
+                date_source = getattr(
+                    temporal_result,
+                    "date_source",
+                    "unknown",
+                )
+
+                if memory_date is None:
+                    continue
+
+                temporal_score = score_temporal_result(
+                    memory_date=memory_date,
+                    query_start=temporal_query_intent.start,
+                    query_end=temporal_query_intent.end,
+                    date_source=date_source,
+                )
+
+                temporal_contexts[int(temporal_result.entry_id)] = (
+                    build_temporal_result_context(
+                        query_start=temporal_query_intent.start,
+                        query_end=temporal_query_intent.end,
+                        temporal_score=temporal_score,
+                    )
+                )
+
         fusion_kwargs = {
             "keyword_results": keyword_results,
             "semantic_results": semantic_results,
@@ -293,10 +375,16 @@ class HybridRetrievalService:
                 fused_results,
             )
 
-            return self._to_hybrid_results(explanations)
+            return self._to_hybrid_results(
+                explanations,
+                temporal_contexts=temporal_contexts,
+            )
 
         explanations = explain_fused(
             fused_results[:top_k],
         )
 
-        return self._to_hybrid_results(explanations)
+        return self._to_hybrid_results(
+            explanations,
+            temporal_contexts=temporal_contexts,
+        )

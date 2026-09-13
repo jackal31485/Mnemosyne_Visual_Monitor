@@ -2446,6 +2446,15 @@ function normalizedSearchText(value) {
         .trim();
 }
 
+function timelineMemoryContent(event) {
+    return (
+        event?.memory_content ||
+        event?.content ||
+        event?.text ||
+        ""
+    );
+}
+
 function eventMatchesGlobalFilters(event) {
     const profileFilter =
         String(state.globalFilter.profileScope || "all").trim();
