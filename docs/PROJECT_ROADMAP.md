@@ -1,7 +1,7 @@
 # Mnemosyne Visual Monitor — Authoritative Project Roadmap
 
-**Status:** Phase 11 implementation complete through 11F.5 — final validation pending
-**Last updated:** 2026-09-13
+**Status:** Phase 12 complete — Phase 13 ready to begin
+**Last updated:** 2026-09-14
 
 ## Purpose
 
@@ -36,9 +36,9 @@ The following remain mandatory throughout all phases:
 | 8 | Hybrid Retrieval | COMPLETE |
 | 9 | Browser-Facing Hybrid Retrieval Integration | COMPLETE |
 | 10 | Entity & Relationship Intelligence | COMPLETE |
-| 11 | Temporal Intelligence | IMPLEMENTATION COMPLETE — FINAL VALIDATION PENDING |
-| 12 | Evidence Consolidation & Memory Synthesis | PLANNED |
-| 13 | Higher-Level Mental Models | PLANNED |
+| 11 | Temporal Intelligence | COMPLETE |
+| 12 | Evidence Consolidation & Memory Synthesis | COMPLETE |
+| 13 | Higher-Level Mental Models | NEXT — READY TO BEGIN |
 | 14 | Cross-Profile Learning & Controlled Transfer | PLANNED |
 | 15 | Advanced Retrieval Optimization | PLANNED |
 | 16 | Distributed Collective / LAN Federation | PLANNED |
@@ -296,8 +296,8 @@ Focus:
 
 ## Phase 11 — Temporal Intelligence
 
-**Implementation status:** COMPLETE through 11F.5  
-**Final status:** FINAL VALIDATION PENDING  
+**Implementation status:** COMPLETE
+**Final status:** COMPLETE — 2026-09-13
 **Current repository HEAD:** `16a5ab7` — `Complete Phase 11F.5 temporal visualization`
 
 Phase 11 extends Mnemosyne's entity and relationship intelligence with
@@ -367,35 +367,62 @@ Focused temporal validation against the supplied repository snapshot:
 
 ### Phase 11 exit criteria
 
-Before Phase 12 begins:
+The Phase 11 closure criteria were completed before Phase 12 implementation
+advanced:
 
-1. Run the complete test suite in the normal project `.venv`.
-2. Confirm all expected tests pass, with only known/accepted skips and warnings.
-3. Run the live desktop/browser validation for:
+1. The complete test suite was run in the normal project `.venv`.
+2. Expected tests passed with only known/accepted skips and warnings.
+3. Live desktop/browser validation covered:
    - temporal history;
    - entity temporal visualization;
    - relationship temporal visualization;
    - governed evidence filtering;
    - missing-time/unknown-state behavior.
-4. Confirm no Athena work is required for Phase 11 closure.
-5. Commit the final documentation updates.
-6. Create the final Phase 11 completion tag.
-7. Only then advance the roadmap to Phase 12.
+4. No Athena work was required for Phase 11 closure.
+5. Final Phase 11 documentation was committed.
+6. The final Phase 11 completion tag was created.
+7. The roadmap was advanced to Phase 12.
 
 ## Phase 12 — Evidence Consolidation & Memory Synthesis
 
-Combine related memories into evidence-backed knowledge units.
+**Status: COMPLETE — 2026-09-14**
 
-Focus:
+Phase 12 establishes governed, evidence-preserving consolidation and memory
+synthesis contracts.
 
-- evidence clustering;
-- duplicate/near-duplicate detection;
+Completed:
+
+- observation similarity;
+- deterministic near-duplicate detection;
+- consolidation candidate modeling;
+- evidence validation;
+- evidence weighting;
 - contradiction handling;
-- confidence;
-- source weighting;
-- traceable synthesis.
+- evidence-preserving synthesis;
+- revocation-aware current-support handling;
+- provenance preservation;
+- deterministic domain behavior;
+- comprehensive Phase 12 validation.
+
+Validation:
+
+- 133 focused Phase 12 tests passed;
+- 1,158 full regression tests passed;
+- 14 tests skipped;
+- 0 failures;
+- `git diff --check` clean.
+
+Phase 12 deliberately does not grant cross-profile learning or profile
+adoption. Consolidation of authorized collective evidence remains distinct
+from profile-specific adoption.
+
+Completion audit:
+
+`docs/archive/phase-12/PHASE_12_COMPLETION_AUDIT_2026-09-14.md`
 
 ## Phase 13 — Higher-Level Mental Models
+
+**Status: NEXT — READY TO BEGIN**
 
 Derive stable concepts and models from accumulated governed knowledge.
 
