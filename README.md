@@ -132,6 +132,85 @@ flowchart LR
     G -.-> M14
 ```
 
+## 🎯 Data Science + Data Engineering Project
+
+Mnemosyne Visual Monitor is an **applied Data Science and Data Engineering
+project** as well as a software system for governed memory and knowledge
+management.
+
+The memory-system domain provides the problem space. The underlying project
+demonstrates practical data disciplines including:
+
+- data modeling and schema design;
+- governed ingestion and transformation;
+- data validation and quality controls;
+- provenance and lineage;
+- entity resolution;
+- relationship modeling;
+- temporal data processing;
+- similarity and signal engineering;
+- semantic and keyword information retrieval;
+- evidence weighting and corroboration;
+- contradiction detection;
+- governed data consolidation;
+- derived knowledge synthesis;
+- deterministic and reproducible processing;
+- automated regression testing;
+- explainability and auditability;
+- API-oriented data serving;
+- structured-data visualization.
+
+The project is deliberately designed to separate **source observations,
+evidence, and derived knowledge** so that sophisticated processing does not
+come at the expense of traceability or data integrity.
+
+### Data Pipeline Perspective
+
+Mnemosyne can be viewed as a governed data pipeline:
+
+```text
+Source Data
+    ↓
+Ingestion
+    ↓
+Validation / Governance
+    ↓
+Normalization / Enrichment
+    ↓
+Entities + Relationships + Temporal Evidence
+    ↓
+Retrieval / Analysis
+    ↓
+Evidence Evaluation
+    ↓
+Governed Consolidation
+    ↓
+Derived Knowledge
+    ↓
+API / Visualization
+```
+This framing is important because the project is intended to demonstrate
+engineering and analytical judgment at each stage of the pipeline.
+### Final External Review
+At the end of the project, Mnemosyne is intended to be shown to experienced
+Data Scientists and Data Engineers for critical technical feedback.
+The objective is not to claim that the project is perfect or production-ready.
+The objective is to make the architecture concrete enough that experienced
+practitioners can evaluate:
+- data modeling;
+- pipeline design;
+- data quality;
+- provenance and lineage;
+- similarity and retrieval methods;
+- statistical assumptions;
+- evaluation methodology;
+- reproducibility;
+- scalability;
+- governance;
+- production-readiness.
+See
+docs/PROJECT_DATA_SCIENCE_DATA_ENGINEERING_POSITIONING.md
+for the detailed review framework.
 ## Where We Are Now
 
 ### 🟢 Phases 1–10 — COMPLETE

@@ -9,6 +9,79 @@ Mnemosyne Visual Monitor is a local-first system for observing, governing, searc
 
 This document is the authoritative implementation roadmap. Historical roadmap documents should not be treated as the current phase authority.
 
+## Data Science & Data Engineering Objective
+
+Mnemosyne Visual Monitor is intentionally developed as an applied
+**Data Science + Data Engineering project**, in addition to being a software
+system for governed memory and knowledge management.
+
+The roadmap therefore evaluates phases not only by whether functionality works,
+but also by whether the resulting architecture demonstrates sound data
+engineering and data science practices.
+
+### Data Engineering
+
+Cross-cutting Data Engineering concerns include:
+
+- data modeling and schema design;
+- governed ingestion and transformation;
+- data contracts;
+- validation and data quality;
+- provenance and lineage;
+- deterministic and idempotent processing;
+- lifecycle/state management;
+- duplicate handling;
+- revocation propagation;
+- derived-data management;
+- testable pipeline boundaries;
+- API/data-serving boundaries;
+- scalability and production-readiness considerations.
+
+### Data Science
+
+Cross-cutting Data Science concerns include:
+
+- similarity and signal engineering;
+- entity resolution;
+- temporal analysis;
+- retrieval and ranking;
+- evidence weighting;
+- corroboration;
+- contradiction analysis;
+- threshold selection;
+- empirical evaluation;
+- explainability;
+- separation of statistical/model signals from governance decisions.
+
+### Final External Review
+
+When the implementation roadmap is complete, the project should be presented
+to experienced Data Scientists and Data Engineers for critical review.
+
+The final review should seek feedback on:
+
+- data-model quality;
+- pipeline architecture;
+- algorithmic choices;
+- statistical assumptions;
+- evaluation methodology;
+- reproducibility;
+- data quality;
+- provenance;
+- scalability;
+- observability;
+- production readiness;
+- opportunities for stronger experimentation or modeling.
+
+The external review is a **learning and validation step**, not a claim that the
+project is production-complete or scientifically validated.
+
+See
+`docs/PROJECT_DATA_SCIENCE_DATA_ENGINEERING_POSITIONING.md`
+for the detailed review framework.
+
+---
+
 ## Architectural invariants
 
 The following remain mandatory throughout all phases:
