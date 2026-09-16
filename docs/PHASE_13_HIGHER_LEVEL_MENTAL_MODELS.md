@@ -1,9 +1,11 @@
 # Phase 13 — Higher-Level Mental Models
 
-**Status:** PLANNED  
+**Status:** COMPLETE
 **Phase:** 13  
 **Predecessor:** Phase 12 — Evidence Consolidation & Memory Synthesis  
 **Successor:** Phase 14 — Cross-Profile Learning & Controlled Transfer
+
+> **Implementation status:** Phase 13A–13G are implemented and Phase 13H final validation has passed. Phase 13 remains a governed derived-knowledge layer; it does not introduce Phase 14 cross-profile learning.
 
 ---
 

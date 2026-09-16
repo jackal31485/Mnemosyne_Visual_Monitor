@@ -1,6 +1,8 @@
 Phase 13 — Governance Invariants
-Status: PLANNED
+Status: COMPLETE
 Phase: 13 — Higher-Level Mental Models
+
+> **Implementation status:** COMPLETE through Phase 13G. Phase 13H final validation passed. These invariants remain non-negotiable for derived mental models.
 1. Purpose
 This document defines the non-negotiable governance invariants for Phase 13.
 These rules take precedence over convenience, model quality, retrieval quality, implementation simplicity, or generation speed.

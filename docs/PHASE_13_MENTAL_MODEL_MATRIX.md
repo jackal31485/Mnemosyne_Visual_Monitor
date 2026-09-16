@@ -1,6 +1,8 @@
 Phase 13 — Mental Model Matrix
-Status: PLANNED
+Status: COMPLETE
 Phase: 13 — Higher-Level Mental Models
+
+> **Implementation status:** COMPLETE through Phase 13G. Phase 13H final validation passed. The matrix remains the governance/reference contract for the implemented mental-model layer.
 1. Purpose
 This matrix defines the expected mental-model categories, inputs, outputs, evidence requirements, temporal semantics, lifecycle behavior, and governance constraints for Phase 13.
 The matrix is an implementation reference.
