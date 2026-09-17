@@ -217,7 +217,7 @@ for the detailed review framework.
 
 The foundation, profile-local memory architecture, mediation boundary, collective knowledge base, semantic representation, visualization, hybrid retrieval, Browser-facing retrieval, entity intelligence, relationship intelligence, entity resolution, relationship evidence, and governed graph enrichment have been implemented and validated through Phase 10.
 
-### 🚩 Phase 12 — COMPLETE / PHASE 13 READY
+### 🚩 Phase 13 — COMPLETE / PHASE 14 READY
 
 Mnemosyne has now moved beyond:
 
@@ -253,7 +253,7 @@ Validation:
 - **4 existing FastAPI deprecation warnings**
 - `git diff --check` clean
 
-Phase 13 — **Higher-Level Mental Models** — is now the next implementation phase.
+Phase 13 — **Higher-Level Mental Models** — has been completed and archived. Phase 14 is now the next implementation phase.
 
 ## The Mnemosyne Memory Progression
 
@@ -268,8 +268,8 @@ The roadmap can also be understood as a progression through increasingly sophist
 | **Phase 10** | Entities and relationships | Associative memory and social understanding |
 | **Phase 11 ✓** | Temporal intelligence | Understanding sequence and change |
 | **Phase 12 ✓** | Evidence consolidation and synthesis | Memory consolidation |
-| **Phase 13 ← NOW** | Higher-level mental models | Building concepts and patterns through experience, education, and development |
-| **Phase 14** | Controlled cross-profile learning | Social learning and learning from others |
+| **Phase 13 ✓** | Higher-level mental models | Building concepts and patterns through experience, education, and development |
+| **Phase 14 ← NOW** | Controlled cross-profile learning | Social learning and learning from others |
 | **Phase 15** | Advanced retrieval optimization | Improving recall strategies |
 | **Phase 16** | Distributed collective / LAN federation | Distributed shared knowledge |
 | **Phase 17** | Governance, audit and security | Evaluating trust, sources, and learned guidance |
@@ -346,8 +346,8 @@ flowchart LR
 
 This distinction is fundamental to Mnemosyne:
 
-**Memory is not the same thing as knowledge.  
-Knowledge is not the same thing as understanding.  
+**Memory is not the same thing as knowledge.
+Knowledge is not the same thing as understanding.
 Understanding is not the same thing as permission to learn or act.**
 
 Mnemosyne's architecture deliberately separates these stages.
@@ -374,9 +374,9 @@ The final architecture therefore aims for **continuous learning without uncontro
 
 ## Roadmap Status
 
-**Current phase: Phase 13 — Higher-Level Mental Models**
+**Current phase: Phase 14 — Cross-Profile Learning & Controlled Transfer**
 
-**Completed through: Phase 12 — Evidence Consolidation & Memory Synthesis**
+**Completed through: Phase 13 — Higher-Level Mental Models**
 
 The roadmap intentionally moves from:
 

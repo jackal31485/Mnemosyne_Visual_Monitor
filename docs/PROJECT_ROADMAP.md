@@ -1,7 +1,7 @@
 # Mnemosyne Visual Monitor — Authoritative Project Roadmap
 
-**Status:** Phase 12 complete — Phase 13 ready to begin
-**Last updated:** 2026-09-14
+**Status:** Phase 13 complete — Phase 14 ready to begin
+**Last updated:** 2026-09-16
 
 ## Purpose
 
@@ -495,7 +495,7 @@ Completion audit:
 
 ## Phase 13 — Higher-Level Mental Models
 
-**Status: NEXT — READY TO BEGIN**
+**Status: COMPLETE**
 
 Derive stable concepts and models from accumulated governed knowledge.
 
@@ -510,16 +510,23 @@ Focus:
 
 ## Phase 14 — Cross-Profile Learning & Controlled Transfer
 
-Enable governed learning between Hermes profiles.
+**Status: CURRENT — READY TO BEGIN**
+
+Enable governed, explicitly authorized knowledge transfer between Hermes profiles without collapsing profile isolation or silently propagating private memory.
 
 Focus:
 
-- candidate knowledge;
-- benefit analysis;
+- transfer candidates;
+- source-profile authorization;
+- destination-profile authorization;
+- benefit and applicability analysis;
 - explicit adoption;
 - profile-specific adaptation;
-- provenance;
-- rollback/revocation.
+- provenance and evidence preservation;
+- conflict handling;
+- revocation and rollback;
+- immutable transfer audit history;
+- strict prevention of implicit cross-profile learning.
 
 ## Phase 15 — Advanced Retrieval Optimization
 
