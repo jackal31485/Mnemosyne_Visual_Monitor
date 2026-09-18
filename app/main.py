@@ -26,6 +26,7 @@ from app.routes.search import router as search_router
 from app.routes.temporal_history import router as temporal_history_router
 from app.routes.temporal_visualization import router as temporal_visualization_router
 from app.routes.mental_models import router as mental_models_router
+from app.routes.transfer_learning import router as transfer_learning_router
 
 # Helper for legacy admin route registration.
 def _register_router_directly(application: FastAPI, router) -> None:
@@ -75,6 +76,7 @@ def create_app() -> FastAPI:
     _register_router_directly(application, temporal_history_router)
     _register_router_directly(application, temporal_visualization_router)
     _register_router_directly(application, mental_models_router)
+    _register_router_directly(application, transfer_learning_router)
     application.include_router(search_router)
 
     return application
