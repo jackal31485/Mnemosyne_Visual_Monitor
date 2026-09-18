@@ -212,6 +212,7 @@ def authorize_transfer(
         actor=request.actor,
         authorized_at=request.authorized_at,
         scope=request.scope,
+        mechanism=request.mechanism.value,
         expires_at=request.expires_at,
     )
 

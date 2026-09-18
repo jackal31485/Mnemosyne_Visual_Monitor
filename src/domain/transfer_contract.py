@@ -205,6 +205,7 @@ class TransferAuthorization:
     actor: str
     authorized_at: datetime
     scope: str
+    mechanism: str = "legacy"
     expires_at: datetime | None = None
     revoked: bool = False
 
@@ -216,10 +217,14 @@ class TransferAuthorization:
             "destination_profile",
             "actor",
             "scope",
+            "mechanism",
         ):
             object.__setattr__(self, name, _required_text(name, getattr(self, name)))
         if self.source_profile == self.destination_profile:
             raise ValueError("source_profile and destination_profile must differ")
+        if not isinstance(self.mechanism, str) or not self.mechanism.strip():
+            raise ValueError("mechanism must be non-empty text")
+        object.__setattr__(self, "mechanism", self.mechanism.strip())
         if not isinstance(self.authorized_at, datetime):
             raise TypeError("authorized_at must be a datetime")
         if self.expires_at is not None:
