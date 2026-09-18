@@ -79,9 +79,9 @@ flowchart LR
 
         M8["PHASE 13<br/>HIGHER-LEVEL MENTAL MODELS<br/><br/>Stable concepts<br/>Inferred relationships<br/>Governed derived models"]
 
-        M9["PHASE 14<br/>CROSS-PROFILE LEARNING<br/>& CONTROLLED TRANSFER<br/><br/>Governed knowledge sharing<br/>between Hermes profiles"]
+        M9["PHASE 14<br/>CROSS-PROFILE LEARNING<br/>& CONTROLLED TRANSFER<br/>✓ COMPLETE<br/><br/>Governed knowledge sharing<br/>between Hermes profiles"]
 
-        M10["PHASE 15<br/>ADVANCED RETRIEVAL OPTIMIZATION<br/><br/>Query classification<br/>Retrieval routing<br/>Multilingual retrieval<br/>Evaluation & optimization"]
+        M10["🚩 PHASE 15 — CURRENT<br/>ADVANCED RETRIEVAL OPTIMIZATION<br/><br/>Query classification<br/>Retrieval routing<br/>Hybrid retrieval optimization<br/>Evaluation & optimization"]
 
         M11["PHASE 16<br/>DISTRIBUTED COLLECTIVE<br/>/ LAN FEDERATION<br/><br/>Controlled collective knowledge<br/>across Mnemosyne instances"]
 
@@ -217,7 +217,7 @@ for the detailed review framework.
 
 The foundation, profile-local memory architecture, mediation boundary, collective knowledge base, semantic representation, visualization, hybrid retrieval, Browser-facing retrieval, entity intelligence, relationship intelligence, entity resolution, relationship evidence, and governed graph enrichment have been implemented and validated through Phase 10.
 
-### 🚩 Phase 13 — COMPLETE / PHASE 14 READY
+### 🚩 Phase 14 — COMPLETE / PHASE 15 READY
 
 Mnemosyne has now moved beyond:
 
@@ -253,7 +253,11 @@ Validation:
 - **4 existing FastAPI deprecation warnings**
 - `git diff --check` clean
 
-Phase 13 — **Higher-Level Mental Models** — has been completed and archived. Phase 14 is now the next implementation phase.
+Phase 13 — **Higher-Level Mental Models** — established governed higher-level concepts and derived mental models.
+
+Phase 14 — **Cross-Profile Learning & Controlled Transfer** — has now been completed and archived. It established governed knowledge sharing between Hermes profiles while preserving provenance, authorization, applicability, conflict handling, adoption, revocation, and rollback.
+
+Phase 15 — **Advanced Retrieval Optimization** — is now the next implementation phase. Its documentation has been created and committed; implementation has not yet started.
 
 ## The Mnemosyne Memory Progression
 
@@ -269,8 +273,8 @@ The roadmap can also be understood as a progression through increasingly sophist
 | **Phase 11 ✓** | Temporal intelligence | Understanding sequence and change |
 | **Phase 12 ✓** | Evidence consolidation and synthesis | Memory consolidation |
 | **Phase 13 ✓** | Higher-level mental models | Building concepts and patterns through experience, education, and development |
-| **Phase 14 ← NOW** | Controlled cross-profile learning | Social learning and learning from others |
-| **Phase 15** | Advanced retrieval optimization | Improving recall strategies |
+| **Phase 14 ✓** | Controlled cross-profile learning | Social learning and learning from others |
+| **Phase 15 ← NOW** | Advanced retrieval optimization | Improving recall strategies |
 | **Phase 16** | Distributed collective / LAN federation | Distributed shared knowledge |
 | **Phase 17** | Governance, audit and security | Evaluating trust, sources, and learned guidance |
 | **Phase 18** | Productionization and final validation | Mature continuous learning |
@@ -374,9 +378,9 @@ The final architecture therefore aims for **continuous learning without uncontro
 
 ## Roadmap Status
 
-**Current phase: Phase 14 — Cross-Profile Learning & Controlled Transfer**
+**Current phase: Phase 15 — Advanced Retrieval Optimization**
 
-**Completed through: Phase 13 — Higher-Level Mental Models**
+**Completed through: Phase 14 — Cross-Profile Learning & Controlled Transfer**
 
 The roadmap intentionally moves from:
 
