@@ -1,141 +1,204 @@
+# Mnemosyne Visual Monitor — Current Architecture & Implementation Specification
 
-# Mnemosyne Current Architecture Reconciliation — 2026-09-16
-
-> **Authority:** This reconciliation records the implementation state established
-> through completion of Phase 13. Where older sections of this specification
-> describe proposed, experimental, or superseded architecture, the implemented
-> repository and phase-specific governance documents take precedence.
+> **Status:** Phase 15 complete — Phase 16 ready to begin
+>
+> **Last updated:** 2026-09-20
+>
+> **Authority:** This section records the current implemented architecture
+> through completion of Phase 15. Where historical sections below describe
+> proposed, experimental, or superseded architecture, the implemented
+> repository, `docs/PROJECT_ROADMAP.md`, and current phase-specific governance
+> documents take precedence.
 
 ## Current Project State
 
-Phase 13 — **Higher-Level Mental Models** — is complete.
+Phase 15 — **Advanced Retrieval Optimization** — is complete.
 
-The completed Phase 13 layer establishes governed derived mental models with:
+The implemented architecture now includes the capabilities established through
+Phases 1–15, including:
 
-- explicit model types and lifecycle states;
-- deterministic candidate detection;
-- evidence and provenance validation;
-- confidence derived from governed evidence;
-- versioning and staleness handling;
-- revocation propagation;
-- evidence-preserving synthesis;
-- read-only API projection;
-- Browser inspection surfaces;
-- explicit separation between source memories and derived knowledge.
+- profile-local memory isolation;
+- governed collective knowledge;
+- provenance and evidence preservation;
+- entity and relationship intelligence;
+- temporal evidence and temporal retrieval;
+- evidence-preserving consolidation;
+- higher-level governed mental models;
+- controlled cross-profile learning and explicit transfer;
+- hybrid lexical and semantic retrieval;
+- query classification and retrieval routing;
+- governed candidate generation;
+- evidence and temporal retrieval signals;
+- reranking diagnostics;
+- multilingual retrieval fallback;
+- retrieval evaluation and diagnostics.
 
-Phase 13 does **not** authorize cross-profile learning.
+Phase 15 optimizes retrieval over knowledge that is already eligible under the
+existing governance model. Retrieval optimization does not authorize, adopt,
+revoke, or synchronize knowledge.
 
 The current repository baseline is:
 
-```text
-master
-e645c37 Complete Phase 13 higher-level mental models documentation
-The repository has been consolidated to a single master branch. Phase-specific
-Git tags and temporary phase branches are no longer part of the active repository
-workflow.
-Phase 14 — Cross-Profile Learning & Controlled Transfer
-Phase 14 is the next implementation phase.
-Its purpose is to establish a governed transfer mechanism through which knowledge
-that is already eligible for sharing may be evaluated for adoption by another
-Hermes profile.
-Phase 14 must distinguish:
-Profile-Local Memory
-        |
-        v
-Governed Collective Knowledge
-        |
-        v
-Transfer Candidate
-        |
-        v
-Authorization / Applicability / Evidence Validation
-        |
-        v
-Explicit Profile Adoption
-        |
-        v
-Profile-Specific Derived Knowledge
-A collective entry being visible to a profile does not constitute learning.
-A transfer candidate being generated does not constitute learning.
-Only an explicitly authorized and auditable adoption operation may create
-profile-specific learned state.
-Phase 14 Non-Negotiable Boundaries
-Phase 14 must preserve:
-1. profile-local memory isolation;
-2. source-memory immutability;
-3. collective provenance;
-4. evidence provenance;
-5. source-profile identity;
-6. destination-profile identity;
-7. explicit transfer authorization;
-8. explicit adoption state;
-9. deterministic transfer decisions;
-10. immutable transfer audit history;
-11. revocation propagation;
-12. conflict visibility;
-13. temporal applicability;
-14. absence of raw private memory content from shared derived representations;
-15. prevention of implicit cross-profile learning.
-Phase 14 must not:
-- copy private raw memory between profile databases;
-- silently modify a destination profile;
-- treat collective visibility as adoption;
-- discard source provenance;
-- delete transfer history;
+    master
+    75097a3 Phase 15 completion: Advanced Retrieval Optimization
+    phase-15-complete
+
+The Phase 15 documentation archive is:
+
+    docs/archive/phase-15/
+
+The authoritative Phase 15 completion audit is:
+
+    docs/PHASE_15_COMPLETION_AUDIT.md
+
+## Phase 15 Architecture
+
+The Phase 15 retrieval pipeline is:
+
+    Query
+      |
+      v
+    Normalization
+      |
+      v
+    Query Classification
+      |
+      v
+    Retrieval Routing
+      |
+      +--> lexical / BM25 signals
+      +--> semantic signals
+      +--> exact-match signals
+      +--> entity / relationship signals
+      +--> temporal signals
+      +--> evidence signals
+      |
+      v
+    Governance Filtering
+      |
+      v
+    Reranking / Result Ordering
+      |
+      v
+    Diagnostics / Explanation
+      |
+      v
+    Governed API / Browser Projection
+
+Phase 15 retrieval optimization preserves these governance invariants:
+
+- promoted and non-revoked eligibility;
+- profile isolation;
+- source profile and source memory provenance;
+- evidence provenance;
+- temporal meaning and precision;
+- conflict visibility;
+- deterministic behavior where required;
+- safe fallback behavior;
+- no raw private content leakage;
+- no implicit learning or synchronization.
+
+Query classification is routing information, not authorization.
+
+Retrieval ranking and evaluation metrics cannot authorize, adopt, revoke, or
+synchronize knowledge.
+
+## Phase 16 — Distributed Collective / LAN Federation
+
+Phase 16 is the **current implementation phase**.
+
+Its purpose is to extend controlled collective knowledge exchange across trusted
+local Mnemosyne instances without converting the system into an unrestricted
+shared memory store.
+
+Phase 16 must establish explicit boundaries for:
+
+- instance identity;
+- peer discovery;
+- trust establishment;
+- authenticated communication;
+- capability and authorization checks;
+- governed knowledge exchange;
+- synchronization state;
+- conflict detection and visibility;
+- explicit adoption;
+- revocation propagation;
+- federation observability;
+- immutable audit history.
+
+The federation boundary is:
+
+    Mnemosyne Instance A
+            |
+            | authenticated / governed exchange
+            v
+    Federation Boundary
+            |
+            +--> identity
+            +--> trust
+            +--> authorization
+            +--> provenance
+            +--> conflict handling
+            +--> revocation
+            +--> audit
+            |
+            v
+    Mnemosyne Instance B
+
+Phase 16 must preserve the existing architectural invariants:
+
+1. Profile-local memory remains isolated.
+2. Raw private memory is not exposed by default.
+3. Collective knowledge remains governed.
+4. Provenance remains attached to exchanged knowledge.
+5. Source and destination identities remain explicit.
+6. Authorization remains explicit.
+7. Adoption remains explicit.
+8. Revocation remains enforceable.
+9. Conflicts remain visible.
+10. Federation activity remains auditable.
+11. Audit history is not destructively deleted.
+12. Peer visibility does not constitute adoption.
+
+Phase 16 must not:
+
+- expose profile-local raw memory by default;
+- bypass collective governance;
+- create implicit cross-profile learning;
+- silently synchronize private profile databases;
+- erase provenance;
+- delete audit history;
+- treat peer visibility as adoption;
 - bypass revocation;
-- hide conflicting evidence;
-- introduce unrestricted profile-to-profile synchronization;
-- create a shared writable memory database;
-- introduce ungoverned LLM-generated learning;
-- modify Athena merely because cross-profile learning is being designed.
-Data Science Boundary
-Phase 14 is an applied decision and evaluation problem.
-The system should make explicit:
-- why a transfer candidate was generated;
-- what evidence supports it;
-- what evidence contradicts it;
-- which source profile produced it;
-- which destination profile is being considered;
-- why the knowledge is applicable;
-- what adaptation is required;
-- what confidence or benefit signals were used;
-- what conditions would invalidate the transfer.
-The decision mechanism must remain inspectable and deterministic where
-determinism is required by the governance contract.
-Data Engineering Boundary
-Phase 14 introduces a controlled transfer pipeline rather than a shared
-cross-profile write path.
-The architecture should preserve separate ownership boundaries:
-Source Profile
-     |
-     | governed candidate
-     v
-Transfer / Mediation Boundary
-     |
-     +--> validation
-     +--> authorization
-     +--> provenance
-     +--> audit
-     |
-     v
-Destination Profile
-The destination profile remains the owner of any profile-specific learned
-representation created by adoption.
-The transfer record must remain auditable independently of whether the
-destination later revokes or supersedes the learned representation.
-Phase 14 Completion Boundary
-Phase 14 is complete only when cross-profile transfer can be demonstrated as:
-- explicit rather than implicit;
-- authorized rather than assumed;
-- provenance-preserving rather than opaque;
-- evidence-backed rather than text-only;
-- reversible through governed revocation;
-- profile-isolated rather than globally mutating;
-- auditable rather than destructive;
-- deterministic enough to reproduce and test.
-Phase 15 must not be implemented as part of Phase 14 merely because retrieval
-optimization could improve transfer quality.
-Phase 14 establishes the governance and transfer mechanism first.
+- introduce unrestricted shared writes;
+- make Athena an implicit participant.
+
+Phase 16 is distinct from Phase 17. Phase 16 establishes the federation
+architecture and its governance boundaries. Phase 17 performs the broader
+governance, audit, adversarial, and security-hardening work.
+
+## Phase 14 — Architectural Lineage
+
+Phase 14 — **Cross-Profile Learning & Controlled Transfer** — is complete.
+
+Its controlled transfer lifecycle established explicit authorization,
+applicability analysis, evidence validation, adoption, conflict handling,
+revocation, rollback, and immutable transfer audit history.
+
+The Phase 14 architecture remains the foundation for Phase 16 federation:
+federation extends governed exchange; it does not replace the controlled
+transfer and adoption model.
+
+## Historical / Superseded Architecture
+
+> The material below is retained for architectural history and traceability.
+> It predates the current Phase 10–15 implementation state and must not
+> override the current repository, roadmap, or phase-specific governance
+> documentation.
+>
+> The original material includes proposed designs, experiments, and a
+> sequential Phase 1–9 implementation plan. Those materials are historical
+> references, not the active implementation roadmap.
 
 # Implementation Specification for Mnemosyne Visual Monitor
 

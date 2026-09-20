@@ -1,7 +1,7 @@
 # Mnemosyne Visual Monitor — Authoritative Project Roadmap
 
-**Status:** Phase 13 complete — Phase 14 ready to begin
-**Last updated:** 2026-09-16
+**Status:** Phase 15 complete — Phase 16 ready to begin
+**Last updated:** 2026-09-20
 
 ## Purpose
 
@@ -510,7 +510,7 @@ Focus:
 
 ## Phase 14 — Cross-Profile Learning & Controlled Transfer
 
-**Status: CURRENT — READY TO BEGIN**
+**Status: COMPLETE — archived under `docs/archive/phase-14/`**
 
 Enable governed, explicitly authorized knowledge transfer between Hermes profiles without collapsing profile isolation or silently propagating private memory.
 
@@ -530,6 +530,8 @@ Focus:
 
 ## Phase 15 — Advanced Retrieval Optimization
 
+**Status: COMPLETE — archived under `docs/archive/phase-15/`**
+
 Optimize retrieval quality after the hybrid foundation is proven and browser-integrated.
 
 Focus:
@@ -540,9 +542,25 @@ Focus:
 - multilingual retrieval;
 - evaluation datasets;
 - measurable retrieval metrics;
-- future reranking improvements beyond the validated Phase 8F baseline.
+- retrieval diagnostics and explainability;
+- governed multilingual fallback;
+- retrieval evaluation and regression protection.
+
+Phase 15 final validation:
+
+- 1,498 tests passed;
+- 14 tests skipped;
+- 0 failures;
+- 4 FastAPI deprecation warnings;
+- 19.43 seconds;
+- `git diff --check` clean.
+
+The authoritative completion audit is
+`docs/PHASE_15_COMPLETION_AUDIT.md`.
 
 ## Phase 16 — Distributed Collective / LAN Federation
+
+**Status: CURRENT — READY TO BEGIN**
 
 Expand controlled collective knowledge across trusted local Mnemosyne instances.
 
