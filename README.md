@@ -1,4 +1,4 @@
-# Proposed README Section — Mnemosyne Learning Architecture
+# Mnemosyne: A Memory Architecture Inspired by Human Learning
 
 ## 🧠 Mnemosyne: A Memory Architecture Inspired by Human Learning
 
@@ -71,13 +71,13 @@ flowchart LR
 
         M4["PHASE 9<br/>BROWSER-FACING HYBRID RETRIEVAL<br/>✓ COMPLETE<br/><br/>Hybrid Search<br/>Filtering & controls<br/>Explainability<br/>Source inspection<br/>Browser integration"]
 
-        M5["🚩 PHASE 10 — CURRENT<br/>ENTITY & RELATIONSHIP INTELLIGENCE<br/><br/>Canonical entities<br/>Entity resolution & aliases<br/>Co-occurrence detection<br/>Typed relationships<br/>Graph enrichment<br/>Relationship provenance"]
+        M5["PHASE 10<br/>ENTITY & RELATIONSHIP INTELLIGENCE<br/>✓ COMPLETE<br/><br/>Canonical entities<br/>Entity resolution & aliases<br/>Co-occurrence detection<br/>Typed relationships<br/>Graph enrichment<br/>Relationship provenance"]
 
-        M6["PHASE 11<br/>TEMPORAL INTELLIGENCE<br/><br/>Events<br/>Temporal relationships<br/>Changing facts<br/>Temporal conflicts"]
+        M6["PHASE 11<br/>TEMPORAL INTELLIGENCE<br/>✓ COMPLETE<br/><br/>Events<br/>Temporal relationships<br/>Changing facts<br/>Temporal conflicts"]
 
-        M7["PHASE 12<br/>EVIDENCE CONSOLIDATION<br/>& MEMORY SYNTHESIS<br/><br/>Multiple memories →<br/>evidence-backed knowledge"]
+        M7["PHASE 12<br/>EVIDENCE CONSOLIDATION<br/>& MEMORY SYNTHESIS<br/>✓ COMPLETE<br/><br/>Multiple memories →<br/>evidence-backed knowledge"]
 
-        M8["PHASE 13<br/>HIGHER-LEVEL MENTAL MODELS<br/><br/>Stable concepts<br/>Inferred relationships<br/>Governed derived models"]
+        M8["PHASE 13<br/>HIGHER-LEVEL MENTAL MODELS<br/>✓ COMPLETE<br/><br/>Stable concepts<br/>Inferred relationships<br/>Governed derived models"]
 
         M9["PHASE 14<br/>CROSS-PROFILE LEARNING<br/>& CONTROLLED TRANSFER<br/>✓ COMPLETE<br/><br/>Governed knowledge sharing<br/>between Hermes profiles"]
 
@@ -291,8 +291,8 @@ The roadmap can also be understood as a progression through increasingly sophist
 | **Phase 12 ✓** | Evidence consolidation and synthesis | Memory consolidation |
 | **Phase 13 ✓** | Higher-level mental models | Building concepts and patterns through experience, education, and development |
 | **Phase 14 ✓** | Controlled cross-profile learning | Social learning and learning from others |
-| **Phase 15 ← NOW** | Advanced retrieval optimization | Improving recall strategies |
-| **Phase 16** | Distributed collective / LAN federation | Distributed shared knowledge |
+| **Phase 15 ✓** | Advanced retrieval optimization | Improving recall strategies |
+| **Phase 16 ← NOW** | Distributed collective / LAN federation | Governed knowledge exchange across instances |
 | **Phase 17** | Governance, audit and security | Evaluating trust, sources, and learned guidance |
 | **Phase 18** | Productionization and final validation | Mature continuous learning |
 
