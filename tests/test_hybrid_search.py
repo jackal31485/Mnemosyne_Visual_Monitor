@@ -1,6 +1,6 @@
 from datetime import datetime
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
 import numpy as np
 import pytest
@@ -1004,3 +1004,77 @@ def test_evidence_signals_do_not_change_fused_result_order_or_provenance():
 
     assert enriched[0].evidence_signal is not None
     assert enriched[1].evidence_signal is not None
+
+
+def test_reranking_preserves_evidence_signal_metadata():
+    keyword_results = [
+        make_result(1, keyword_rank=1),
+    ]
+
+    fused_results = [
+        make_fused(1, 0.04, keyword_rank=1),
+    ]
+
+    reranked_results = [
+        RerankedResult(
+            entry_id=1,
+            source_profile="Athena",
+            origin_memory_id="memory-1",
+            fused_score=0.04,
+            reranker_score=0.95,
+            reranker_rank=1,
+            keyword_rank=1,
+            semantic_rank=None,
+            graph_rank=None,
+            temporal_rank=None,
+            keyword_contribution=0.01,
+            semantic_contribution=0.0,
+            graph_contribution=0.0,
+            temporal_contribution=0.0,
+            entity_rank=None,
+            entity_contribution=0.0,
+            provenance=(("Athena", "memory-1", "2026-09-07"),),
+        ),
+    ]
+
+    (
+        service,
+        _keyword,
+        _semantic,
+        _graph,
+        _temporal,
+        _fusion,
+        _encoder,
+        _reranker,
+    ) = make_service(
+        keyword_results=keyword_results,
+        fused_results=fused_results,
+        reranked_results=reranked_results,
+    )
+
+    from src.retrieval.evidence_signal import EvidenceSignal
+
+    service.evidence_dao = MagicMock()
+    service.evidence_dao.list.return_value = [
+        {
+            "evidence_kind": "observed",
+            "confidence": 1.0,
+        },
+    ]
+
+    results = service.search(
+        "query",
+        rerank=True,
+        top_k=1,
+        candidate_limit=20,
+    )
+
+    assert len(results) == 1
+    assert results[0].evidence_signal == EvidenceSignal(
+        evidence_present=True,
+        evidence_count=1,
+        observed_count=1,
+        inferred_count=0,
+        confidence=1.0,
+        evidence_quality=1.0,
+    )

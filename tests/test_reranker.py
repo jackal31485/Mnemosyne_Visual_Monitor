@@ -224,3 +224,52 @@ def test_non_finite_encoder_score_is_rejected() -> None:
             "query",
             [candidate],
         )
+
+
+def test_rerank_diagnostics_describe_bounded_ranking():
+    candidates = [fused(1), fused(2), fused(3)]
+    gateway = gateway_for(*candidates)
+    encoder = FakeCrossEncoder([0.1, 0.9])
+
+    reranker = Reranker(encoder, gateway)
+
+    results = reranker.rerank(
+        "query",
+        candidates,
+        candidate_limit=2,
+        top_k=2,
+    )
+
+    assert [result.entry_id for result in results] == [2, 1]
+
+    assert reranker.last_diagnostics.candidate_limit == 2
+    assert reranker.last_diagnostics.top_k == 2
+    assert reranker.last_diagnostics.candidate_entry_ids == (1, 2)
+    assert reranker.last_diagnostics.reranked_entry_ids == (2, 1)
+    assert reranker.last_diagnostics.fused_scores == (
+        (1, candidates[0].fused_score),
+        (2, candidates[1].fused_score),
+    )
+    assert reranker.last_diagnostics.reranker_scores == (
+        (2, 0.9),
+        (1, 0.1),
+    )
+    assert reranker.last_diagnostics.rank_changes == (
+        (2, 1),
+        (1, -1),
+    )
+
+
+def test_rerank_diagnostics_are_empty_for_empty_candidates():
+    reranker = Reranker(
+        FakeCrossEncoder([]),
+        InMemoryMemoryGateway(),
+    )
+
+    assert reranker.rerank("query", []) == []
+
+    assert reranker.last_diagnostics.candidate_entry_ids == ()
+    assert reranker.last_diagnostics.reranked_entry_ids == ()
+    assert reranker.last_diagnostics.fused_scores == ()
+    assert reranker.last_diagnostics.reranker_scores == ()
+    assert reranker.last_diagnostics.rank_changes == ()

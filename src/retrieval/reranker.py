@@ -25,6 +25,19 @@ class CrossEncoderProtocol(Protocol):
 
 
 @dataclass(frozen=True)
+class RerankDiagnostics:
+    """Deterministic diagnostics for one reranking operation."""
+
+    candidate_limit: int
+    top_k: int
+    candidate_entry_ids: tuple[int, ...]
+    reranked_entry_ids: tuple[int, ...]
+    fused_scores: tuple[tuple[int, float], ...]
+    reranker_scores: tuple[tuple[int, float], ...]
+    rank_changes: tuple[tuple[int, int], ...]
+
+
+@dataclass(frozen=True)
 class RerankedResult:
     """A hybrid result augmented with an optional reranker score."""
 
@@ -61,6 +74,15 @@ class Reranker:
     ) -> None:
         self.encoder = encoder
         self.gateway = gateway
+        self.last_diagnostics = RerankDiagnostics(
+            candidate_limit=0,
+            top_k=0,
+            candidate_entry_ids=(),
+            reranked_entry_ids=(),
+            fused_scores=(),
+            reranker_scores=(),
+            rank_changes=(),
+        )
 
     @staticmethod
     def _validate_limit(name: str, value: int) -> None:
@@ -94,7 +116,21 @@ class Reranker:
 
         bounded = list(candidates[:candidate_limit])
 
+        candidate_entry_ids = tuple(
+            int(candidate.entry_id)
+            for candidate in bounded
+        )
+
         if not bounded:
+            self.last_diagnostics = RerankDiagnostics(
+                candidate_limit=candidate_limit,
+                top_k=top_k,
+                candidate_entry_ids=(),
+                reranked_entry_ids=(),
+                fused_scores=(),
+                reranker_scores=(),
+                rank_changes=(),
+            )
             return []
 
         pairs: list[tuple[str, str]] = []
@@ -143,7 +179,14 @@ class Reranker:
 
         results: list[RerankedResult] = []
 
-        for rank, (score, candidate) in enumerate(scored[:top_k], start=1):
+        selected = scored[:top_k]
+
+        fused_ranks = {
+            int(candidate.entry_id): rank
+            for rank, candidate in enumerate(bounded, start=1)
+        }
+
+        for rank, (score, candidate) in enumerate(selected, start=1):
             results.append(
                 RerankedResult(
                     entry_id=candidate.entry_id,
@@ -165,5 +208,39 @@ class Reranker:
                     provenance=candidate.provenance,
                 )
             )
+
+        self.last_diagnostics = RerankDiagnostics(
+            candidate_limit=candidate_limit,
+            top_k=top_k,
+            candidate_entry_ids=candidate_entry_ids,
+            reranked_entry_ids=tuple(
+                int(candidate.entry_id)
+                for _score, candidate in selected
+            ),
+            fused_scores=tuple(
+                (
+                    int(candidate.entry_id),
+                    float(candidate.fused_score),
+                )
+                for candidate in bounded
+            ),
+            reranker_scores=tuple(
+                (
+                    int(candidate.entry_id),
+                    float(score),
+                )
+                for score, candidate in selected
+            ),
+            rank_changes=tuple(
+                (
+                    int(candidate.entry_id),
+                    fused_ranks[int(candidate.entry_id)] - rank,
+                )
+                for rank, (_score, candidate) in enumerate(
+                    selected,
+                    start=1,
+                )
+            ),
+        )
 
         return results

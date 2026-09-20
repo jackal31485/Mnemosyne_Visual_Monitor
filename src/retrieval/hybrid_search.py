@@ -518,6 +518,7 @@ class HybridRetrievalService:
             return self._to_hybrid_results(
                 explanations,
                 temporal_contexts=temporal_contexts,
+                evidence_signals=evidence_signals,
             )
 
         explanations = explain_fused(
