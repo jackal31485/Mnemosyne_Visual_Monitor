@@ -217,7 +217,7 @@ for the detailed review framework.
 
 The foundation, profile-local memory architecture, mediation boundary, collective knowledge base, semantic representation, visualization, hybrid retrieval, Browser-facing retrieval, entity intelligence, relationship intelligence, entity resolution, relationship evidence, and governed graph enrichment have been implemented and validated through Phase 10.
 
-### 🟢 Phases 14–15 — COMPLETE / PHASE 16 READY
+### 🟢 Phases 14–16 — COMPLETE / PHASE 17 READY
 
 Mnemosyne has now moved beyond:
 
@@ -270,7 +270,7 @@ Phase 15 final validation:
 
 Phase 15 is formally closed. The authoritative completion audit is `docs/PHASE_15_COMPLETION_AUDIT.md`, with the Phase 15 planning and governance documents archived under `docs/archive/phase-15/`.
 
-### 🚩 Phase 16 — CURRENT
+### 🟢 Phase 16 — COMPLETE
 
 Phase 16 — **Distributed Collective / LAN Federation** — begins the transition from a single Mnemosyne instance to controlled knowledge exchange across Mnemosyne instances.
 
@@ -292,8 +292,8 @@ The roadmap can also be understood as a progression through increasingly sophist
 | **Phase 13 ✓** | Higher-level mental models | Building concepts and patterns through experience, education, and development |
 | **Phase 14 ✓** | Controlled cross-profile learning | Social learning and learning from others |
 | **Phase 15 ✓** | Advanced retrieval optimization | Improving recall strategies |
-| **Phase 16 ← NOW** | Distributed collective / LAN federation | Governed knowledge exchange across instances |
-| **Phase 17** | Governance, audit and security | Evaluating trust, sources, and learned guidance |
+| **Phase 16 ✓** | Distributed collective / LAN federation | Governed knowledge exchange across instances |
+| **Phase 17 ← NOW** | Governance, audit and security | Evaluating trust, sources, and learned guidance |
 | **Phase 18** | Productionization and final validation | Mature continuous learning |
 
 ## From Learning Sources to Understanding
@@ -395,9 +395,9 @@ The final architecture therefore aims for **continuous learning without uncontro
 
 ## Roadmap Status
 
-**Current phase: Phase 16 — Distributed Collective / LAN Federation**
+**Current phase: Phase 17 — Governance, Audit & Security Hardening**
 
-**Completed through: Phase 15 — Advanced Retrieval Optimization**
+**Completed through: Phase 16 — Distributed Collective / LAN Federation**
 
 The roadmap intentionally moves from:
 

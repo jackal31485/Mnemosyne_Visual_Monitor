@@ -1,6 +1,6 @@
 # Mnemosyne Visual Monitor — Current Architecture & Implementation Specification
 
-> **Status:** Phase 16 current — 16J complete, 16K observability and audit next
+> **Status:** Phase 16 complete — Phase 17 Governance, Audit & Security Hardening next
 >
 > **Last updated:** 2026-09-20
 >
@@ -105,7 +105,7 @@ synchronize knowledge.
 
 ## Phase 16 — Distributed Collective / LAN Federation
 
-Phase 16 is the **current implementation phase**.
+Phase 16 is **complete**.
 
 Its purpose is to extend controlled collective knowledge exchange across trusted
 local Mnemosyne instances without converting the system into an unrestricted

@@ -1,6 +1,6 @@
 # Mnemosyne Visual Monitor — Authoritative Project Roadmap
 
-**Status:** Phase 16 current — 16J complete, 16K observability and audit next
+**Status:** Phase 16 complete — Phase 17 Governance, Audit & Security Hardening next
 **Last updated:** 2026-09-20
 
 ## Purpose
@@ -560,7 +560,7 @@ The authoritative completion audit is
 
 ## Phase 16 — Distributed Collective / LAN Federation
 
-**Status: CURRENT — 16J COMPLETE / 16K NEXT**
+**Status: COMPLETE**
 
 Expand controlled collective knowledge across trusted local Mnemosyne instances.
 
@@ -575,6 +575,36 @@ Focus:
 - federation observability.
 
 LAN discovery implemented during earlier phases is a foundation, not automatic federation.
+
+### Phase 16 Final Validation
+
+Phase 16 completed its Distributed Collective / LAN Federation scope with:
+
+- explicit participant identity and peer discovery;
+- separated discovery, trust, authentication, and authorization;
+- governed knowledge exchange with preserved provenance;
+- idempotent synchronization and visible conflicts;
+- explicit Phase 14 adoption integration;
+- governed agent-specific projections;
+- revocation propagation;
+- federation diagnostics and immutable audit records;
+- negative governance validation;
+- full regression validation.
+
+Final validation:
+
+- **141 federation integration tests passed**
+- **77 governance-negative tests passed**
+- **1,639 full regression tests passed**
+- **14 tests skipped**
+- **0 failures**
+- **4 existing FastAPI deprecation warnings**
+- `git diff --check` clean
+
+No Phase 16 GUI/application-presentation files changed, so live GUI validation was not applicable to this phase.
+
+The Phase 16 completion audit is archived under
+`docs/archive/phase-16/PHASE_16_COMPLETION_AUDIT_2026-09-20.md`.
 
 ## Phase 17 — Governance, Audit & Security Hardening
 
