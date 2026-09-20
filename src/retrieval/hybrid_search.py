@@ -26,10 +26,12 @@ from src.retrieval.temporal_result_context import (
     TemporalResultContext,
     build_temporal_result_context,
 )
+from src.retrieval.query_classification import classify_query
 from src.retrieval.query_routing import (
     QueryRouter,
     RetrievalRoute,
 )
+from src.retrieval.candidate_generation import CandidateGenerator
 
 
 @dataclass(frozen=True)
@@ -92,6 +94,7 @@ class HybridRetrievalService:
         self.encoder = encoder
         self.entity_searcher = entity_searcher
         self.reranker = reranker
+        self.candidate_generator = CandidateGenerator()
 
     @staticmethod
     def _decode_embedding(blob: bytes) -> np.ndarray:
@@ -134,6 +137,19 @@ class HybridRetrievalService:
                 break
 
         return seeds
+
+    @staticmethod
+    def _filter_to_candidate_ids(
+        results: Sequence,
+        candidate_ids: set[int],
+    ) -> list:
+        """Keep channel results inside the bounded candidate universe."""
+
+        return [
+            result
+            for result in results
+            if int(result.entry_id) in candidate_ids
+        ]
 
     @staticmethod
     def _to_hybrid_results(
@@ -358,6 +374,60 @@ class HybridRetrievalService:
                         temporal_score=temporal_score,
                     )
                 )
+
+        candidate_generation_route = retrieval_route
+
+        if not isinstance(candidate_generation_route, RetrievalRoute):
+            candidate_generation_route = QueryRouter.route(
+                classify_query(query),
+            )
+
+        candidate_set = self.candidate_generator.generate(
+            candidate_generation_route,
+            keyword_results=keyword_results,
+            semantic_results=semantic_results,
+            graph_results=graph_results,
+            temporal_results=temporal_results,
+            entity_results=entity_results,
+            candidate_limit=candidate_limit,
+        )
+
+        candidate_ids = set(candidate_set.entry_ids)
+
+        # Explicitly enabled channels remain eligible, but must still obey
+        # the bounded candidate universe.
+        if self.entity_searcher is not None:
+            for result in entity_results:
+                if len(candidate_ids) >= candidate_limit:
+                    break
+                candidate_ids.add(int(result.entry_id))
+
+        if temporal_mode is not None:
+            for result in temporal_results:
+                if len(candidate_ids) >= candidate_limit:
+                    break
+                candidate_ids.add(int(result.entry_id))
+
+        keyword_results = self._filter_to_candidate_ids(
+            keyword_results,
+            candidate_ids,
+        )
+        semantic_results = self._filter_to_candidate_ids(
+            semantic_results,
+            candidate_ids,
+        )
+        graph_results = self._filter_to_candidate_ids(
+            graph_results,
+            candidate_ids,
+        )
+        temporal_results = self._filter_to_candidate_ids(
+            temporal_results,
+            candidate_ids,
+        )
+        entity_results = self._filter_to_candidate_ids(
+            entity_results,
+            candidate_ids,
+        )
 
         fusion_kwargs = {
             "keyword_results": keyword_results,
