@@ -81,9 +81,9 @@ flowchart LR
 
         M9["PHASE 14<br/>CROSS-PROFILE LEARNING<br/>& CONTROLLED TRANSFER<br/>✓ COMPLETE<br/><br/>Governed knowledge sharing<br/>between Hermes profiles"]
 
-        M10["🚩 PHASE 15 — CURRENT<br/>ADVANCED RETRIEVAL OPTIMIZATION<br/><br/>Query classification<br/>Retrieval routing<br/>Hybrid retrieval optimization<br/>Evaluation & optimization"]
+        M10["PHASE 15<br/>ADVANCED RETRIEVAL OPTIMIZATION<br/>✓ COMPLETE<br/><br/>Query classification<br/>Retrieval routing<br/>Hybrid retrieval optimization<br/>Evaluation & diagnostics"]
 
-        M11["PHASE 16<br/>DISTRIBUTED COLLECTIVE<br/>/ LAN FEDERATION<br/><br/>Controlled collective knowledge<br/>across Mnemosyne instances"]
+        M11["🚩 PHASE 16 — CURRENT<br/>DISTRIBUTED COLLECTIVE<br/>/ LAN FEDERATION<br/><br/>Controlled collective knowledge<br/>across Mnemosyne instances"]
 
         M12["PHASE 17<br/>GOVERNANCE, AUDIT<br/>& SECURITY HARDENING<br/><br/>Security review<br/>Adversarial testing<br/>Hardened governance"]
 
@@ -217,7 +217,7 @@ for the detailed review framework.
 
 The foundation, profile-local memory architecture, mediation boundary, collective knowledge base, semantic representation, visualization, hybrid retrieval, Browser-facing retrieval, entity intelligence, relationship intelligence, entity resolution, relationship evidence, and governed graph enrichment have been implemented and validated through Phase 10.
 
-### 🚩 Phase 14 — COMPLETE / PHASE 15 READY
+### 🟢 Phases 14–15 — COMPLETE / PHASE 16 READY
 
 Mnemosyne has now moved beyond:
 
@@ -257,7 +257,24 @@ Phase 13 — **Higher-Level Mental Models** — established governed higher-leve
 
 Phase 14 — **Cross-Profile Learning & Controlled Transfer** — has now been completed and archived. It established governed knowledge sharing between Hermes profiles while preserving provenance, authorization, applicability, conflict handling, adoption, revocation, and rollback.
 
-Phase 15 — **Advanced Retrieval Optimization** — is now the next implementation phase. Its documentation has been created and committed; implementation has not yet started.
+Phase 15 — **Advanced Retrieval Optimization** — has now been completed and archived. It established query classification and routing, governed candidate generation, evidence and temporal retrieval signals, reranking diagnostics, multilingual retrieval fallback, retrieval evaluation, and integrated retrieval diagnostics while preserving the governance boundaries established through Phases 1–14.
+
+Phase 15 final validation:
+
+- **1,498 tests passed**
+- **14 tests skipped**
+- **0 failures**
+- **4 existing FastAPI deprecation warnings**
+- **19.43 seconds**
+- `git diff --check` clean
+
+Phase 15 is formally closed. The authoritative completion audit is `docs/PHASE_15_COMPLETION_AUDIT.md`, with the Phase 15 planning and governance documents archived under `docs/archive/phase-15/`.
+
+### 🚩 Phase 16 — CURRENT
+
+Phase 16 — **Distributed Collective / LAN Federation** — begins the transition from a single Mnemosyne instance to controlled knowledge exchange across Mnemosyne instances.
+
+Its scope is limited to governed distributed collective knowledge. Phase 16 must preserve the profile isolation, provenance, authorization, revocation, and audit guarantees established by the preceding phases.
 
 ## The Mnemosyne Memory Progression
 
@@ -378,9 +395,9 @@ The final architecture therefore aims for **continuous learning without uncontro
 
 ## Roadmap Status
 
-**Current phase: Phase 15 — Advanced Retrieval Optimization**
+**Current phase: Phase 16 — Distributed Collective / LAN Federation**
 
-**Completed through: Phase 14 — Cross-Profile Learning & Controlled Transfer**
+**Completed through: Phase 15 — Advanced Retrieval Optimization**
 
 The roadmap intentionally moves from:
 
