@@ -26,6 +26,10 @@ from src.retrieval.temporal_result_context import (
     TemporalResultContext,
     build_temporal_result_context,
 )
+from src.retrieval.query_routing import (
+    QueryRouter,
+    RetrievalRoute,
+)
 
 
 @dataclass(frozen=True)
@@ -198,13 +202,21 @@ class HybridRetrievalService:
         reference_time: datetime | None = None,
         rerank: bool = True,
     ) -> list[HybridResult]:
-        """Return deterministic hybrid retrieval results."""
+        """Return deterministic hybrid retrieval results.
+
+        Query classification and routing are explicit Phase 15 metadata.
+        The route does not replace the existing governed retrieval pipeline;
+        all existing retrieval channels and governance checks remain
+        authoritative.
+        """
 
         if not isinstance(query, str):
             raise TypeError("query must be a string")
 
         if not query.strip():
             return []
+
+        retrieval_route = QueryRouter.route_query(query)
 
         self._validate_limit("top_k", top_k)
         self._validate_limit("candidate_limit", candidate_limit)

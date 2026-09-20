@@ -585,3 +585,136 @@ def test_entity_channel_flows_through_hybrid_pipeline():
     assert results[0].origin_memory_id == "entity-memory-7"
     assert results[0].entity_rank == 1
     assert results[0].entity_contribution == pytest.approx(1.0 / 61.0)
+
+
+def test_search_classifies_and_routes_query_without_changing_governed_pipeline(
+    monkeypatch,
+):
+    from src.retrieval import hybrid_search as hybrid_search_module
+
+    route = Mock()
+    route.intent = "relationship"
+    route.normalized_query = (
+        "What is the relationship between Athena and Mnemosyne?"
+    )
+    route.channels = ()
+    route.signals = ("relationship",)
+
+    route_query = Mock(return_value=route)
+    monkeypatch.setattr(
+        hybrid_search_module.QueryRouter,
+        "route_query",
+        route_query,
+    )
+
+    (
+        service,
+        keyword,
+        semantic,
+        graph,
+        temporal,
+        fusion,
+        encoder,
+        _reranker,
+    ) = make_service(
+        keyword_results=[],
+        semantic_results=[],
+        graph_results=[],
+        temporal_results=[],
+        fused_results=[],
+    )
+
+    service.search(
+        "What is the relationship between Athena and Mnemosyne?",
+        rerank=False,
+    )
+
+    route_query.assert_called_once_with(
+        "What is the relationship between Athena and Mnemosyne?"
+    )
+
+    keyword.search.assert_called_once_with(
+        "What is the relationship between Athena and Mnemosyne?",
+        limit=20,
+        profile=None,
+    )
+
+    semantic.search.assert_called_once()
+    graph.expand.assert_not_called()
+    temporal.search_by_recency.assert_not_called()
+    temporal.search_by_event_date.assert_not_called()
+
+    fusion.fuse.assert_called_once()
+
+
+def test_semantic_query_preserves_existing_hybrid_candidate_behavior():
+    (
+        service,
+        keyword,
+        semantic,
+        graph,
+        _temporal,
+        fusion,
+        _encoder,
+        _reranker,
+    ) = make_service(
+        keyword_results=[make_result(1, keyword_rank=1)],
+        semantic_results=[make_result(2, semantic_rank=1)],
+        graph_results=[make_result(3, graph_rank=1)],
+        fused_results=[],
+    )
+
+    service.search(
+        "How does Mnemosyne preserve evidence?",
+        rerank=False,
+    )
+
+    keyword.search.assert_called_once()
+    semantic.search.assert_called_once()
+    graph.expand.assert_called_once_with(
+        [1, 2],
+        limit_per_seed=4,
+        profile=None,
+    )
+
+    fusion.fuse.assert_called_once()
+
+
+def test_route_integration_does_not_change_profile_boundary():
+    (
+        service,
+        keyword,
+        semantic,
+        graph,
+        _temporal,
+        fusion,
+        _encoder,
+        _reranker,
+    ) = make_service(
+        keyword_results=[],
+        semantic_results=[],
+        graph_results=[],
+        fused_results=[],
+    )
+
+    service.search(
+        "Who is Athena?",
+        profile="Horus",
+        rerank=False,
+    )
+
+    keyword.search.assert_called_once_with(
+        "Who is Athena?",
+        limit=20,
+        profile="Horus",
+    )
+
+    semantic_args, semantic_kwargs = semantic.search.call_args
+
+    assert semantic_kwargs == {
+        "top_k": 20,
+        "profile": "Horus",
+    }
+
+    graph.expand.assert_not_called()
+    fusion.fuse.assert_called_once()
