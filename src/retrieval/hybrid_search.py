@@ -35,6 +35,9 @@ from src.retrieval.query_routing import (
 from src.retrieval.candidate_generation import CandidateGenerator
 from src.retrieval.evidence_signal import EvidenceSignal, build_evidence_signal
 from src.retrieval.temporal_signal import TemporalSignal, build_temporal_signal
+from src.retrieval.multilingual_retrieval import (
+    build_multilingual_profile,
+)
 
 
 @dataclass(frozen=True)
@@ -246,6 +249,7 @@ class HybridRetrievalService:
             return []
 
         retrieval_route = QueryRouter.route_query(query)
+        multilingual_profile = build_multilingual_profile(query)
 
         self._validate_limit("top_k", top_k)
         self._validate_limit("candidate_limit", candidate_limit)
@@ -306,14 +310,17 @@ class HybridRetrievalService:
             profile=profile,
         )
 
-        embedding = self.encoder.generate(query)
-        query_vector = self._decode_embedding(embedding)
+        semantic_results = []
 
-        semantic_results = self.semantic_searcher.search(
-            query_vector,
-            top_k=semantic_limit,
-            profile=profile,
-        )
+        if multilingual_profile.semantic_capability.value == "supported":
+            embedding = self.encoder.generate(query)
+            query_vector = self._decode_embedding(embedding)
+
+            semantic_results = self.semantic_searcher.search(
+                query_vector,
+                top_k=semantic_limit,
+                profile=profile,
+            )
 
         seed_ids = self._unique_seed_ids(
             keyword_results,

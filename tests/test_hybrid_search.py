@@ -1078,3 +1078,94 @@ def test_reranking_preserves_evidence_signal_metadata():
         confidence=1.0,
         evidence_quality=1.0,
     )
+
+
+def test_non_latin_query_skips_unsupported_semantic_retrieval():
+    (
+        service,
+        keyword,
+        semantic,
+        _graph,
+        _temporal,
+        fusion,
+        encoder,
+        _reranker,
+    ) = make_service(
+        keyword_results=[make_result(1, keyword_rank=1)],
+        semantic_results=[],
+        fused_results=[],
+    )
+
+    service.search(
+        "メモリの検索",
+        rerank=False,
+    )
+
+    keyword.search.assert_called_once_with(
+        "メモリの検索",
+        limit=20,
+        profile=None,
+    )
+    encoder.generate.assert_not_called()
+    semantic.search.assert_not_called()
+    fusion.fuse.assert_called_once()
+
+
+def test_mixed_script_query_skips_unsupported_semantic_retrieval():
+    (
+        service,
+        keyword,
+        semantic,
+        _graph,
+        _temporal,
+        fusion,
+        encoder,
+        _reranker,
+    ) = make_service(
+        keyword_results=[make_result(1, keyword_rank=1)],
+        semantic_results=[],
+        fused_results=[],
+    )
+
+    service.search(
+        "Mnemosyne メモリ",
+        rerank=False,
+    )
+
+    keyword.search.assert_called_once_with(
+        "Mnemosyne メモリ",
+        limit=20,
+        profile=None,
+    )
+    encoder.generate.assert_not_called()
+    semantic.search.assert_not_called()
+    fusion.fuse.assert_called_once()
+
+
+def test_latin_query_retains_existing_semantic_retrieval():
+    (
+        service,
+        keyword,
+        semantic,
+        _graph,
+        _temporal,
+        fusion,
+        encoder,
+        _reranker,
+    ) = make_service(
+        keyword_results=[],
+        semantic_results=[],
+        fused_results=[],
+    )
+
+    service.search(
+        "How does Mnemosyne preserve evidence?",
+        rerank=False,
+    )
+
+    keyword.search.assert_called_once()
+    encoder.generate.assert_called_once_with(
+        "How does Mnemosyne preserve evidence?"
+    )
+    semantic.search.assert_called_once()
+    fusion.fuse.assert_called_once()
