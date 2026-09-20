@@ -16,12 +16,35 @@ from app.services.hybrid_retrieval import get_hybrid_retrieval_service
 router = APIRouter()
 
 
+class TemporalSignalDTO(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    relevant: bool
+    score: float
+    date_source: str
+    query_start: datetime | None
+    query_end: datetime | None
+
+
+class EvidenceSignalDTO(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    evidence_present: bool
+    evidence_count: int
+    observed_count: int
+    inferred_count: int
+    confidence: float | None
+    evidence_quality: float
+
+
 class HybridResultDTO(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     temporal_query_relevant: bool = False
     temporal_query_score: float = 0.0
     temporal_query_context: TemporalResultContext | None = None
+    temporal_signal: TemporalSignalDTO | None = None
+    evidence_signal: EvidenceSignalDTO | None = None
 
     entry_id: int
     source_profile: str

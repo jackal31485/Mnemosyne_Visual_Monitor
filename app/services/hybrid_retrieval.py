@@ -9,6 +9,7 @@ from pathlib import Path
 from src.domain.collective import CollectiveDAO
 from src.domain.graph_aggregator import GraphAggregator
 from src.domain.live_memory_gateway import LiveMemoryGateway
+from src.domain.temporal_evidence import TemporalEvidenceDAO
 from src.domain.embedding_generator import SentenceTransformerEncoder
 from src.retrieval.cross_encoder import LocalCrossEncoder
 from src.retrieval.graph_search import GraphSearcher
@@ -67,6 +68,7 @@ def build_hybrid_retrieval_service() -> HybridRetrievalService:
         fusion=RankFusion(),
         encoder=encoder,
         reranker=reranker,
+        evidence_dao=TemporalEvidenceDAO(COLLECTIVE_DB),
     )
 
 

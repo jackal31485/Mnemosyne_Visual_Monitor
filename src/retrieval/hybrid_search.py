@@ -9,6 +9,7 @@ from typing import Sequence
 import numpy as np
 
 from src.domain.embedding_generator import SentenceTransformerEncoder
+from src.domain.temporal_evidence import TemporalEvidenceDAO
 from src.retrieval.explainability import (
     RetrievalExplanation,
     explain_fused,
@@ -32,6 +33,8 @@ from src.retrieval.query_routing import (
     RetrievalRoute,
 )
 from src.retrieval.candidate_generation import CandidateGenerator
+from src.retrieval.evidence_signal import EvidenceSignal, build_evidence_signal
+from src.retrieval.temporal_signal import TemporalSignal, build_temporal_signal
 
 
 @dataclass(frozen=True)
@@ -69,6 +72,8 @@ class HybridResult:
     temporal_query_relevant: bool = False
     temporal_query_score: float = 0.0
     temporal_query_context: TemporalResultContext | None = None
+    temporal_signal: TemporalSignal | None = None
+    evidence_signal: EvidenceSignal | None = None
 
 
 
@@ -85,6 +90,7 @@ class HybridRetrievalService:
         encoder: SentenceTransformerEncoder,
         entity_searcher=None,
         reranker: Reranker | None = None,
+        evidence_dao: TemporalEvidenceDAO | None = None,
     ) -> None:
         self.keyword_searcher = keyword_searcher
         self.semantic_searcher = semantic_searcher
@@ -94,6 +100,7 @@ class HybridRetrievalService:
         self.encoder = encoder
         self.entity_searcher = entity_searcher
         self.reranker = reranker
+        self.evidence_dao = evidence_dao
         self.candidate_generator = CandidateGenerator()
 
     @staticmethod
@@ -155,8 +162,10 @@ class HybridRetrievalService:
     def _to_hybrid_results(
         explanations: Sequence[RetrievalExplanation],
         temporal_contexts: dict[int, TemporalResultContext] | None = None,
+        evidence_signals: dict[int, EvidenceSignal] | None = None,
     ) -> list[HybridResult]:
         temporal_contexts = temporal_contexts or {}
+        evidence_signals = evidence_signals or {}
 
         results: list[HybridResult] = []
 
@@ -193,6 +202,10 @@ class HybridRetrievalService:
                         else 0.0
                     ),
                     temporal_query_context=temporal_context,
+                    temporal_signal=build_temporal_signal(temporal_context),
+                    evidence_signal=evidence_signals.get(
+                        explanation.entry_id
+                    ),
                     entity_rank=explanation.entity_rank,
                     entity_contribution=explanation.entity_contribution,
                     provenance=explanation.provenance,
@@ -408,6 +421,51 @@ class HybridRetrievalService:
                     break
                 candidate_ids.add(int(result.entry_id))
 
+        # Phase 15C evidence signals are descriptive metadata only.
+        # Evidence is queried strictly after the candidate universe is
+        # finalized, so evidence cannot expand or authorize retrieval.
+        evidence_signals: dict[int, EvidenceSignal] = {}
+
+        if self.evidence_dao is not None and candidate_ids:
+            candidate_profiles: dict[int, str] = {}
+
+            for result in (
+                list(keyword_results)
+                + list(semantic_results)
+                + list(graph_results)
+                + list(temporal_results)
+                + list(entity_results)
+            ):
+                entry_id = int(result.entry_id)
+
+                if entry_id not in candidate_ids:
+                    continue
+
+                source_profile = getattr(result, "source_profile", None)
+
+                if source_profile is None:
+                    continue
+
+                candidate_profiles.setdefault(
+                    entry_id,
+                    str(source_profile),
+                )
+
+            for entry_id in sorted(candidate_ids):
+                source_profile = candidate_profiles.get(entry_id)
+
+                if source_profile is None:
+                    continue
+
+                evidence_records = self.evidence_dao.list(
+                    collective_entry_id=entry_id,
+                    source_profile=source_profile,
+                )
+
+                evidence_signals[entry_id] = build_evidence_signal(
+                    evidence_records
+                )
+
         keyword_results = self._filter_to_candidate_ids(
             keyword_results,
             candidate_ids,
@@ -469,4 +527,5 @@ class HybridRetrievalService:
         return self._to_hybrid_results(
             explanations,
             temporal_contexts=temporal_contexts,
+            evidence_signals=evidence_signals,
         )

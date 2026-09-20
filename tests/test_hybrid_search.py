@@ -718,3 +718,289 @@ def test_route_integration_does_not_change_profile_boundary():
 
     graph.expand.assert_not_called()
     fusion.fuse.assert_called_once()
+
+
+def test_evidence_signal_is_attached_to_governed_candidate():
+    keyword_results = [
+        make_result(1, keyword_rank=1),
+    ]
+
+    fused_results = [
+        make_fused(
+            1,
+            0.02,
+            keyword_rank=1,
+        ),
+    ]
+
+    evidence_dao = Mock()
+    evidence_dao.list.return_value = [
+        {
+            "temporal_evidence_id": "te-1",
+            "collective_entry_id": 1,
+            "evidence_kind": "observed",
+            "confidence": 0.9,
+            "source_profile": "Athena",
+            "source_memory_id": "memory-1",
+        },
+        {
+            "temporal_evidence_id": "te-2",
+            "collective_entry_id": 1,
+            "evidence_kind": "inferred",
+            "confidence": 0.7,
+            "source_profile": "Athena",
+            "source_memory_id": "memory-1",
+        },
+    ]
+
+    (
+        service,
+        _keyword,
+        _semantic,
+        _graph,
+        _temporal,
+        _fusion,
+        _encoder,
+        _reranker,
+    ) = make_service(
+        keyword_results=keyword_results,
+        fused_results=fused_results,
+    )
+
+    service.evidence_dao = evidence_dao
+
+    results = service.search(
+        "test query",
+        rerank=False,
+    )
+
+    assert len(results) == 1
+
+    result = results[0]
+
+    assert result.entry_id == 1
+    assert result.evidence_signal is not None
+    assert result.evidence_signal.evidence_present is True
+    assert result.evidence_signal.evidence_count == 2
+    assert result.evidence_signal.observed_count == 1
+    assert result.evidence_signal.inferred_count == 1
+    assert result.evidence_signal.confidence == pytest.approx(0.8)
+    assert result.evidence_signal.evidence_quality == pytest.approx(0.65)
+
+    evidence_dao.list.assert_called_once_with(
+        collective_entry_id=1,
+        source_profile="Athena",
+    )
+
+
+def test_evidence_lookup_preserves_source_profile_isolation():
+    keyword_results = [
+        make_result(1, keyword_rank=1),
+    ]
+
+    fused_results = [
+        make_fused(
+            1,
+            0.02,
+            keyword_rank=1,
+        ),
+    ]
+
+    evidence_dao = Mock()
+    evidence_dao.list.return_value = [
+        {
+            "temporal_evidence_id": "te-athena",
+            "collective_entry_id": 1,
+            "evidence_kind": "observed",
+            "confidence": 1.0,
+            "source_profile": "Athena",
+            "source_memory_id": "memory-1",
+        },
+    ]
+
+    (
+        service,
+        _keyword,
+        _semantic,
+        _graph,
+        _temporal,
+        _fusion,
+        _encoder,
+        _reranker,
+    ) = make_service(
+        keyword_results=keyword_results,
+        fused_results=fused_results,
+    )
+
+    service.evidence_dao = evidence_dao
+
+    results = service.search(
+        "test query",
+        profile="Athena",
+        rerank=False,
+    )
+
+    assert [result.entry_id for result in results] == [1]
+
+    evidence_dao.list.assert_called_once_with(
+        collective_entry_id=1,
+        source_profile="Athena",
+    )
+
+
+def test_evidence_cannot_expand_candidate_universe():
+    keyword_results = [
+        make_result(1, keyword_rank=1),
+    ]
+
+    fused_results = [
+        make_fused(
+            1,
+            0.02,
+            keyword_rank=1,
+        ),
+    ]
+
+    evidence_dao = Mock()
+    evidence_dao.list.return_value = [
+        {
+            "temporal_evidence_id": "te-extra",
+            "collective_entry_id": 999,
+            "evidence_kind": "observed",
+            "confidence": 1.0,
+            "source_profile": "Athena",
+            "source_memory_id": "memory-999",
+        },
+    ]
+
+    (
+        service,
+        _keyword,
+        _semantic,
+        _graph,
+        _temporal,
+        _fusion,
+        _encoder,
+        _reranker,
+    ) = make_service(
+        keyword_results=keyword_results,
+        fused_results=fused_results,
+    )
+
+    service.evidence_dao = evidence_dao
+
+    results = service.search(
+        "test query",
+        rerank=False,
+    )
+
+    assert [result.entry_id for result in results] == [1]
+    assert all(result.entry_id != 999 for result in results)
+
+    evidence_dao.list.assert_called_once_with(
+        collective_entry_id=1,
+        source_profile="Athena",
+    )
+
+
+def test_evidence_signals_do_not_change_fused_result_order_or_provenance():
+    keyword_results = [
+        make_result(1, keyword_rank=1),
+        make_result(2, keyword_rank=2),
+    ]
+
+    fused_results = [
+        make_fused(
+            1,
+            0.04,
+            keyword_rank=1,
+        ),
+        make_fused(
+            2,
+            0.03,
+            keyword_rank=2,
+        ),
+    ]
+
+    (
+        baseline_service,
+        _keyword,
+        _semantic,
+        _graph,
+        _temporal,
+        _fusion,
+        _encoder,
+        _reranker,
+    ) = make_service(
+        keyword_results=keyword_results,
+        fused_results=fused_results,
+    )
+
+    baseline = baseline_service.search(
+        "test query",
+        rerank=False,
+    )
+
+    evidence_dao = Mock()
+    evidence_dao.list.side_effect = [
+        [
+            {
+                "temporal_evidence_id": "te-1",
+                "collective_entry_id": 1,
+                "evidence_kind": "observed",
+                "confidence": 1.0,
+                "source_profile": "Athena",
+                "source_memory_id": "memory-1",
+            },
+        ],
+        [
+            {
+                "temporal_evidence_id": "te-2",
+                "collective_entry_id": 2,
+                "evidence_kind": "inferred",
+                "confidence": 0.2,
+                "source_profile": "Athena",
+                "source_memory_id": "memory-2",
+            },
+        ],
+    ]
+
+    (
+        evidence_service,
+        _keyword,
+        _semantic,
+        _graph,
+        _temporal,
+        _fusion,
+        _encoder,
+        _reranker,
+    ) = make_service(
+        keyword_results=keyword_results,
+        fused_results=fused_results,
+    )
+
+    evidence_service.evidence_dao = evidence_dao
+
+    enriched = evidence_service.search(
+        "test query",
+        rerank=False,
+    )
+
+    assert [result.entry_id for result in enriched] == [
+        result.entry_id for result in baseline
+    ]
+
+    assert [result.fused_score for result in enriched] == [
+        result.fused_score for result in baseline
+    ]
+
+    assert [result.fused_rank for result in enriched] == [
+        result.fused_rank for result in baseline
+    ]
+
+    assert [result.provenance for result in enriched] == [
+        result.provenance for result in baseline
+    ]
+
+    assert enriched[0].evidence_signal is not None
+    assert enriched[1].evidence_signal is not None
