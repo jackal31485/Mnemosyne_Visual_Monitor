@@ -1,6 +1,6 @@
 # Mnemosyne Visual Monitor — Current Architecture & Implementation Specification
 
-> **Status:** Phase 15 complete — Phase 16 ready to begin
+> **Status:** Phase 16 current — 16J complete, 16K observability and audit next
 >
 > **Last updated:** 2026-09-20
 >

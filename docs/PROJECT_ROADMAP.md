@@ -1,6 +1,6 @@
 # Mnemosyne Visual Monitor — Authoritative Project Roadmap
 
-**Status:** Phase 15 complete — Phase 16 ready to begin
+**Status:** Phase 16 current — 16J complete, 16K observability and audit next
 **Last updated:** 2026-09-20
 
 ## Purpose
@@ -560,7 +560,7 @@ The authoritative completion audit is
 
 ## Phase 16 — Distributed Collective / LAN Federation
 
-**Status: CURRENT — READY TO BEGIN**
+**Status: CURRENT — 16J COMPLETE / 16K NEXT**
 
 Expand controlled collective knowledge across trusted local Mnemosyne instances.
 
