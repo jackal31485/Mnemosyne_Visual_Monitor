@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict
 
 from src.domain.athena_api import AthenaAPI
 from src.retrieval.hybrid_search import HybridRetrievalService
+from src.retrieval.retrieval_diagnostics import build_retrieval_diagnostics
 from src.retrieval.temporal_result_context import TemporalResultContext
 
 from app.services.hybrid_retrieval import get_hybrid_retrieval_service
@@ -67,6 +68,20 @@ class HybridResultDTO(BaseModel):
     provenance: Any
 
 
+class HybridSearchDiagnosticsDTO(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    query: str
+    result_count: int
+    requested_top_k: int
+    candidate_limit: int
+    result_entry_ids: tuple[int, ...]
+    reranking_enabled: bool
+    reranker_diagnostics: Any | None
+    result_diagnostics: tuple[Any, ...]
+    evaluation: Any | None
+
+
 class HybridSearchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -75,6 +90,7 @@ class HybridSearchResponse(BaseModel):
     temporal_mode: str | None
     rerank_requested: bool
     reranker_available: bool
+    diagnostics: HybridSearchDiagnosticsDTO
     results: list[HybridResultDTO]
 
 
@@ -135,11 +151,30 @@ def search_hybrid(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    diagnostics = build_retrieval_diagnostics(
+        query=q,
+        results=results,
+        requested_top_k=top_k,
+        candidate_limit=candidate_limit,
+        reranking_enabled=rerank,
+    )
+
     return HybridSearchResponse(
         query=q,
         profile=profile,
         temporal_mode=temporal_mode,
         rerank_requested=rerank,
         reranker_available=service.reranker is not None,
+        diagnostics=HybridSearchDiagnosticsDTO(
+            query=diagnostics.query,
+            result_count=diagnostics.result_count,
+            requested_top_k=diagnostics.requested_top_k,
+            candidate_limit=diagnostics.candidate_limit,
+            result_entry_ids=diagnostics.result_entry_ids,
+            reranking_enabled=diagnostics.reranking_enabled,
+            reranker_diagnostics=diagnostics.reranker_diagnostics,
+            result_diagnostics=diagnostics.result_diagnostics,
+            evaluation=diagnostics.evaluation,
+        ),
         results=[HybridResultDTO(**result.__dict__) for result in results],
     )

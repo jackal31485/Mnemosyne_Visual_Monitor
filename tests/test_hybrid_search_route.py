@@ -109,3 +109,47 @@ def test_hybrid_route_rejects_partial_date_window():
 
     assert response.status_code == 400
     assert "must be supplied together" in response.json()["detail"]
+
+
+def test_hybrid_route_exposes_retrieval_diagnostics():
+    service = FakeService()
+    app.dependency_overrides[hybrid_service_dep] = lambda: service
+    try:
+        client = TestClient(app)
+        response = client.get(
+            "/api/search/hybrid",
+            params={
+                "q": "timeline repair",
+                "top_k": 5,
+                "candidate_limit": 20,
+                "profile": "athena",
+                "rerank": "true",
+            },
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+
+    diagnostics = response.json()["diagnostics"]
+
+    assert diagnostics["query"] == "timeline repair"
+    assert diagnostics["result_count"] == 1
+    assert diagnostics["requested_top_k"] == 5
+    assert diagnostics["candidate_limit"] == 20
+    assert diagnostics["result_entry_ids"] == [7]
+    assert diagnostics["reranking_enabled"] is True
+    assert diagnostics["evaluation"] is None
+
+    result_diagnostics = diagnostics["result_diagnostics"]
+    assert len(result_diagnostics) == 1
+    assert result_diagnostics[0]["entry_id"] == 7
+    assert result_diagnostics[0]["rank"] == 1
+    assert result_diagnostics[0]["source_profile"] == "athena"
+    assert result_diagnostics[0]["origin_memory_id"] == "memory-7"
+    assert result_diagnostics[0]["fused_rank"] == 1
+    assert result_diagnostics[0]["reranker_rank"] == 1
+    assert result_diagnostics[0]["rank_change"] == 0
+    assert result_diagnostics[0]["keyword_rank"] == 1
+    assert result_diagnostics[0]["semantic_rank"] == 2
+    assert result_diagnostics[0]["provenance_present"] is True

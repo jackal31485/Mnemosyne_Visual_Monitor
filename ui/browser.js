@@ -2278,6 +2278,46 @@ function renderHybridSearch(results = state.hybridResults, metadata = null) {
     `;
     container.appendChild(header);
 
+    const diagnostics = metadata?.diagnostics;
+    if (diagnostics) {
+        const section = document.createElement("section");
+        section.className = "inspector-section hybrid-diagnostics";
+
+        const evaluation =
+            diagnostics.evaluation === null ||
+            diagnostics.evaluation === undefined
+                ? "Not evaluated"
+                : "Evaluated";
+
+        section.innerHTML = `
+            <h3>Retrieval Diagnostics</h3>
+            <div class="tile-stat-grid">
+                <div>
+                    <strong>${Number(diagnostics.result_count ?? results.length).toLocaleString()}</strong>
+                    <span>Returned</span>
+                </div>
+                <div>
+                    <strong>${Number(diagnostics.requested_top_k ?? 0).toLocaleString()}</strong>
+                    <span>Requested top K</span>
+                </div>
+                <div>
+                    <strong>${Number(diagnostics.candidate_limit ?? 0).toLocaleString()}</strong>
+                    <span>Candidate limit</span>
+                </div>
+                <div>
+                    <strong>${diagnostics.reranking_enabled ? "Yes" : "No"}</strong>
+                    <span>Reranking</span>
+                </div>
+            </div>
+            <dl class="inspector-grid">
+                <dt>Evaluation</dt>
+                <dd>${escapeHTML(evaluation)}</dd>
+            </dl>
+        `;
+
+        container.appendChild(section);
+    }
+
     if (metadata?.reranker_available === false) {
         const notice = document.createElement("div");
         notice.className = "hybrid-search-notice";
