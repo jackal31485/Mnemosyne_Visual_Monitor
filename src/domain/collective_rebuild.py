@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import os
 import sqlite3
+import tempfile
 from pathlib import Path
 from typing import Any
 
-from .collective import CollectiveDAO
+from .collective import DB_PATH, CollectiveDAO
 from .profile_ingest import (
     discover_profile_paths,
     extract_memories,
@@ -62,20 +64,29 @@ def nuke_and_rebuild_collective() -> dict[str, Any]:
 
     IMPORTANT:
     - The source Mnemosyne databases are never modified.
-    - collective.db is destroyed and recreated.
+    - The existing collective.db remains untouched until the replacement
+      database has been built successfully.
+    - A successfully built replacement is atomically installed.
     - Every discovered source memory becomes a collective reference.
     - Nothing is promoted automatically.
     """
 
     profiles = discover_profile_paths()
 
-    dao = CollectiveDAO()
+    live_path = Path(DB_PATH).absolute()
+    live_path.parent.mkdir(parents=True, exist_ok=True)
+
+    fd, temporary_path = tempfile.mkstemp(
+        prefix=f".{live_path.name}.",
+        suffix=".rebuild",
+        dir=live_path.parent,
+    )
+    os.close(fd)
+
+    temporary_path = Path(temporary_path)
+    dao = CollectiveDAO(temporary_path)
 
     try:
-        # Completely destroy the existing application collective.
-        dao.reset()
-
-        # Re-open the newly created database and recreate the schema.
         dao.ensure_schema()
 
         profile_counts: dict[str, int] = {}
@@ -90,11 +101,22 @@ def nuke_and_rebuild_collective() -> dict[str, Any]:
             profile_counts[profile_dir.name] = count
             total += count
 
+        dao.close()
+
+        # The completed SQLite database is now the replacement candidate.
+        # os.replace() provides atomic replacement on the same filesystem.
+        os.replace(temporary_path, live_path)
+
         return {
             "profiles": len(profiles),
             "profile_counts": profile_counts,
             "total_entries": total,
         }
 
-    finally:
+    except Exception:
         dao.close()
+
+        if temporary_path.exists():
+            temporary_path.unlink()
+
+        raise
