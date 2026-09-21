@@ -1,0 +1,12 @@
+.git
+.venv
+.pytest_cache
+__pycache__
+*.py[cod]
+*$py.class
+tmp
+data
+audit
+models
+app/db
+tests

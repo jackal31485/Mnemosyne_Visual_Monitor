@@ -1,0 +1,36 @@
+services:
+  mnemosyne:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mnemosyne-visual-monitor
+    restart: unless-stopped
+
+    ports:
+      - "${MNEMOSYNE_PORT:-8000}:8000"
+
+    environment:
+      MNEMOSYNE_HOST: "0.0.0.0"
+      MNEMOSYNE_PORT: "8000"
+      MNEMOSYNE_VERSION: "${MNEMOSYNE_VERSION:-18.0.0}"
+      MNEMOSYNE_EMBEDDING_DEVICE: "${MNEMOSYNE_EMBEDDING_DEVICE:-cpu}"
+      MNEMOSYNE_RERANK_DEVICE: "${MNEMOSYNE_RERANK_DEVICE:-cpu}"
+      MNEMOSYNE_HYBRID_RERANK: "${MNEMOSYNE_HYBRID_RERANK:-true}"
+
+    volumes:
+      - "${MNEMOSYNE_DATA_ROOT:?Set MNEMOSYNE_DATA_ROOT}/data:/app/data"
+      - "${MNEMOSYNE_DISCOVERY_ROOT:?Set MNEMOSYNE_DISCOVERY_ROOT}/app-db:/app/app/db"
+      - "${MNEMOSYNE_AUDIT_ROOT:?Set MNEMOSYNE_AUDIT_ROOT}/audit:/app/audit"
+      - "${MNEMOSYNE_MODELS_ROOT:?Set MNEMOSYNE_MODELS_ROOT}/models:/app/models:ro"
+      - "${HERMES_PROFILES_ROOT:?Set HERMES_PROFILES_ROOT}:/home/mnemosyne/.hermes/profiles:ro"
+
+    healthcheck:
+      test:
+        - CMD
+        - python3
+        - -c
+        - "import urllib.request; urllib.request.urlopen(http://127.0.0.1:8000/health, timeout=5).read()"
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
