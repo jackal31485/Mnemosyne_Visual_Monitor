@@ -8,6 +8,7 @@ from src.domain.federation_session import (
     FederationSessionState,
     authenticate_federation_session,
     unauthenticated_federation_session,
+    session_is_active,
 )
 
 
@@ -108,3 +109,62 @@ def test_session_is_immutable(participant):
 
     with pytest.raises(AttributeError):
         session.state = FederationSessionState.REVOKED  # type: ignore[misc]
+
+
+def test_authenticated_session_is_active_within_valid_interval(participant):
+    session = authenticate_federation_session(
+        participant=participant,
+        session_id="session-1",
+        authenticated_at=100,
+        expires_at=200,
+    )
+
+    assert session_is_active(session, at=100) is True
+    assert session_is_active(session, at=199) is True
+
+
+def test_authenticated_session_is_inactive_at_expiration(participant):
+    session = authenticate_federation_session(
+        participant=participant,
+        session_id="session-1",
+        authenticated_at=100,
+        expires_at=200,
+    )
+
+    assert session_is_active(session, at=200) is False
+    assert session_is_active(session, at=201) is False
+
+
+def test_authenticated_session_is_inactive_before_authentication(participant):
+    session = authenticate_federation_session(
+        participant=participant,
+        session_id="session-1",
+        authenticated_at=100,
+        expires_at=200,
+    )
+
+    assert session_is_active(session, at=99) is False
+
+
+def test_expired_and_revoked_sessions_are_temporally_inactive(participant):
+    session = authenticate_federation_session(
+        participant=participant,
+        session_id="session-1",
+        authenticated_at=100,
+        expires_at=200,
+    )
+
+    assert session_is_active(session.expire(), at=150) is False
+    assert session_is_active(session.revoke(), at=150) is False
+
+
+def test_session_activity_requires_integer_timestamp(participant):
+    session = authenticate_federation_session(
+        participant=participant,
+        session_id="session-1",
+        authenticated_at=100,
+        expires_at=200,
+    )
+
+    with pytest.raises(TypeError, match="at must be an integer"):
+        session_is_active(session, at="100")

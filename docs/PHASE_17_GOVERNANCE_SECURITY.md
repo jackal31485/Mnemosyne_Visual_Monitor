@@ -152,6 +152,14 @@ Cover:
 
 Revocation must invalidate applicable authority without deleting historical audit evidence.
 
+Federation session validity is evaluated temporally at privileged-operation
+boundaries. An authenticated session is usable only within its explicit
+validity interval, with `authenticated_at <= operation_time < expires_at`
+when an expiration is present. Temporal validity is evaluated separately
+from the session's explicit authentication state. The governed remote
+knowledge receive boundary rejects sessions that are not active at the
+supplied operation time.
+
 ### 17H — Input Validation & Fail-Closed Guarantees
 
 Review security-sensitive federation boundaries for:

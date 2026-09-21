@@ -12,7 +12,10 @@ from src.domain.federation_identity import FederationParticipant
 from src.domain.federation_operation_authorization import (
     authorize_federation_operation,
 )
-from src.domain.federation_session import FederationSession
+from src.domain.federation_session import (
+    FederationSession,
+    session_is_active,
+)
 
 
 class FederationExchangeState(str, Enum):
@@ -254,8 +257,14 @@ def receive_remote_knowledge(
     recipient: FederationParticipant,
     session: FederationSession,
     authorization: FederationAuthorization,
+    at: int,
 ) -> FederationKnowledgeReceipt:
     """Receive remote knowledge through the governed authorization boundary."""
+
+    if not session_is_active(session, at=at):
+        raise PermissionError(
+            "federation session is not active at the supplied time"
+        )
 
     authorize_federation_operation(
         session,

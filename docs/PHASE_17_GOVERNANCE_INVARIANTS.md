@@ -25,7 +25,7 @@ An invalid governance state must fail closed.
 
 - **INV-17.08** — Privileged federation communication requires authentication.
 - **INV-17.09** — Authentication failure fails closed.
-- **INV-17.10** — Expired sessions cannot perform privileged operations.
+- **INV-17.10** — Expired sessions cannot perform privileged operations; temporal session validity is evaluated at the supplied operation time.
 - **INV-17.11** — Revoked sessions cannot perform privileged operations.
 - **INV-17.12** — Session identity must match the authenticated participant.
 - **INV-17.13** — Session validity cannot be inferred from network reachability.

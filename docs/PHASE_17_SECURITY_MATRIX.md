@@ -40,6 +40,19 @@ This matrix defines the security-hardening surface for Phase 17 and provides tra
 | 17.29 | Stale authority | Stale authorization is rejected | Expired/revoked authority remains usable | Adversarial |
 | 17.30 | Completion | Security evidence is traceable | Phase marked complete without required validation | Completion audit |
 
+### 17G Temporal Session Evidence
+
+The federation session boundary now provides explicit temporal validity
+evaluation through `session_is_active(session, at=...)`. The governed
+`receive_remote_knowledge()` boundary requires an operation timestamp and
+rejects an authenticated session at or after its configured expiration.
+
+Evidence:
+- `tests/unit/test_federation_session.py`
+- `tests/unit/test_federation_exchange.py`
+- targeted 17G/security suite: 61 passed
+- full regression: 1,657 passed, 14 skipped, 4 warnings
+
 ## Threat Categories
 
 ### T1 — Identity Confusion

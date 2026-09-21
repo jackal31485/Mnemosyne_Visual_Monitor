@@ -104,6 +104,39 @@ class FederationSession:
         )
 
 
+def session_is_active(
+    session: FederationSession,
+    *,
+    at: int,
+) -> bool:
+    """Return whether a federation session is usable at the supplied instant.
+
+    Temporal validity is evaluated separately from the session's explicit
+    authentication state.  An authenticated session is valid from its
+    authenticated_at timestamp through, but not including, expires_at.
+    """
+
+    if not isinstance(session, FederationSession):
+        raise TypeError("session must be a FederationSession")
+
+    if not isinstance(at, int):
+        raise TypeError("at must be an integer")
+
+    if not session.is_authenticated:
+        return False
+
+    if (
+        session.authenticated_at is not None
+        and at < session.authenticated_at
+    ):
+        return False
+
+    if session.expires_at is not None and at >= session.expires_at:
+        return False
+
+    return True
+
+
 def authenticate_federation_session(
     *,
     participant: FederationParticipant,
