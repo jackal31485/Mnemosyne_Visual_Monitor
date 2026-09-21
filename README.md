@@ -211,6 +211,51 @@ practitioners can evaluate:
 See
 docs/PROJECT_DATA_SCIENCE_DATA_ENGINEERING_POSITIONING.md
 for the detailed review framework.
+## Local Production Execution
+
+The canonical local application entrypoint is `app.main:app`. The project provides
+a production-style local launcher at `scripts/run_local.sh`.
+
+### Prerequisites
+
+- Python 3.12 or compatible Python version supported by the project environment.
+- Project virtual environment at `.venv`.
+- Runtime dependencies installed from `requirements.txt`.
+
+### Start the application
+
+From the project root:
+
+```bash
+source .venv/bin/activate
+scripts/run_local.sh
+```
+
+The launcher defaults to:
+
+- Host: `127.0.0.1`
+- Port: `8000`
+- Uvicorn reload: disabled
+
+The application health endpoint is available at `/health`.
+
+### Optional runtime configuration
+
+The launcher supports:
+
+- `MNEMOSYNE_HOST` — bind address; defaults to `127.0.0.1`.
+- `MNEMOSYNE_PORT` — HTTP port; defaults to `8000`.
+- `MNEMOSYNE_VERSION` — optional application version reported by `/health`.
+
+For example:
+
+```bash
+MNEMOSYNE_PORT=8001 MNEMOSYNE_VERSION="18.0.0" scripts/run_local.sh
+```
+
+The older `src/web/main.py` entrypoint is not the canonical production
+application entrypoint.
+
 ## Where We Are Now
 
 ### 🟢 Phases 1–10 — COMPLETE
