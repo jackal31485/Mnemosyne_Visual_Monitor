@@ -174,6 +174,13 @@ class FederationAuditStore:
 
         for path in sorted(self.base.glob("*.json")):
             payload = json.loads(path.read_text(encoding="utf-8"))
+
+            persisted_audit_id = payload.get("audit_id")
+            if persisted_audit_id != path.stem:
+                raise FederationAuditError(
+                    "persisted audit filename does not match audit ID"
+                )
+
             records.append(
                 FederationAuditRecord(
                     audit_id=payload["audit_id"],

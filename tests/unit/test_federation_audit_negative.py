@@ -77,6 +77,23 @@ def test_audit_store_has_no_update_or_delete_authority(tmp_path):
     assert store.list_records() == (record,)
 
 
+def test_persisted_audit_filename_must_match_audit_id(tmp_path):
+    store = FederationAuditStore(tmp_path)
+    record = _record()
+
+    store.append(record)
+
+    original = store.base / f"{record.audit_id}.json"
+    tampered = store.base / "different-audit-id.json"
+    original.rename(tampered)
+
+    with pytest.raises(
+        FederationAuditError,
+        match="filename does not match audit ID",
+    ):
+        store.list_records()
+
+
 def test_audit_record_cannot_be_mutated_after_recording(tmp_path):
     recorder = FederationAuditRecorder(
         FederationAuditStore(tmp_path),
