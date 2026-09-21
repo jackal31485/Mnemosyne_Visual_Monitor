@@ -234,6 +234,26 @@ def test_receipt_does_not_imply_adoption(
     assert receipt.is_adoptable is False
 
 
+def test_receipt_exchange_id_must_match_provenance(
+    envelope,
+    recipient,
+):
+    mismatched_provenance = FederationProvenance(
+        source_participant_id=envelope.sender.participant_id,
+        source_memory_id="memory-001",
+        source_profile_id="profile-001",
+        originating_exchange_id="different-exchange",
+    )
+
+    with pytest.raises(ValueError, match="receipt provenance exchange ID"):
+        FederationKnowledgeReceipt(
+            exchange_id=envelope.exchange_id,
+            recipient=recipient,
+            state=FederationExchangeState.VALIDATED,
+            provenance=mismatched_provenance,
+        )
+
+
 def test_rejected_receipt_requires_reason(
     envelope,
     recipient,

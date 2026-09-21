@@ -173,6 +173,14 @@ class FederationKnowledgeReceipt:
             )
 
         if (
+            self.provenance.originating_exchange_id
+            != self.exchange_id
+        ):
+            raise ValueError(
+                "receipt provenance exchange ID must match exchange ID"
+            )
+
+        if (
             self.state is FederationExchangeState.REJECTED
             and not self.rejection_reason
         ):

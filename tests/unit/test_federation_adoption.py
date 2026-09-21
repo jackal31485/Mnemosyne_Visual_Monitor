@@ -11,6 +11,7 @@ from src.domain.federation_exchange import (
     FederationExchangeEnvelope,
     FederationExchangeKind,
     FederationKnowledgeReceipt,
+    validate_exchange_envelope,
     FederationProvenance,
     FederationExchangeState,
 )
@@ -124,17 +125,29 @@ def test_invalid_receipt_state_is_rejected():
 def test_exchange_identity_must_match_receipt():
     envelope, receipt = _exchange()
 
-    mismatched = FederationKnowledgeReceipt(
+    mismatched_envelope = FederationExchangeEnvelope(
         exchange_id="other-exchange",
-        recipient=receipt.recipient,
-        state=FederationExchangeState.VALIDATED,
-        provenance=receipt.provenance,
+        sender=envelope.sender,
+        recipient=envelope.recipient,
+        kind=envelope.kind,
+        provenance=FederationProvenance(
+            source_participant_id=envelope.sender.participant_id,
+            source_memory_id=envelope.provenance.source_memory_id,
+            source_profile_id=envelope.provenance.source_profile_id,
+            originating_exchange_id="other-exchange",
+        ),
+        payload=envelope.payload,
     )
 
-    with pytest.raises(FederationAdoptionError):
+    mismatched_receipt = validate_exchange_envelope(
+        mismatched_envelope,
+        recipient=envelope.recipient,
+    )
+
+    with pytest.raises(ValueError, match="exchange"):
         propose_federation_adoption(
             envelope,
-            mismatched,
+            mismatched_receipt,
             destination_profile="local-profile",
             source_profile="remote-profile",
             source_knowledge_id="knowledge-1",
