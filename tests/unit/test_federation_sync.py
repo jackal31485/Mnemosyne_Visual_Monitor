@@ -54,6 +54,7 @@ def test_stale_sequence_is_duplicate(checkpoint):
     )
 
     assert decision.status is FederationSyncStatus.DUPLICATE
+    assert decision.should_apply is False
 
 
 def test_sequence_gap_requires_retry(checkpoint):
@@ -66,6 +67,7 @@ def test_sequence_gap_requires_retry(checkpoint):
 
     assert decision.status is FederationSyncStatus.RETRY
     assert decision.requires_retry is True
+    assert decision.should_apply is False
     assert decision.checkpoint == checkpoint
 
 
@@ -78,6 +80,7 @@ def test_stale_version_is_duplicate(checkpoint):
     )
 
     assert decision.status is FederationSyncStatus.DUPLICATE
+    assert decision.should_apply is False
 
 
 def test_large_version_jump_is_visible_as_divergence(checkpoint):
