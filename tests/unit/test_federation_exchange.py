@@ -159,6 +159,30 @@ def test_receive_remote_knowledge_rejects_unauthenticated_session(
         )
 
 
+def test_receive_remote_knowledge_rejects_authenticated_session_without_capability(
+    envelope,
+    recipient,
+):
+    session = authenticate_federation_session(
+        participant=recipient,
+        session_id="session-001",
+        authenticated_at=100,
+        expires_at=200,
+    )
+    authorization = authorize_participant(
+        participant=recipient,
+        capabilities=frozenset(),
+    )
+
+    with pytest.raises(PermissionError, match="missing federation capability"):
+        receive_remote_knowledge(
+            envelope,
+            recipient=recipient,
+            session=session,
+            authorization=authorization,
+        )
+
+
 def test_receive_remote_knowledge_uses_validation_boundary(
     envelope,
     recipient,
