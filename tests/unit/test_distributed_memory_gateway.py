@@ -108,3 +108,31 @@ def test_invalid_qualified_profile_is_rejected():
             "agent-a:",
             "memory-1",
         )
+
+def test_local_profile_cannot_cross_read_another_profile(monkeypatch):
+    calls = []
+
+    class FakeLocalGateway:
+        def get_memory(self, profile, memory_id):
+            calls.append((profile, memory_id))
+            if profile == "profile-a":
+                return "profile-a memory"
+            raise KeyError(
+                f"Memory {memory_id} not found for profile {profile}"
+            )
+
+    gateway = DistributedMemoryGateway()
+    gateway._local = FakeLocalGateway()
+
+    assert gateway.get_memory("profile-a", "memory-1") == "profile-a memory"
+
+    with pytest.raises(
+        KeyError,
+        match="Memory memory-1 not found for profile profile-b",
+    ):
+        gateway.get_memory("profile-b", "memory-1")
+
+    assert calls == [
+        ("profile-a", "memory-1"),
+        ("profile-b", "memory-1"),
+    ]
