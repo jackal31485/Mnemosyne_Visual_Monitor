@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import sys
 from pathlib import Path
+import os
 
 # Compute project roots.
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -86,6 +87,16 @@ app = create_app()
 # ---------------------------------------------------------------------------
 # Minimal root endpoint for TestClient compatibility
 # ---------------------------------------------------------------------------
+@app.get("/health")
+def health() -> dict[str, str | None]:
+    """Return a minimal operational liveness response."""
+    return {
+        "status": "ok",
+        "service": "mnemosyne-visual-monitor",
+        "version": os.getenv("MNEMOSYNE_VERSION"),
+    }
+
+
 @app.get("/")
 def read_root() -> str:
     """Return the main browser page.
