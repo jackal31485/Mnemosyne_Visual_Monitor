@@ -1,6 +1,6 @@
 # Mnemosyne Visual Monitor — Authoritative Project Roadmap
 
-**Status:** Phase 17 current — Governance, Audit & Security Hardening
+**Status:** Phase 18 next — Productionization, Deployment & Final Validation
 **Last updated:** 2026-09-20
 
 ## Purpose
@@ -115,7 +115,7 @@ The following remain mandatory throughout all phases:
 | 14 | Cross-Profile Learning & Controlled Transfer | PLANNED |
 | 15 | Advanced Retrieval Optimization | PLANNED |
 | 16 | Distributed Collective / LAN Federation | PLANNED |
-| 17 | Governance, Audit & Security Hardening | PLANNED |
+| 17 | Governance, Audit & Security Hardening | COMPLETE — 2026-09-21 |
 | 18 | Productionization, Deployment & Final Validation | PLANNED |
 
 ## Phase 7 — Browser / Visual Monitor
@@ -608,12 +608,43 @@ The Phase 16 completion audit is archived under
 
 ## Phase 17 — Governance, Audit & Security Hardening
 
-**Status: CURRENT — PLANNING BASELINE**
+**Status: COMPLETE — 2026-09-21**
 
-Harden the governance, audit, security, integrity, recovery, privacy, and
-adversarial boundaries established through Phase 16 before productionization.
+Phase 17 is complete. The phase hardened the governance, audit, security,
+integrity, recovery, privacy, and adversarial boundaries established through
+Phase 16.
 
-Phase 17 scope:
+Validated completion evidence is recorded in:
+
+- `docs/PHASE_17_COMPLETION_AUDIT.md`
+- `docs/archive/phase-17/PHASE_17_GOVERNANCE_SECURITY.md`
+- `docs/archive/phase-17/PHASE_17_SECURITY_MATRIX.md`
+- `docs/archive/phase-17/PHASE_17_GOVERNANCE_INVARIANTS.md`
+
+Final regression:
+
+- **1,660 passed**
+- **14 skipped**
+- **4 existing FastAPI deprecation warnings**
+- **19.81 seconds**
+- `git diff --check` clean
+
+No GUI/application-presentation changes were introduced by Phase 17, so live
+GUI validation was not applicable.
+
+The application-level audit remains append-only, but filesystem-level and
+administrator-level tamper resistance is a residual operational concern.
+Entity/relationship derived-data rebuilds also retain their bounded
+non-atomic behavior across independent SQLite DAO connections. These are
+documented residual risks rather than claims of complete operational security.
+
+Phase 17 preserves the Phase 14 adoption authority, Phase 16 federation
+governance, profile-local memory isolation, provenance, revocation, and the
+explicit Athena boundary.
+
+### Phase 17 Scope
+
+The completed hardening work covered:
 
 - **17A — Governance & security baseline**
 - **17B — Threat model & trust-boundary analysis**
@@ -627,50 +658,24 @@ Phase 17 scope:
 - **17J — Security observability & adversarial validation**
 - **17K — Integrated validation, audit & closure**
 
-Phase 17 explicitly preserves:
-
-- Phase 14 as the authoritative adoption boundary;
-- Phase 16 federation governance;
-- profile-local memory isolation;
-- provenance and source attribution;
-- explicit authorization and least authority;
-- effective revocation;
-- application-level append-only audit history;
-- the distinction between logical audit immutability and filesystem/administrator-level tamper resistance.
-
-Phase 17 does not include:
-
-- production deployment;
-- Unraid rollout;
-- production backup/restore rollout;
-- final operational packaging;
-- production monitoring rollout;
-- final performance qualification.
-
-Those concerns belong to Phase 18.
-
-Detailed Phase 17 documents:
-
-- `docs/PHASE_17_GOVERNANCE_SECURITY.md`
-- `docs/PHASE_17_SECURITY_MATRIX.md`
-- `docs/PHASE_17_GOVERNANCE_INVARIANTS.md`
-- `docs/PHASE_17_COMPLETION_AUDIT_TEMPLATE.md`
+Phase 17 does not include production deployment, Unraid rollout, production
+backup/restore, final operational packaging, production monitoring, or final
+performance qualification. Those concerns remain in Phase 18.
 
 ## Phase 18 — Productionization, Deployment & Final Validation
 
-Prepare for deployment and operational use.
+**Status: NEXT — PLANNED**
 
-Focus:
+Phase 18 is the next implementation boundary and will address:
 
 - deployment packaging;
+- Unraid rollout;
 - backup/restore;
 - monitoring;
 - upgrade/migration procedures;
 - performance validation;
 - operational documentation;
 - final end-to-end validation.
-
-The planned final deployment target is the user's Unraid environment. Development remains local until the project reaches the deployment phase.
 
 ## Hindsight-inspired improvements
 

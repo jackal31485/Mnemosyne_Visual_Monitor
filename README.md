@@ -217,7 +217,7 @@ for the detailed review framework.
 
 The foundation, profile-local memory architecture, mediation boundary, collective knowledge base, semantic representation, visualization, hybrid retrieval, Browser-facing retrieval, entity intelligence, relationship intelligence, entity resolution, relationship evidence, and governed graph enrichment have been implemented and validated through Phase 10.
 
-### 🟢 Phases 14–16 — COMPLETE / PHASE 17 NOW
+### 🟢 Phases 14–17 — COMPLETE / PHASE 18 NEXT
 
 Mnemosyne has now moved beyond:
 
@@ -293,12 +293,12 @@ The roadmap can also be understood as a progression through increasingly sophist
 | **Phase 14 ✓** | Controlled cross-profile learning | Social learning and learning from others |
 | **Phase 15 ✓** | Advanced retrieval optimization | Improving recall strategies |
 | **Phase 16 ✓** | Distributed collective / LAN federation | Governed knowledge exchange across instances |
-| **Phase 17 ← NOW** | Governance, audit and security hardening | Hardening governance, audit, security, integrity, recovery, and adversarial boundaries |
-| **Phase 18** | Productionization and final validation | Mature continuous learning |
+| **Phase 17 ✓** | Governance, audit and security hardening | Hardened governance, audit, security, integrity, recovery, and adversarial boundaries |
+| **Phase 18 → NEXT** | Productionization and final validation | Mature continuous learning |
 
-### 🚩 Phase 17 — CURRENT
+### 🟢 Phase 17 — COMPLETE
 
-Phase 17 — **Governance, Audit & Security Hardening** — hardens the governance and security boundaries established through Phase 16 before productionization.
+Phase 17 — **Governance, Audit & Security Hardening** — completed the security, governance, audit, integrity, recovery, privacy, and adversarial hardening of the boundaries established through Phase 16.
 
 Focus:
 
@@ -314,7 +314,7 @@ Focus:
 - security observability;
 - integrated negative and adversarial validation.
 
-Phase 17 does not include production deployment or operational rollout. Those remain Phase 18.
+Phase 17 is complete. Production deployment and operational rollout remain explicitly reserved for Phase 18.
 
 ## From Learning Sources to Understanding
 
@@ -415,9 +415,9 @@ The final architecture therefore aims for **continuous learning without uncontro
 
 ## Roadmap Status
 
-**Current phase: Phase 17 — Governance, Audit & Security Hardening**
+**Current phase: Phase 18 — Productionization, Deployment & Final Validation**
 
-**Completed through: Phase 16 — Distributed Collective / LAN Federation**
+**Completed through: Phase 17 — Governance, Audit & Security Hardening**
 
 The roadmap intentionally moves from:
 

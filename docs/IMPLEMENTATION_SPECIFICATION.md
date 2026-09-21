@@ -1,6 +1,6 @@
 # Mnemosyne Visual Monitor — Current Architecture & Implementation Specification
 
-> **Status:** Phase 17 current — Governance, Audit & Security Hardening
+> **Status:** Phase 18 next — Productionization, Deployment & Final Validation
 >
 > **Last updated:** 2026-09-20
 >
@@ -103,38 +103,6 @@ Query classification is routing information, not authorization.
 Retrieval ranking and evaluation metrics cannot authorize, adopt, revoke, or
 synchronize knowledge.
 
-## Phase 17 — Governance, Audit & Security Hardening
-
-Phase 17 is the **current implementation phase**.
-
-Its purpose is to harden the governance, audit, authentication, authorization,
-provenance, integrity, recovery, privacy, and adversarial boundaries established
-through Phase 16.
-
-Phase 17 focuses on:
-
-- governance and security baseline review;
-- threat and trust-boundary analysis;
-- authentication and authorization hardening;
-- federation abuse and adversarial-path hardening;
-- provenance and audit integrity;
-- profile/data isolation;
-- revocation, replay, and stale-authority protection;
-- input validation and fail-closed behavior;
-- migration safety, integrity, and recovery;
-- security observability;
-- integrated negative/security validation.
-
-Phase 14 adoption remains authoritative. Phase 16 federation governance remains
-intact. Production deployment remains outside this phase and belongs to Phase 18.
-
-The detailed Phase 17 planning documents are:
-
-- `docs/PHASE_17_GOVERNANCE_SECURITY.md`
-- `docs/PHASE_17_SECURITY_MATRIX.md`
-- `docs/PHASE_17_GOVERNANCE_INVARIANTS.md`
-- `docs/PHASE_17_COMPLETION_AUDIT_TEMPLATE.md`
-
 ## Phase 16 — Distributed Collective / LAN Federation
 
 Phase 16 is **complete**.
@@ -208,6 +176,61 @@ Phase 16 must not:
 Phase 16 is distinct from Phase 17. Phase 16 establishes the federation
 architecture and its governance boundaries. Phase 17 performs the broader
 governance, audit, adversarial, and security-hardening work.
+
+## Phase 17 — Governance, Audit & Security Hardening
+
+Phase 17 is **complete**. Phase 18 is the next implementation phase.
+
+Its purpose is to harden the governance, audit, authentication, authorization,
+provenance, integrity, recovery, privacy, and adversarial boundaries established
+through Phase 16.
+
+Phase 17 focuses on:
+
+- governance and security baseline review;
+- threat and trust-boundary analysis;
+- authentication and authorization hardening;
+- federation abuse and adversarial-path hardening;
+- provenance and audit integrity;
+- profile/data isolation;
+- revocation, replay, and stale-authority protection;
+- input validation and fail-closed behavior;
+- migration safety, integrity, and recovery;
+- security observability;
+- integrated negative/security validation.
+
+Phase 14 adoption remains authoritative. Phase 16 federation governance remains
+intact. Production deployment remains outside this phase and belongs to Phase 18.
+
+The Phase 17 completion record is:
+
+- `docs/PHASE_17_COMPLETION_AUDIT.md`
+
+The historical Phase 17 planning and governance documents are archived under:
+
+- `docs/archive/phase-17/`
+
+## Phase 18 — Productionization, Deployment & Final Validation
+
+Phase 18 is the **next implementation phase**.
+
+Its purpose is to prepare the completed Mnemosyne architecture for
+deployment and operational use.
+
+Phase 18 focuses on:
+
+- deployment packaging;
+- Unraid rollout;
+- production backup and restore;
+- monitoring;
+- upgrade and migration procedures;
+- performance validation;
+- operational documentation;
+- final end-to-end validation.
+
+Phase 18 is intentionally distinct from the governance and security hardening
+completed in Phase 17.
+
 
 ## Phase 14 — Architectural Lineage
 
