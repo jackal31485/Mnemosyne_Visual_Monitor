@@ -4,7 +4,15 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
+from src.domain.federation_authorization import (
+    FederationAuthorization,
+    FederationCapability,
+)
 from src.domain.federation_identity import FederationParticipant
+from src.domain.federation_operation_authorization import (
+    authorize_federation_operation,
+)
+from src.domain.federation_session import FederationSession
 
 
 class FederationExchangeState(str, Enum):
@@ -236,8 +244,16 @@ def receive_remote_knowledge(
     envelope: FederationExchangeEnvelope,
     *,
     recipient: FederationParticipant,
+    session: FederationSession,
+    authorization: FederationAuthorization,
 ) -> FederationKnowledgeReceipt:
-    """Receive remote knowledge through the governed validation boundary."""
+    """Receive remote knowledge through the governed authorization boundary."""
+
+    authorize_federation_operation(
+        session,
+        authorization,
+        FederationCapability.RECEIVE_KNOWLEDGE,
+    )
 
     return validate_exchange_envelope(
         envelope,

@@ -9,9 +9,17 @@ from src.domain.federation_exchange import (
     receive_remote_knowledge,
     validate_exchange_envelope,
 )
+from src.domain.federation_authorization import (
+    FederationCapability,
+    authorize_participant,
+)
 from src.domain.federation_identity import (
     FederationParticipant,
     FederationParticipantType,
+)
+from src.domain.federation_session import (
+    authenticate_federation_session,
+    unauthenticated_federation_session,
 )
 
 
@@ -116,13 +124,61 @@ def test_matching_recipient_is_validated(
     assert receipt.rejection_reason is None
 
 
+def test_receive_remote_knowledge_rejects_unauthenticated_session(
+    sender,
+    recipient,
+):
+    envelope = FederationExchangeEnvelope(
+        exchange_id="exchange-001",
+        sender=sender,
+        recipient=recipient,
+        kind=FederationExchangeKind.OBSERVATION,
+        provenance=FederationProvenance(
+            source_participant_id=sender.participant_id,
+            source_memory_id="memory-001",
+            source_profile_id="profile-001",
+            originating_exchange_id="exchange-001",
+        ),
+        payload={"fact": "test"},
+    )
+    session = unauthenticated_federation_session(
+        participant=recipient,
+        session_id="session-001",
+    )
+    authorization = authorize_participant(
+        participant=recipient,
+        capabilities=frozenset({FederationCapability.RECEIVE_KNOWLEDGE}),
+    )
+
+    with pytest.raises(PermissionError):
+        receive_remote_knowledge(
+            envelope,
+            recipient=recipient,
+            session=session,
+            authorization=authorization,
+        )
+
+
 def test_receive_remote_knowledge_uses_validation_boundary(
     envelope,
     recipient,
 ):
+    session = authenticate_federation_session(
+        participant=recipient,
+        session_id="session-001",
+        authenticated_at=100,
+        expires_at=200,
+    )
+    authorization = authorize_participant(
+        participant=recipient,
+        capabilities=frozenset({FederationCapability.RECEIVE_KNOWLEDGE}),
+    )
+
     receipt = receive_remote_knowledge(
         envelope,
         recipient=recipient,
+        session=session,
+        authorization=authorization,
     )
 
     assert isinstance(receipt, FederationKnowledgeReceipt)
@@ -133,9 +189,22 @@ def test_receipt_does_not_imply_adoption(
     envelope,
     recipient,
 ):
+    session = authenticate_federation_session(
+        participant=recipient,
+        session_id="session-001",
+        authenticated_at=100,
+        expires_at=200,
+    )
+    authorization = authorize_participant(
+        participant=recipient,
+        capabilities=frozenset({FederationCapability.RECEIVE_KNOWLEDGE}),
+    )
+
     receipt = receive_remote_knowledge(
         envelope,
         recipient=recipient,
+        session=session,
+        authorization=authorization,
     )
 
     assert receipt.is_adoptable is False
@@ -186,9 +255,22 @@ def test_envelope_is_immutable(envelope):
 
 
 def test_receipt_is_immutable(envelope, recipient):
+    session = authenticate_federation_session(
+        participant=recipient,
+        session_id="session-001",
+        authenticated_at=100,
+        expires_at=200,
+    )
+    authorization = authorize_participant(
+        participant=recipient,
+        capabilities=frozenset({FederationCapability.RECEIVE_KNOWLEDGE}),
+    )
+
     receipt = receive_remote_knowledge(
         envelope,
         recipient=recipient,
+        session=session,
+        authorization=authorization,
     )
 
     with pytest.raises(AttributeError):
