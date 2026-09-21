@@ -217,7 +217,7 @@ for the detailed review framework.
 
 The foundation, profile-local memory architecture, mediation boundary, collective knowledge base, semantic representation, visualization, hybrid retrieval, Browser-facing retrieval, entity intelligence, relationship intelligence, entity resolution, relationship evidence, and governed graph enrichment have been implemented and validated through Phase 10.
 
-### 🟢 Phases 14–16 — COMPLETE / PHASE 17 READY
+### 🟢 Phases 14–16 — COMPLETE / PHASE 17 NOW
 
 Mnemosyne has now moved beyond:
 
@@ -293,8 +293,28 @@ The roadmap can also be understood as a progression through increasingly sophist
 | **Phase 14 ✓** | Controlled cross-profile learning | Social learning and learning from others |
 | **Phase 15 ✓** | Advanced retrieval optimization | Improving recall strategies |
 | **Phase 16 ✓** | Distributed collective / LAN federation | Governed knowledge exchange across instances |
-| **Phase 17 ← NOW** | Governance, audit and security | Evaluating trust, sources, and learned guidance |
+| **Phase 17 ← NOW** | Governance, audit and security hardening | Hardening governance, audit, security, integrity, recovery, and adversarial boundaries |
 | **Phase 18** | Productionization and final validation | Mature continuous learning |
+
+### 🚩 Phase 17 — CURRENT
+
+Phase 17 — **Governance, Audit & Security Hardening** — hardens the governance and security boundaries established through Phase 16 before productionization.
+
+Focus:
+
+- governance and security baseline review;
+- threat and trust-boundary analysis;
+- authentication and authorization hardening;
+- federation abuse and adversarial-path hardening;
+- provenance and audit integrity;
+- profile/data isolation;
+- revocation, replay, and stale-authority protection;
+- input validation and fail-closed behavior;
+- migration safety, integrity, and failure recovery;
+- security observability;
+- integrated negative and adversarial validation.
+
+Phase 17 does not include production deployment or operational rollout. Those remain Phase 18.
 
 ## From Learning Sources to Understanding
 

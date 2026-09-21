@@ -1,6 +1,6 @@
 # Mnemosyne Visual Monitor — Authoritative Project Roadmap
 
-**Status:** Phase 16 complete — Phase 17 Governance, Audit & Security Hardening next
+**Status:** Phase 17 current — Governance, Audit & Security Hardening
 **Last updated:** 2026-09-20
 
 ## Purpose
@@ -608,18 +608,53 @@ The Phase 16 completion audit is archived under
 
 ## Phase 17 — Governance, Audit & Security Hardening
 
-Harden the system before production deployment.
+**Status: CURRENT — PLANNING BASELINE**
 
-Focus:
+Harden the governance, audit, security, integrity, recovery, privacy, and
+adversarial boundaries established through Phase 16 before productionization.
 
-- complete audit trails;
-- permission boundaries;
-- revocation guarantees;
-- migration safety;
-- integrity checks;
-- failure recovery;
-- security review;
-- adversarial testing.
+Phase 17 scope:
+
+- **17A — Governance & security baseline**
+- **17B — Threat model & trust-boundary analysis**
+- **17C — Authentication & authorization hardening**
+- **17D — Federation abuse / adversarial-path hardening**
+- **17E — Provenance & audit integrity hardening**
+- **17F — Profile/data isolation security**
+- **17G — Revocation, replay & stale-authority protection**
+- **17H — Input validation / fail-closed behavior**
+- **17I — Migration safety, integrity & recovery**
+- **17J — Security observability & adversarial validation**
+- **17K — Integrated validation, audit & closure**
+
+Phase 17 explicitly preserves:
+
+- Phase 14 as the authoritative adoption boundary;
+- Phase 16 federation governance;
+- profile-local memory isolation;
+- provenance and source attribution;
+- explicit authorization and least authority;
+- effective revocation;
+- application-level append-only audit history;
+- the distinction between logical audit immutability and filesystem/administrator-level tamper resistance.
+
+Phase 17 does not include:
+
+- production deployment;
+- Unraid rollout;
+- production backup/restore rollout;
+- final operational packaging;
+- production monitoring rollout;
+- final performance qualification.
+
+Those concerns belong to Phase 18.
+
+Detailed Phase 17 documents:
+
+- `docs/PHASE_17_GOVERNANCE_SECURITY.md`
+- `docs/PHASE_17_SECURITY_MATRIX.md`
+- `docs/PHASE_17_GOVERNANCE_INVARIANTS.md`
+- `docs/PHASE_17_COMPLETION_AUDIT_TEMPLATE.md`
 
 ## Phase 18 — Productionization, Deployment & Final Validation
 
