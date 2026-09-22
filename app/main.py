@@ -113,7 +113,7 @@ def read_root() -> str:
         return fh.read()
 
 # Self‑discoverable registration ------------------------------------
-from app.discovery import DB_PATH
+from app.discovery import DB_PATH, _ensure_schema
 import sqlite3
 
 _discovery_beacon = DiscoveryBeacon(api_port=8000)
@@ -149,6 +149,7 @@ def _register_self_discoverable() -> None:
         now_ts,
     )
     with sqlite3.connect(str(DB_PATH)) as conn:
+        _ensure_schema(conn)
         conn.execute(
             """
             INSERT INTO discovery_records
