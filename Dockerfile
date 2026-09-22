@@ -4,8 +4,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     HOME=/home/mnemosyne
 
-RUN groupadd --system mnemosyne && \
-    useradd --system --gid mnemosyne --create-home --home-dir /home/mnemosyne mnemosyne
+RUN useradd --system --uid 99 --gid 100 --create-home --home-dir /home/mnemosyne mnemosyne
 
 WORKDIR /app
 
@@ -22,7 +21,7 @@ COPY PROJECT_DATA_SCIENCE_DATA_ENGINEERING_POSITIONING.md /app/PROJECT_DATA_SCIE
 COPY PROJECT_ROADMAP.md /app/PROJECT_ROADMAP.md
 
 RUN mkdir -p /app/data /app/app/db /app/audit /app/models /home/mnemosyne/.hermes/profiles && \
-    chown -R mnemosyne:mnemosyne /app/data /app/app/db /app/audit /app/models /home/mnemosyne
+    chown -R 99:100 /app/data /app/app/db /app/audit /app/models /home/mnemosyne
 
 USER mnemosyne
 
