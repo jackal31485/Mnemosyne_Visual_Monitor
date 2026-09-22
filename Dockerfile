@@ -13,6 +13,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY app /app/app
 COPY src /app/src
+COPY services /app/services
 COPY ui /app/ui
 COPY scripts /app/scripts
 COPY README.md /app/README.md
