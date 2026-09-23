@@ -105,6 +105,51 @@ async function fetchProfiles() {
     return normalizeProfiles(await fetchJSON("/api/collective/profiles"));
 }
 
+async function fetchHermesRuntime() {
+    return fetchJSON("/api/runtime/hermes");
+}
+
+function renderHermesRuntime(runtime) {
+    const value = (value) => {
+        if (value === null || value === undefined || value === "") {
+            return "—";
+        }
+        return String(value);
+    };
+
+    const profiles = Array.isArray(runtime?.profile_names)
+        ? runtime.profile_names
+        : [];
+
+    $("hermes-runtime-version").textContent = value(runtime?.version);
+    $("hermes-runtime-current-profile").textContent =
+        value(runtime?.current_profile);
+    $("hermes-runtime-profiles").textContent =
+        profiles.length ? profiles.join(", ") : "—";
+    $("hermes-runtime-config").textContent = value(runtime?.config_path);
+    $("hermes-runtime-installation").textContent =
+        value(runtime?.installation_path);
+    $("hermes-runtime-executable").textContent =
+        value(runtime?.executable_path);
+    $("hermes-runtime-venv").textContent = value(runtime?.venv_path);
+
+    const status = $("hermes-runtime-status");
+    status.textContent = "Connected";
+    status.classList.remove("error");
+}
+
+async function loadHermesRuntime() {
+    const status = $("hermes-runtime-status");
+
+    try {
+        const runtime = await fetchHermesRuntime();
+        renderHermesRuntime(runtime);
+    } catch (error) {
+        status.textContent = `Unavailable — ${error.message}`;
+        status.classList.add("error");
+    }
+}
+
 async function fetchGraph(profile = null) {
     const params = new URLSearchParams();
     if (profile) params.set("source_profile", profile);
@@ -3638,6 +3683,7 @@ async function refresh(){
         setStatus("Refreshing…");
         state.profiles=await fetchProfiles(); renderProfiles(state.profiles); initTiles(state.profiles);
         renderColourControls();
+        await loadHermesRuntime();
         const diagnostics=await fetchDiagnostics(); renderStatistics(diagnostics);
         state.graph=await fetchGraph(state.selectedProfile);
         tileEventCache.clear();
@@ -3886,6 +3932,7 @@ async function init(){
         setStatus("Loading profiles…");
         state.profiles=await fetchProfiles(); renderProfiles(state.profiles); initTiles(state.profiles);
         renderColourControls();
+        await loadHermesRuntime();
         const diagnostics=await fetchDiagnostics(); renderStatistics(diagnostics);
         await refreshDiscovery();
         state.graph=await fetchGraph(state.selectedProfile);

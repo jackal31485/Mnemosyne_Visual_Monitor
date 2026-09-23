@@ -112,6 +112,22 @@ button:active:not(:disabled) { transform:translateY(1px); }
 .operation-status { min-height:16px; }
 .operation-status.success { color:#9bd6a5; }
 .operation-status.error { color:var(--danger); }
+
+.runtime-details { margin-top:6px; }
+.runtime-row {
+    display:grid;
+    grid-template-columns:88px minmax(0,1fr);
+    gap:8px;
+    margin:5px 0;
+    font-size:10px;
+    line-height:1.35;
+}
+.runtime-label { color:var(--muted); }
+.runtime-value {
+    min-width:0;
+    color:var(--text);
+    overflow-wrap:anywhere;
+}
 .operation-primary,.operation-danger { width:100%; padding:7px 8px; margin-top:6px; }
 .operation-danger { color:#ffd0d0; border-color:rgba(239,143,143,.4); }
 .agent-list { margin-top:8px; display:grid; gap:6px; }
