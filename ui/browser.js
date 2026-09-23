@@ -3377,14 +3377,13 @@ function renderAgents(payload){
     state.scanning=Boolean(payload.scanning);
     state.agentMap=new Map(state.agents.map(a=>[a.client_id,a]));
 
-    // Identify the local Hermes agent from the discovery hostname.
-    // The browser may use 127.0.0.1 while discovery advertises the LAN address.
+    // Identify the local Hermes agent from the browser host.
+    // Discovery may identify the same agent by either hostname or LAN address.
+    // Do not hard-code a particular Hermes host as the local agent.
     const localHostname=window.location.hostname;
-    const matchingHostname=state.agents.find(agent =>
-        agent.hostname === localHostname
-    );
-    const discoveredLocal=matchingHostname || state.agents.find(agent =>
-        agent.hostname === "loki-tux"
+    const discoveredLocal=state.agents.find(agent =>
+        agent.hostname === localHostname ||
+        agent.address === localHostname
     );
     state.localAgentId=discoveredLocal?.client_id || null;
     $("discovery-summary").textContent =
