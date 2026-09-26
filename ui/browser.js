@@ -3377,11 +3377,14 @@ function renderAgents(payload){
     state.scanning=Boolean(payload.scanning);
     state.agentMap=new Map(state.agents.map(a=>[a.client_id,a]));
 
-    // Identify the local Hermes agent from the browser host.
-    // Discovery may identify the same agent by either hostname or LAN address.
-    // Do not hard-code a particular Hermes host as the local agent.
+    // Identify the local Hermes agent from discovery first.
+    // The discovery service knows which record belongs to this instance,
+    // including when the browser is opened through localhost/loopback.
+    // Retain hostname/address matching as a compatibility fallback.
     const localHostname=window.location.hostname;
     const discoveredLocal=state.agents.find(agent =>
+        agent.is_local === true
+    ) || state.agents.find(agent =>
         agent.hostname === localHostname ||
         agent.address === localHostname
     );

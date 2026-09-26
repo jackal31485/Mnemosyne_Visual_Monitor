@@ -133,8 +133,17 @@ def test_adoption_does_not_create_profile_or_memory():
         _delete_agent(client_id)
 
 
-def test_adopted_agent_remains_discoverable():
+def test_adopted_agent_remains_discoverable(monkeypatch):
     client_id = str(uuid.uuid4())
+
+    class FakeBeacon:
+        def __init__(self, client_id):
+            self.client_id = client_id
+
+    monkeypatch.setattr(
+        "app.routes.discovery.DiscoveryBeacon",
+        lambda: FakeBeacon(client_id),
+    )
 
     try:
         _insert_agent(client_id)
@@ -159,6 +168,7 @@ def test_adopted_agent_remains_discoverable():
 
         assert len(matching) == 1
         assert matching[0]["state"] == "ADOPTED"
+        assert matching[0]["is_local"] is True
 
     finally:
         _delete_agent(client_id)

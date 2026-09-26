@@ -9,7 +9,7 @@ from src.domain.profile_ingest import (
     discover_profile_paths,
     extract_memories,
 )
-from src.domain.live_memory_gateway import LiveMemoryGateway
+from src.domain.distributed_memory_gateway import DistributedMemoryGateway
 
 router = APIRouter(
     prefix="/api/memories",
@@ -93,7 +93,7 @@ def get_memory_content(
     collective.db.
     """
 
-    gateway = LiveMemoryGateway()
+    gateway = DistributedMemoryGateway()
 
     try:
         content = gateway.get_memory(

@@ -30,6 +30,41 @@ class DistributedMemoryGateway:
         if ":" not in profile:
             return self._local.get_memory(profile, memory_id)
 
+        agent_id, remote_profile = self._split_distributed_profile(
+            profile
+        )
+
+        client = self._client_for_agent(agent_id)
+        return client.get_memory(remote_profile, memory_id)
+
+    def get_memory_metadata(
+        self,
+        profile: str,
+        memory_id: str,
+    ) -> dict:
+        profile = str(profile)
+        memory_id = str(memory_id)
+
+        if ":" not in profile:
+            return self._local.get_memory_metadata(
+                profile,
+                memory_id,
+            )
+
+        agent_id, remote_profile = self._split_distributed_profile(
+            profile
+        )
+
+        client = self._client_for_agent(agent_id)
+        return client.get_memory_metadata(
+            remote_profile,
+            memory_id,
+        )
+
+    @staticmethod
+    def _split_distributed_profile(
+        profile: str,
+    ) -> tuple[str, str]:
         agent_id, remote_profile = profile.split(":", 1)
 
         if not agent_id or not remote_profile:
@@ -37,12 +72,15 @@ class DistributedMemoryGateway:
                 f"Invalid distributed source profile: {profile}"
             )
 
-        for endpoint in get_discovered_agents():
-            if endpoint.agent_id != agent_id:
-                continue
+        return agent_id, remote_profile
 
-            client = AgentMemoryClient(endpoint)
-            return client.get_memory(remote_profile, memory_id)
+    @staticmethod
+    def _client_for_agent(
+        agent_id: str,
+    ) -> AgentMemoryClient:
+        for endpoint in get_discovered_agents():
+            if endpoint.agent_id == agent_id:
+                return AgentMemoryClient(endpoint)
 
         raise KeyError(
             f"Source agent {agent_id} is not available through LAN discovery"

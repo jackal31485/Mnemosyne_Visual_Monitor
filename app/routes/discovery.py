@@ -15,6 +15,7 @@ from ..discovery import (
     STALE_THRESHOLD_SECONDS,
 )
 from ..discovery_scan import scan_controller
+from ..discovery_beacon import DiscoveryBeacon
 
 
 
@@ -73,6 +74,7 @@ def _load_records(
 
     records = []
     now = int(time.time())
+    local_client_id = DiscoveryBeacon().client_id
 
     with sqlite3.connect(str(db_path)) as conn:
         conn.row_factory = sqlite3.Row
@@ -115,6 +117,7 @@ def _load_records(
                     "last_seen": _iso(row["last_seen"]),
                     "state": row["state"],
                     "stale": stale,
+                    "is_local": row["client_id"] == local_client_id,
                 }
             )
 
