@@ -315,11 +315,28 @@ Phase 15 final validation:
 
 Phase 15 is formally closed. The authoritative completion audit is `docs/PHASE_15_COMPLETION_AUDIT.md`, with the Phase 15 planning and governance documents archived under `docs/archive/phase-15/`.
 
-### 🟢 Phase 16 — COMPLETE
+### ⚠️ Phase 16 — domain implementation complete; runtime closure gap documented
 
 Phase 16 — **Distributed Collective / LAN Federation** — begins the transition from a single Mnemosyne instance to controlled knowledge exchange across Mnemosyne instances.
 
 Its scope is limited to governed distributed collective knowledge. Phase 16 must preserve the profile isolation, provenance, authorization, revocation, and audit guarantees established by the preceding phases.
+
+The independent audit at `docs/PHASE_16_AUDIT_2026-09-28.md` verifies the
+federation domain model, qualified source-memory routing, focused tests, and
+full regression suite. It also identifies a closure-blocking runtime gap: the
+distributed source-memory HTTP read path is selected by discovery/adoption but
+does not invoke the authenticated-session and capability-authorization
+federation boundary. Phase 16 must not be claimed as formally closed until
+that path is governed and validated end to end.
+
+### Proposed Jarvis second-brain program — not implemented
+
+`docs/JARVIS_SECOND_BRAIN_ROADMAP.md` defines the proposed Jarvis control
+plane and second-brain architecture. Jarvis, Laya, Open WebUI integration,
+Markdown second-brain automation, a Jarvis dashboard, daily maintenance
+automation, and voice are not implemented in this repository. The roadmap
+preserves the historical Mnemosyne Phase 17/18 numbering and uses `J17`–`J31`
+for the proposed Jarvis workstream to avoid renumbering completed history.
 
 ## The Mnemosyne Memory Progression
 

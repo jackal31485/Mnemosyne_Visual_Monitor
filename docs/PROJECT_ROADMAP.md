@@ -114,9 +114,23 @@ The following remain mandatory throughout all phases:
 | 13 | Higher-Level Mental Models | NEXT — READY TO BEGIN |
 | 14 | Cross-Profile Learning & Controlled Transfer | PLANNED |
 | 15 | Advanced Retrieval Optimization | PLANNED |
-| 16 | Distributed Collective / LAN Federation | PLANNED |
+| 16 | Distributed Collective / LAN Federation | DOMAIN IMPLEMENTED; RUNTIME CLOSURE GAP DOCUMENTED |
 | 17 | Governance, Audit & Security Hardening | COMPLETE — 2026-09-21 |
 | 18 | Productionization, Deployment & Final Validation | PLANNED |
+
+### Current reconciliation note
+
+The historical Phase 16 closure record is superseded for current-baseline
+status by `docs/PHASE_16_AUDIT_2026-09-28.md`. The federation domain contracts
+and regression coverage are implemented, but the live distributed
+source-memory route does not use the authenticated-session and
+capability-authorization federation boundary. Phase 16 is therefore not
+formally closed until that route is governed and validated end to end.
+
+The proposed Jarvis second-brain program is documented separately in
+`docs/JARVIS_SECOND_BRAIN_ROADMAP.md`. It is not implemented and uses `J17`–
+`J31` identifiers so it does not overwrite the historical Mnemosyne Phase
+17/18 numbering.
 
 ## Phase 7 — Browser / Visual Monitor
 
